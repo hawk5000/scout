@@ -10,14 +10,19 @@ import { DateText } from "./ui";
 export function CustomerMarket({
   workspace,
   onChange,
-  category,
   updatesOnly = false,
 }: {
   workspace: CustomerWorkspace;
   onChange: (w: CustomerWorkspace) => void;
-  category?: Category;
   updatesOnly?: boolean;
 }) {
+  const hotelName = workspace.profile?.name || workspace.propertyName;
+  const categoryLabels: Record<Category, string> = {
+    corporate: "Companies",
+    project: "Projects",
+    event: "Events",
+  };
+  const [category, setCategory] = useState("all");
   const [query, setQuery] = useState("");
   const [view, setView] = useState("visible");
   const [order, setOrder] = useState("changed");
@@ -35,7 +40,7 @@ export function CustomerMarket({
   const params = new URLSearchParams({
     q: query,
     state: view,
-    category: category ?? "all",
+    category,
   });
   const list = useMemo(
     () =>
@@ -44,7 +49,7 @@ export function CustomerMarket({
         new URLSearchParams({
           q: query,
           state: view,
-          category: category ?? "all",
+          category,
         }),
       ).sort((a, b) => {
         const x =
@@ -74,9 +79,7 @@ export function CustomerMarket({
   const shownSelected = selected.filter((id) => list.some((f) => f.id === id));
   if (shownSelected.length) params.set("ids", shownSelected.join(","));
   const current = workspace.findings.find((f) => f.id === detail);
-  const runs = workspace.runs.filter(
-    (r) => !category || r.categories.includes(category),
-  );
+  const runs = workspace.runs;
   async function downloadCsv(url: string) {
     try {
       const response = await fetch(url, { cache: "no-store" });
@@ -88,7 +91,11 @@ export function CustomerMarket({
       link.download = "scout-findings.csv";
       link.click();
       setTimeout(() => URL.revokeObjectURL(blob), 1000);
-      setMessage("CSV downloaded. Fictional imports are labeled in every row.");
+      setMessage(
+        workspace.marketMode === "synthetic"
+          ? "CSV downloaded. Fictional examples are labeled in every row."
+          : "CSV downloaded. Ready to use in your sales tools.",
+      );
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Export failed.");
     }
@@ -111,7 +118,7 @@ export function CustomerMarket({
       const data = await r.json();
       if (!r.ok) throw Error(data.error);
       onChange(data);
-      setMessage("Finding preference saved.");
+      setMessage("Finding updated.");
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Save failed.");
     } finally {
@@ -123,33 +130,29 @@ export function CustomerMarket({
       <div className="empty-state">
         <h2>
           {updatesOnly
-            ? "No imported updates yet."
-            : "No researched findings yet."}
+            ? "No updates yet."
+            : `No findings added for ${hotelName} yet.`}
         </h2>
         <p>
-          No findings have been ingested for this hotel. Research and scheduled
-          updates remain disabled.
+          {updatesOnly
+            ? "New findings and important changes will appear here after they are reviewed and added."
+            : "Once findings are reviewed and added, you can explore the details, check the sources and save the ones that matter to your hotel."}
         </p>
-        {category && (
-          <p>
-            {workspace.coverage[category] ||
-              "Coverage instructions have not been added."}
-          </p>
-        )}
       </div>
     );
   return (
     <>
       {workspace.marketMode === "synthetic" && (
         <div className="notice">
-          Isolated synthetic test workspace. All findings and sources are
-          fictional. No research or sending occurs.
+          Demo findings � fictional examples only. All findings and sources in
+          this test workspace are synthetic.
         </div>
       )}
       {workspace.marketMode === "reviewed" && (
         <p className="notice">
-          Reviewed imports. SCOUT has not independently verified these sources
-          or started live research.
+          These findings were reviewed before being added. SCOUT has not
+          independently verified the sources; check the evidence and open
+          questions before acting.
         </p>
       )}
       <p role="status">{message}</p>
@@ -162,10 +165,10 @@ export function CustomerMarket({
               </h2>
               <p>
                 {r.status !== "Completed"
-                  ? "Incomplete coverage"
+                  ? "Update incomplete"
                   : r.newIds.length || r.changedIds.length
-                    ? "Imported update"
-                    : "Completed import with no material changes"}{" "}
+                    ? "Findings added or changed"
+                    : "No significant changes"}{" "}
                 · {r.newIds.length} new · {r.changedIds.length} changed
               </p>
               {[...r.newIds, ...r.changedIds].map((id) => {
@@ -198,48 +201,40 @@ export function CustomerMarket({
         </div>
       ) : (
         <>
-          <div className="tabs" role="group" aria-label="Finding views">
-            {[
-              ["visible", "All"],
-              ["saved", "Saved"],
-              ["updated", "Updated"],
-            ].map(([v, label]) => (
-              <button
-                key={v}
-                aria-pressed={view === v}
-                onClick={() => {
-                  setView(v);
-                  setSelected([]);
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          {view === "updated" && (
-            <p>
-              Findings with recorded material changes across the imported
-              history, from <DateText value={workspace.runs[0]?.at ?? null} />{" "}
-              through <DateText value={workspace.runs.at(-1)?.at ?? null} />.
-              Quiet imports do not erase earlier changes.
-            </p>
-          )}
-          <div className="filter-bar">
+          <div className="filter-bar customer-filters">
             <label className="search-field">
               Search findings
               <input
                 value={query}
                 maxLength={200}
+                placeholder="Search a company, place or topic"
                 onChange={(e) => setQuery(e.target.value)}
               />
             </label>
             <label>
-              View
+              Type
+              <select
+                value={category}
+                onChange={(e) => {
+                  setCategory(e.target.value);
+                  setSelected([]);
+                }}
+              >
+                <option value="all">All types</option>
+                {Object.entries(categoryLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Show
               <select value={view} onChange={(e) => setView(e.target.value)}>
-                <option value="visible">Not dismissed</option>
-                <option value="all">All records</option>
+                <option value="visible">Current findings</option>
+                <option value="all">Including dismissed</option>
                 <option value="saved">Saved</option>
-                <option value="updated">Updated</option>
+                <option value="updated">Changed findings</option>
                 <option value="dismissed">Dismissed</option>
               </select>
             </label>
@@ -266,12 +261,12 @@ export function CustomerMarket({
               >
                 {shownSelected.length
                   ? "Export selected CSV"
-                  : "Export filtered CSV"}
+                  : "Export results CSV"}
               </a>
             )}
           </div>
           <p className="fine-print">
-            Unknown dates and records without a material change appear last.
+            Select findings to export a shortlist, or export all results shown.
           </p>
           {list.map((f) => (
             <article className="panel detail-section" key={f.id}>
@@ -296,7 +291,8 @@ export function CustomerMarket({
               <p className="finding-summary">{f.summary}</p>
               <p>
                 <strong>Potential hotel relevance · inference:</strong>{" "}
-                {f.assessment.inference || "Hotel relevance not assessed."}
+                {f.assessment.inference ||
+                  "Potential hotel business has not been assessed."}
               </p>
               <p>
                 <DateText value={f.facts.start} /> · {f.quality}
@@ -304,7 +300,7 @@ export function CustomerMarket({
                 {f.dismissed ? " · Dismissed" : ""}
               </p>
               <button className="button small" onClick={() => setDetail(f.id)}>
-                Details
+                View finding
               </button>
             </article>
           ))}
@@ -367,12 +363,16 @@ export function CustomerMarket({
           </div>
           <h3>What happened</h3>
           <p>{current.summary}</p>
-          <h3>Potential hotel relevance</h3>
+          <h3>Why it may matter to {hotelName}</h3>
+          <p className="fine-print">
+            An assessment of possible hotel business, not confirmed demand.
+          </p>
           <p>
-            {current.assessment.inference || "Hotel relevance not assessed."}
+            {current.assessment.inference ||
+              "Potential hotel business has not been assessed."}
           </p>
           <p>{current.assessment.rationale}</p>
-          <h3>Unknowns</h3>
+          <h3>What still needs checking</h3>
           <ul>
             {current.assessment.unknowns.map((u) => (
               <li key={u}>{u}</li>
@@ -403,7 +403,7 @@ export function CustomerMarket({
             </div>
           ))}
           <details>
-            <summary>Version history</summary>
+            <summary>Changes over time</summary>
             {current.versions.map((v, i) => (
               <p key={i}>
                 <DateText value={v.at} /> · {v.summary}

@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { CustomerMarket } from "./customer-market";
 import { Brand } from "./ui";
-import { categories, categoryNames } from "@/lib/contracts";
 import type { CustomerWorkspace } from "@/customer/contracts";
 import { profileFromBasics } from "@/customer/profile-basics";
 export function CustomerLogin() {
@@ -77,7 +76,7 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
   const [workspace, setWorkspace] = useState(initial),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState("findings");
   async function logout() {
     setBusy(true);
     try {
@@ -139,34 +138,24 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
           Sign out
         </button>
       </header>
-      <div className="customer-notice">
-        <strong>Research is disabled</strong>
-        <p>
-          Hotel profile changes are saved to your account when you select Save.
-          Live research, paid calls and notifications are off.
-        </p>
-      </div>
+      <p className="customer-service-status">
+        Research is not running. Notifications are off.
+      </p>
       <nav className="customer-nav" aria-label="Customer workspace">
         {[
-          "overview",
-          "blueprint",
-          "corporate",
-          "project",
-          "event",
-          "updates",
-          "profile",
-        ].map((t) => (
+          ["findings", "Findings"],
+          ["updates", "Updates"],
+          ["profile", "Hotel profile"],
+        ].map(([value, label]) => (
           <button
-            key={t}
-            aria-current={tab === t ? "page" : undefined}
+            key={value}
+            aria-current={tab === value ? "page" : undefined}
             onClick={() => {
-              setTab(t);
+              setTab(value);
               setMessage("");
             }}
           >
-            {categories.includes(t as (typeof categories)[number])
-              ? categoryNames[t as (typeof categories)[number]]
-              : t[0].toUpperCase() + t.slice(1)}
+            {label}
           </button>
         ))}
       </nav>
@@ -284,31 +273,26 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
         </section>
       ) : (
         <section>
-          <p className="eyebrow">SCOUT by SalesHospitality</p>
+          <p className="eyebrow">
+            {tab === "updates"
+              ? "Your market updates"
+              : "Your market blueprint"}
+          </p>
           <h1>
-            {tab === "overview"
-              ? `Findings for ${hotelName}`
-              : tab === "blueprint"
-                ? `${hotelName} market blueprint`
-                : tab === "updates"
-                  ? `Updates for ${hotelName}`
-                  : categoryNames[tab as (typeof categories)[number]]}
+            {tab === "updates"
+              ? `Updates for ${hotelName}`
+              : `Findings for ${hotelName}`}
           </h1>
           <p>
-            {profile
-              ? `${hotelName}’s profile is saved. Market research has not been activated.`
-              : "Start by saving your hotel name and address."}
+            {tab === "updates"
+              ? "See what�s new, what changed and which findings are worth another look."
+              : "Local companies, projects and events that may bring business to your hotel. Save useful findings or export them to your sales tools."}
           </p>
           <CustomerMarket
             key={tab}
             workspace={workspace}
             onChange={setWorkspace}
             updatesOnly={tab === "updates"}
-            category={
-              categories.includes(tab as (typeof categories)[number])
-                ? (tab as (typeof categories)[number])
-                : undefined
-            }
           />
         </section>
       )}

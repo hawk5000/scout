@@ -2991,3 +2991,34 @@ details p {
     padding-top: 16px;
   }
 }
+
+.customer-service-status {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin: 1rem 0;
+}
+.customer-filters {
+  display: grid;
+  grid-template-columns: minmax(200px, 2fr) repeat(3, minmax(140px, 1fr));
+}
+.customer-filters > label {
+  min-width: 0;
+}
+.customer-filters input,
+.customer-filters select {
+  width: 100%;
+  min-width: 0;
+}
+@media (max-width: 800px) {
+  .customer-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+  .customer-filters .search-field {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 480px) {
+  .customer-filters {
+    grid-template-columns: 1fr;
+  }
+}

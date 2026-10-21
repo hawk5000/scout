@@ -494,3 +494,9 @@ Production verification: application `6818cc6`, Vercel deployment `dpl_CAohVALMG
 ## 2026-10-21 — Hotel identity and profile wording
 
 Made the active hotel prominent throughout the customer workspace: Your hotel label, larger saved hotel name, saved locality, hotel-specific profile heading and findings/blueprint/update titles. Identity follows the authenticated workspace and saved profile, never a hard-coded ABC Hotel label. Narrow screens give the hotel identity its own row. No profile values, access, research, paid-call or notification settings changed. Typecheck and production build passed; this is a presentation-only change.
+
+## 2026-10-21 — Simple findings-first customer workspace
+
+Consolidated duplicate Overview/Blueprint and three agent tabs into Findings, Updates and Hotel profile. The authenticated hotel name remains prominent. Companies, Projects and Events are simple finding filters alongside search, saved/changed/dismissed views and date sorting. Kept scoped save/dismiss, copy, evidence, dates, unknowns, history and CSV exports; simplified customer wording and corrected the export success message so real reviewed findings are not called fictional. Removed customer coverage instructions and repetitive technical notices. Honest research-off status and explicit synthetic labeling remain.
+
+81 unit/integration tests, TypeScript, production build and 111 compiled HTTP smoke assertions passed. No Worker/configuration/schema changes or production customer writes. Live research, paid calls and notifications remain disabled. Hosted browser acceptance follows deployment; real findings still await prepared evidence and approval.
