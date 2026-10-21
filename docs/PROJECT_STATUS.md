@@ -1,6 +1,6 @@
 # Project status
 
-Current status (2026-10-21): **Customer accounts and findings persistence foundation are deployed to production. ABC Hotel profile and membership are preserved. Fresh owner-entered SIL sign-in verification is pending.** Live research, paid calls, notifications and production ingestion remain disabled.
+Current status (2026-10-21): **Customer accounts and findings persistence foundation are deployed to production. ABC Hotel profile and membership are preserved. Fresh owner-entered SIL sign-in and profile persistence are verified.** Live research, paid calls, notifications and production ingestion remain disabled.
 
 ## Initial handoff — historical
 
@@ -430,3 +430,12 @@ Next: onboard an approved real hotel through the verified SIL/local membership p
 - Fresh checks: 70/70 tests, TypeScript, production build passed. Production browser shows no researched findings and all research/paid-call/notification controls off.
 - Signed out for a fresh real SIL login. Owner password entry is required in Chrome; fresh sign-in and post-login profile display remain pending, not claimed complete. No password reset or SIL configuration change.
 - Next: finish owner-entered sign-in and confirm revision 3 profile; then separately authorize reviewed-data enrollment/import when actual source-backed findings are available. Live research, paid calls and notifications remain off.
+
+
+## 2026-10-21 — Production ABC Hotel acceptance completed
+
+- Owner entered the existing SIL password directly in Chrome. Fresh production sign-in opened ABC Hotel workspace at https://scout-olive-ten.vercel.app/app on the production release following `da96448` (documentation only after application revision `0bf43af`). No credentials were read or copied.
+- D1 audit confirms profile save revision 3 at 22:49:01.480Z, sign-out at 22:49:08.921Z, and new session at 22:51:33.662Z. This verifies a fresh session after sign-out, rather than reuse of the earlier session.
+- Browser Profile after login shows ABC Hotel, Hillsboro, Oregon, America/Los_Angeles and radius 10. D1 revision remains 3; full profile JSON, coverage JSON and membership are unchanged from the pre-promotion baseline. Tenant/property mapping remains tenant_abc / property_abc_abc_hotel.
+- Production contains zero customer markets; no synthetic findings were inserted. Live research, paid calls, notifications and ingestion remain disabled. Real findings require a separately approved reviewed-data enrollment/import pass; no sign-in or persistence blocker remains for this acceptance.
+- Production promotion checks remain 70 tests passing, typecheck/build passing. Formatting passed after normalizing checkout-only Windows line endings; no source diff resulted.
