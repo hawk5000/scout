@@ -269,7 +269,10 @@ export function CustomerMarket({
             Select findings to export a shortlist, or export all results shown.
           </p>
           {list.map((f) => (
-            <article className="panel detail-section" key={f.id}>
+            <article
+              className={`panel detail-section customer-finding-card finding-accent-${f.categories[0]}`}
+              key={f.id}
+            >
               <label className="check-label">
                 <input
                   type="checkbox"
@@ -290,7 +293,7 @@ export function CustomerMarket({
                 {f.location} · {f.facts.status}
               </p>
               <p className="finding-summary">{f.summary}</p>
-              <p>
+              <p className="customer-finding-relevance">
                 <strong>Why it may matter to {hotelName}:</strong>{" "}
                 {f.assessment.inference ||
                   "Potential hotel business has not been assessed."}
@@ -313,7 +316,7 @@ export function CustomerMarket({
       )}
       {current && (
         <section
-          className="panel detail-section"
+          className="panel detail-section customer-finding-detail"
           id="customer-finding-detail"
           tabIndex={-1}
           aria-label={`Finding details: ${current.title}`}
