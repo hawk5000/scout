@@ -18,5 +18,3 @@ ACCEPTANCE_EXPIRES_AT = "2026-10-22T23:00:00.000Z"
 binding = "DB"
 database_name = "scout-findings-acceptance"
 database_id = "ccef2c7a-8e1d-4b32-87ba-27ac15bd7a35"
-
-

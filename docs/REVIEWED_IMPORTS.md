@@ -34,3 +34,8 @@ The existing 50-item/1MB snapshot/500-finding/200-cycle limits still apply. A pr
 ## Verification
 
 Local synthetic tests cover pending invisibility, exact approval/retry, stale/hash/payload rejection, cross-property access, immutable snapshots, audit rollback, repeated enrollment, reviewed-mode validation, direct bypass denial, durable reopen, concurrent approval and HTML escaping. Real source quality and hosted operator acceptance remain separate release gates. Live research, paid calls and notifications remain disabled throughout.
+
+
+## Hosted acceptance completed
+
+The isolated acceptance pass is recorded in PROJECT_STATUS.md. Preview: https://scout-qetynj336-parrieb-9172s-projects.vercel.app/app . Only synthetic fixture identities/evidence were used. Operator report generation and explicit approval ran against the deployed acceptance Worker; pending/rejected records stayed out of customer results. Both review and direct-ingestion access were disabled again afterward. Production activation remains a separate step; never promote this preview with its synthetic environment overrides.
