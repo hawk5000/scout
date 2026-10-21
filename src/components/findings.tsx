@@ -370,7 +370,7 @@ export function Blueprint({
             )}
           </p>
         )}
-        <div className="filter-bar">
+        <div className="finding-search">
           <label className="search-field">
             <Search size={18} />
             <span className="sr-only">Search findings</span>
@@ -381,100 +381,105 @@ export function Blueprint({
               onChange={(e) => update("q", e.target.value)}
             />
           </label>
-          {!category && (
+        </div>
+        <details className="finding-filters">
+          <summary>Filters &amp; sort</summary>
+          <div className="filter-bar">
+            {!category && (
+              <label>
+                Category
+                <select
+                  value={filters.category}
+                  onChange={(e) =>
+                    update("category", e.target.value as Filters["category"])
+                  }
+                >
+                  <option value="all">All categories</option>
+                  {categories.map((c) => (
+                    <option key={c} value={c}>
+                      {c === "corporate"
+                        ? "Companies"
+                        : c === "project"
+                          ? "Projects"
+                          : "Events"}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <label>
-              Category
+              View
               <select
-                value={filters.category}
+                value={filters.state}
                 onChange={(e) =>
-                  update("category", e.target.value as Filters["category"])
+                  update("state", e.target.value as Filters["state"])
                 }
               >
-                <option value="all">All categories</option>
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c === "corporate"
-                      ? "Companies"
-                      : c === "project"
-                        ? "Projects"
-                        : "Events"}
+                <option value="visible">Not dismissed</option>
+                <option value="saved">Saved</option>
+                <option value="dismissed">Dismissed</option>
+                <option value="all">All records</option>
+              </select>
+            </label>
+            <label>
+              Evidence
+              <select
+                value={filters.quality}
+                onChange={(e) =>
+                  update("quality", e.target.value as Filters["quality"])
+                }
+              >
+                {[
+                  "all",
+                  "Sample evidence",
+                  "Needs verification",
+                  "Stale",
+                  "Conflicting evidence",
+                ].map((v) => (
+                  <option key={v} value={v}>
+                    {v === "all" ? "Any evidence status" : v}
                   </option>
                 ))}
               </select>
             </label>
-          )}
-          <label>
-            View
-            <select
-              value={filters.state}
-              onChange={(e) =>
-                update("state", e.target.value as Filters["state"])
-              }
-            >
-              <option value="visible">Not dismissed</option>
-              <option value="saved">Saved</option>
-              <option value="dismissed">Dismissed</option>
-              <option value="all">All records</option>
-            </select>
-          </label>
-          <label>
-            Evidence
-            <select
-              value={filters.quality}
-              onChange={(e) =>
-                update("quality", e.target.value as Filters["quality"])
-              }
-            >
-              {[
-                "all",
-                "Sample evidence",
-                "Needs verification",
-                "Stale",
-                "Conflicting evidence",
-              ].map((v) => (
-                <option key={v} value={v}>
-                  {v === "all" ? "Any evidence status" : v}
+            <label>
+              Sort by
+              <select
+                value={sort}
+                onChange={(e) => {
+                  setSort(e.target.value as "changed" | "date");
+                  setSelected([]);
+                }}
+              >
+                <option value="changed">Most recent change</option>
+                <option value="date">Relevant date · earliest first</option>
+              </select>
+            </label>
+          </div>
+          {view === "all" && (
+            <label className="activity-filter">
+              Activity
+              <select
+                value={activity}
+                onChange={(e) => {
+                  setActivity(e.target.value);
+                  setSelected([]);
+                }}
+              >
+                <option value="current">
+                  Current / upcoming · includes unknown dates
                 </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Sort by
-            <select
-              value={sort}
-              onChange={(e) => {
-                setSort(e.target.value as "changed" | "date");
-                setSelected([]);
-              }}
-            >
-              <option value="changed">Most recent change</option>
-              <option value="date">Relevant date · earliest first</option>
-            </select>
-          </label>
-        </div>
-        {view === "all" && (
-          <label className="activity-filter">
-            Activity
-            <select
-              value={activity}
-              onChange={(e) => {
-                setActivity(e.target.value);
-                setSelected([]);
-              }}
-            >
-              <option value="current">
-                Current / upcoming · includes unknown dates
-              </option>
-              <option value="history">Completed / canceled</option>
-              <option value="all">All activity</option>
-            </select>
-          </label>
-        )}
-        <p className="sort-note">
-          {sort === "changed"
-            ? "Recorded material changes, newest first. Findings without a recorded change appear last."
-            : "Relevant start date, earliest first. Unknown dates appear last."}
-        </p>
+                <option value="history">Completed / canceled</option>
+                <option value="all">All activity</option>
+              </select>
+            </label>
+          )}
+          <p className="sort-note">
+            {sort === "changed"
+              ? "Recorded material changes, newest first. Findings without a recorded change appear last."
+              : "Relevant start date, earliest first. Unknown dates appear last."}
+          </p>
+        </details>
         <div className="results-bar">
           <span>
             {list.length} finding{list.length !== 1 ? "s" : ""}{" "}

@@ -2893,3 +2893,33 @@ details p {
     white-space: normal;
   }
 }
+.finding-select {
+  flex-direction: row;
+  justify-content: flex-start;
+}
+.activity-filter {
+  flex-direction: row;
+  justify-content: flex-start;
+}
+.finding-search .search-field {
+  position: relative;
+}
+.finding-search input {
+  width: 100%;
+}
+.finding-filters {
+  margin: 12px 0 18px;
+}
+.finding-filters > summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 10px 0;
+}
+.finding-filters .filter-bar {
+  margin-top: 10px;
+}
+@media (max-width: 700px) {
+  .activity-filter {
+    flex-direction: column;
+  }
+}
