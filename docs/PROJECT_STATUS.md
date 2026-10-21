@@ -1,6 +1,6 @@
 # Project status
 
-Current status (2026-10-21): **Hosted synthetic demo remains available; customer account and D1 persistence foundation implemented and tested locally. Customer activation remains closed pending verified SCOUT SIL registration and approved cloud configuration.** Live research, paid API calls and notifications remain disabled. See the latest customer-foundation entry and `docs/CUSTOMER_FOUNDATION.md`.
+Current status (2026-10-21): **Customer accounts and findings persistence foundation are deployed to production. ABC Hotel profile and membership are preserved. Fresh owner-entered SIL sign-in verification is pending.** Live research, paid calls, notifications and production ingestion remain disabled.
 
 ## Initial handoff — historical
 
@@ -419,3 +419,14 @@ Next: onboard an approved real hotel through the verified SIL/local membership p
 - **Confirmed fix:** direct attachment navigation encountered Chrome ERR_BLOCKED_BY_CLIENT. Customer CSV now uses authenticated fetch/download and displays failures in place. Final downloaded CSV was inspected: exactly one filtered corporate finding, updated end date 2026-12-01, FICTIONAL SYNTHETIC FIXTURE label. Copy confirmed the labeled brief in clipboard. 390px evidence view had no horizontal overflow; no console errors observed on final preview. Temporary browser viewport restored. Screenshots: C:/Users/Admin/AppData/Local/Temp/scout-hosted-acceptance-saved.png, scout-hosted-acceptance-profile.png, scout-hosted-acceptance-mobile.png.
 - **Closed test ingestion:** deployed Worker version `8e66e36f-45ac-4e8b-942a-73a9ee07986a` with INGESTION_ENABLED=false; credentialed POST returns 403. Subsequent session/read confirmed durable data and researchEnabled=false, paidCallsEnabled=false, notificationsEnabled=false. Acceptance access expires October 22, 2026 at 4:00 PM PDT, after which requests fail closed. No scheduled cleanup or notifications were created; retained resources contain only synthetic fixtures.
 - **Next pass:** reviewed-source preparation and approval, retention/scaling design, then a separately authorized production migration and real SIL/customer acceptance. This pass proves isolated hosted persistence/ingestion, not live research quality or production activation. Customer account UI parity with the findings-first demo remains a distinct presentation task.
+
+
+## 2026-10-21 — Findings foundation production promotion
+
+- Promoted tested findings foundation to main, application revision `0bf43af`. Production Vercel deployment `dpl_CeKcuKfqENZYyUQwi1Di4WWeXhyd` (`scout-1lkyg3wr0-parrieb-9172s-projects.vercel.app`) is Ready and aliased to `scout-olive-ten.vercel.app`. This is a production build using existing production configuration, not promotion of the synthetic preview.
+- Applied only pending additive migration `0003_customer_findings.sql` to production D1. Deployed production entrypoint `customer/worker.ts`, Worker version `bb0e32ed-c4a0-4f9f-81a5-91a77fb1a763`. Explicit `INGESTION_ENABLED=false`; actual POST /ingestion returns 403, Ingestion is disabled.
+- Production environment uses real SIL-backed production Worker; SCOUT_HOSTED_ACCEPTANCE is absent. No synthetic provisioning ran. New market and ingestion tables contain zero rows; ABC Hotel is not enrolled for ingestion. Synthetic acceptance data remains in its separate database/Worker.
+- Verified ABC mapping tenant_abc / property_abc_abc_hotel with existing membership. Before/after migration profile, coverage, membership and revision were identical. Existing authenticated browser session opened ABC Hotel workspace. Saved the existing approved profile without editing any fields; UI confirmed saved and D1 revision advanced 2 to 3. Profile JSON, coverage JSON and membership remain byte-for-byte identical to baseline.
+- Fresh checks: 70/70 tests, TypeScript, production build passed. Production browser shows no researched findings and all research/paid-call/notification controls off.
+- Signed out for a fresh real SIL login. Owner password entry is required in Chrome; fresh sign-in and post-login profile display remain pending, not claimed complete. No password reset or SIL configuration change.
+- Next: finish owner-entered sign-in and confirm revision 3 profile; then separately authorize reviewed-data enrollment/import when actual source-backed findings are available. Live research, paid calls and notifications remain off.
