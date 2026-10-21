@@ -329,7 +329,7 @@ export function WorkspaceApp() {
         <div className="demo-banner">
           <div>
             <span>
-              Demo workspace � All findings are fictional. Changes stay in this
+              Demo workspace · All findings are fictional. Changes stay in this
               browser for seven days.
             </span>
             <details className="demo-disclosure">
@@ -433,7 +433,7 @@ function Overview({ data }: { data: Workspace }) {
           <strong>{verification}</strong>
           <span>
             Need verification
-            <small>Current evidence status � all records</small>
+            <small>Current evidence status · all records</small>
           </span>
         </Link>
       </div>
@@ -441,16 +441,16 @@ function Overview({ data }: { data: Workspace }) {
         <div className="latest-cycle">
           <span>
             <strong>
-              Latest sample cycle � <DateText value={latest.at} />
+              Latest sample cycle · <DateText value={latest.at} />
             </strong>
             <br />
             {latest.status !== "Completed"
-              ? "Incomplete coverage � this is not a successful quiet check."
+              ? "Incomplete coverage — this is not a successful quiet check."
               : latest.newIds.length || latest.changedIds.length
                 ? "Completed sample check."
-                : "Completed quiet check � no new findings or material changes."}{" "}
+                : "Completed quiet check — no new findings or material changes."}{" "}
             <Link href={`/demo/updates#${latest.id}`}>
-              {latest.newIds.length} new � {latest.changedIds.length} materially
+              {latest.newIds.length} new · {latest.changedIds.length} materially
               changed in this cycle
             </Link>
           </span>
@@ -488,7 +488,7 @@ function Overview({ data }: { data: Workspace }) {
         <section>
           <h3>Your research area</h3>
           <p>
-            {data.profile.marketCenter} � {data.profile.radiusMiles}-mile radius
+            {data.profile.marketCenter} · {data.profile.radiusMiles}-mile radius
             <br />
             {data.profile.includedPlaces.join(", ")}
           </p>

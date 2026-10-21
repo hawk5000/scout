@@ -2438,6 +2438,8 @@ details p {
 .demo-disclosure {
   font-size: 12px;
   max-width: 720px;
+  padding: 0;
+  border: 0;
 }
 .demo-disclosure summary {
   color: var(--forest);

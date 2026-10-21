@@ -184,7 +184,7 @@ export function FindingTable({
               <td>
                 <p className="finding-summary">{f.summary}</p>
                 <p className="finding-relevance">
-                  <strong>Potential hotel relevance � inference</strong>
+                  <strong>Potential hotel relevance · inference</strong>
                   <span>
                     {f.inference?.trim() || "Hotel relevance not assessed."}
                   </span>
@@ -410,7 +410,7 @@ export function Blueprint({
               }}
             >
               <option value="changed">Most recent change</option>
-              <option value="date">Relevant date � earliest first</option>
+              <option value="date">Relevant date · earliest first</option>
             </select>
           </label>
         </div>
