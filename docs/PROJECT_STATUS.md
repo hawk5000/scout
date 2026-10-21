@@ -1,6 +1,6 @@
 # Project status
 
-Current status (2026-10-21): **Full hosted synthetic demo implemented with browser-local persistence and disposable server evaluation. Production customer access remains closed.** Live research, paid API calls and notification sending remain disabled. See the latest hosted-demo entry and `docs/HOSTED_DEMO.md`.
+Current status (2026-10-21): **Hosted synthetic demo remains available; customer account and D1 persistence foundation implemented and tested locally. Customer activation remains closed pending verified SCOUT SIL registration and approved cloud configuration.** Live research, paid API calls and notifications remain disabled. See the latest customer-foundation entry and `docs/CUSTOMER_FOUNDATION.md`.
 
 ## Initial handoff — historical
 
@@ -271,3 +271,47 @@ Run `npm run pilot:fixtures` from the project root and open `reports/synthetic-p
 - Confirmed all six generated delivery previews remained `prepared-disabled`, actual charged usage remained zero, and production `/api/workspace` plus legacy hosted `/api/demo/workspace` returned 503. No live research, paid API calls or notifications were enabled or performed.
 - Remaining limits: synthetic data only; browser-profile-local storage with seven-day expiry and bounded history; manual fixture processing, no automatic hosted scheduler; no customer authentication, durable cloud customer storage or verified SIL/provider integration. This is a working hosted demo, not production customer readiness.
 - Next pass: only after explicit authorization and verified external contracts, implement real identity/entitlement and durable customer storage, then separately authorize research and delivery integrations. No external dependency blocks the completed synthetic demo.
+
+## 2026-10-21 — Customer account and persistent data foundation (local implementation)
+
+### Inspected and reused
+
+- Inspected the current sibling SIL canonical access/persistence standards, customer-portal schemas, generic customer-auth login/session-status routes, credential/session validation service, app auth registry and service authentication. Inspected Hotel Review Desk's trusted server SIL client pattern. No sibling checkout was modified.
+- SIL has verified generic server-to-server login and session revalidation contracts, but **SCOUT is absent from the inspected app registry/config/schema**. No SCOUT app key, scoped service credential, property mapping or customer grant was invented. Authentication/password administration remains SIL-owned.
+
+### Implemented
+
+- Dedicated customer Worker and D1 binding adapter, separate from demo storage. Typed login/read/update/logout operations; no arbitrary SQL transport or research/send operations. Added migration `0002_customer_accounts.sql` for private properties, local memberships, hashed sessions, optimistic revisions, audit triggers and durable login limits.
+- Verified SIL HTTP adapter validates app/scope/version, denies password-change-required access and rechecks SIL on every authenticated operation. A random eight-hour opaque session is stored only as a hash in D1; Next issues a Secure/HttpOnly/SameSite=Strict host cookie. Local revocation, role/property access changes, expiry and logout invalidate sessions. Temporary SIL/database failures deny access without switching to fixtures.
+- Next server-only broker and same-origin, bounded JSON login/logout/workspace routes; strict scope rejection; private/no-store responses and authenticated profile JSON export. Server derives scope from the session. Viewer is read-only; editor/admin can update profile/coverage. Concurrent edits return a conflict instead of overwriting. Database-trigger auditing is atomic with profile changes.
+- Customer `/app` sign-in and workspace UI: hotel/profile setup, market boundaries, coverage for all three scouts, Overview/Blueprint/Updates empty states, revision/conflict feedback, reload/export and sign-out. Customer accounts start empty; there is no synthetic data import or pretend live research history. Existing demo remains isolated.
+- Added offline operator SQL preparation for verified local assignments, revocation and confirmed property erasure. It cannot create SIL identities or entitlements and does not execute SQL. Documented configuration, release/recovery checks and exact external blockers in `docs/CUSTOMER_FOUNDATION.md`; supplied disabled configuration templates without resource IDs or credentials.
+
+### Tested
+
+- **58/58 tests passed**, including eleven customer foundation tests: persistent SQLite reopen through the D1 statement interface, cross-tenant/same-tenant property isolation, viewer denial, concurrent/stale saves, audit rollback, local/SIL revocation, role changes, expiry/logout, durable login throttling, strict verified SIL request/response contracts, typed Worker positive/negative flow, and offline provisioning/revocation/erasure isolation.
+- **108 compiled HTTP assertions passed** for existing demo regressions plus customer-disabled, no-cookie, no-store, origin and forged-scope rejection. An initial origin-normalization mismatch was corrected; final checks passed.
+- Typecheck, formatting and optimized Next production build passed. Customer Worker bundled for the browser/Worker target using the installed esbuild dependency; no Node-only runtime dependency was introduced into the Worker.
+- Tests use disposable SQLite and stub SIL contract responses. No local browser test was performed; no real SIL account call, production database mutation, migration, cloud provisioning, push or deployment occurred in this pass.
+
+### Still blocked or unverified
+
+1. SIL owner must register SCOUT, confirm the canonical app key and scoped service-principal route permissions, and assign verified users/properties/entitlements/mappings/defaults. Existing generic routes alone do not prove SCOUT login is supported. No other app's grant may be reused.
+2. Authorized dedicated SCOUT D1/Worker resources, approved migration execution, HTTPS route, and securely supplied Vercel/Worker secrets are required. Local SQL compatibility and a bundle check are not remote D1/Worker acceptance.
+3. Real account login/revocation and cross-device persistence, deployed cookie/UI behavior, operational monitoring, approved retention policy and an isolated backup/restore rehearsal remain release gates. Configured authenticated Next-to-Worker behavior needs the approved deployment; disabled Next routes and Worker/service flows were tested separately locally.
+4. This phase persists customer profiles and coverage only. Real findings ingestion/assessment/state persistence, evidence integration and research subscription delivery remain separate work; customer findings stay empty. Primary account creation, resets and property default administration remain SIL-owned.
+
+### Disabled and next pass
+
+Live research, paid provider calls and notifications remain disabled by customer contracts and the Worker operation allowlist. No schedulers, model tools, sending transports, billing integration or cloud research jobs were added. Customer activation defaults false on both hosts, and no live resource configuration exists.
+
+Next: an explicitly authorized SIL registration and infrastructure integration pass. Confirm upstream contracts and scoped grants, configure the dedicated Worker/D1 deployment, apply reviewed migrations, prepare verified local memberships and run deployed authenticated acceptance and recovery checks. Keep research, paid calls and notifications disabled during that pass. The account/data foundation is implemented locally, **not activated or certified production-ready**.
+
+
+## 2026-10-21 — SIL registration and dedicated Worker/D1 integration
+
+- Registered SCOUT in SIL using canonical customer login/session contracts, explicit property mappings/direct entitlements, and an auth-only service principal scoped to two internal QA hotels. Existing service credentials, registrations and customer accounts were preserved. SIL commit `8b8baea` is pushed and deployed.
+- Created dedicated `scout-customer-production` D1, applied migrations 0001/0002, deployed `scout-customer-foundation`, and configured private Vercel/Worker secrets. Both internal accounts passed actual SIL and Worker workspace checks. No research/provider/notification bindings or schedulers exist.
+- Fixed Cloudflare redirect compatibility and D1 trigger-inclusive mutation counts; writes now use RETURNING rows for reliable success/conflict detection.
+- SIL validation: 2,226 tests passed, 12 existing skips, typecheck and production webpack build passed. SIL lint command reports no configured ESLint check. SCOUT local and deployed acceptance results will be recorded after this release check.
+- Customer browser acceptance is pending deployment of the account UI. Research, paid calls and notifications remain disabled. No real market findings are populated.

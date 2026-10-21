@@ -2292,3 +2292,73 @@ details p {
     content: " (" attr(href) ")";
   }
 }
+
+.customer-shell {
+  max-width: 1100px;
+  margin: auto;
+  padding: 24px;
+}
+.customer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+.customer-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 28px 0;
+}
+.customer-nav button {
+  padding: 10px 14px;
+  border: 1px solid #d9ddd5;
+  background: #fff;
+  color: #183e32;
+  border-radius: 6px;
+}
+.customer-nav button[aria-current="page"] {
+  background: #183e32;
+  color: #fff;
+}
+.customer-form {
+  max-width: 720px;
+}
+.customer-form fieldset {
+  border: 1px solid #d9ddd5;
+  padding: 24px;
+  display: grid;
+  gap: 18px;
+}
+.customer-form label,
+.access-page form label {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 16px;
+}
+.customer-form input:not([type="checkbox"]),
+.customer-form textarea,
+.access-page form input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #bfc9bf;
+  background: #fff;
+  border-radius: 5px;
+}
+.customer-form textarea {
+  min-height: 85px;
+}
+.customer-form input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+@media (max-width: 480px) {
+  .customer-shell {
+    padding: 16px;
+  }
+  .customer-form fieldset {
+    padding: 14px;
+  }
+}

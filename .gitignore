@@ -15,3 +15,5 @@ local-data/
 *.sqlite
 *.sqlite3
 *.tsbuildinfo
+
+.vercel

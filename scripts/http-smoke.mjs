@@ -18,6 +18,7 @@ async function withServer(demo, verify) {
     ...process.env,
     NEXT_TELEMETRY_DISABLED: "1",
     SCOUT_DEMO_ENABLED: demo ? "true" : "false",
+    SCOUT_CUSTOMER_ENABLED: "false",
   };
   delete env.VERCEL;
   delete env.VERCEL_ENV;
@@ -133,6 +134,46 @@ await withServer(false, async (base) => {
   assert.match(await download.text(), /FICTIONAL DEMO/);
   checks++;
   status(await fetch(`${base}/api/workspace`), 503);
+  status(await fetch(`${base}/api/workspace?tenantId=forged`), 400);
+  status(await fetch(`${base}/api/customer/export`), 503);
+  status(await fetch(`${base}/api/customer/export?propertyId=forged`), 400);
+  const customerLogin = (origin, input) =>
+    fetch(`${base}/api/customer/login`, {
+      method: "POST",
+      headers: { origin, "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+  status(
+    await customerLogin("https://outside.example", {
+      email: "test@example.com",
+      password: "fictional",
+    }),
+    403,
+  );
+  status(
+    await customerLogin(base, {
+      email: "test@example.com",
+      password: "fictional",
+      tenantId: "forged",
+    }),
+    400,
+  );
+  const unavailable = await customerLogin(base, {
+    email: "test@example.com",
+    password: "fictional",
+  });
+  status(unavailable, 503);
+  assert.equal(unavailable.headers.get("set-cookie"), null);
+  assert.match(unavailable.headers.get("cache-control"), /no-store/);
+  checks++;
+  status(
+    await fetch(`${base}/api/workspace`, {
+      method: "PATCH",
+      headers: { origin: "https://outside.example" },
+      body: "{}",
+    }),
+    403,
+  );
   status(await fetch(`${base}/api/demo/workspace`), 503);
   status(await fetch(`${base}/api/demo/export`), 503);
   status(await fetch(`${base}/api/demo/subscription`), 503);

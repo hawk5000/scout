@@ -84,3 +84,7 @@ See [Pass 4 acceptance](docs/PASS_4_ACCEPTANCE.md) for results, optional manual 
 The public **Explore the full fictional demo** button now opens the complete workspace on Vercel. Changes persist in that browser for seven days; separate browser profiles are isolated. **Exit & clear demo** removes the browser state. Use fictional information only. No hosted database or authenticated customer account is created.
 
 In Administrator setup, queue a baseline/update and click **Process next fixture job**. No terminal is required. No automatic schedule, live research, paid calls or notification transport is enabled. Limits: 128 changes and 12 fixture-run actions per demo; export and clear it to restart. See [Hosted demo architecture and review steps](docs/HOSTED_DEMO.md) for the stateless server boundary and limitations. Earlier local SQLite/CLI instructions describe the retained developer adapters, not hosted browser persistence.
+
+## Customer account foundation
+
+The separate customer foundation is implemented locally and disabled by default. See [Customer foundation](docs/CUSTOMER_FOUNDATION.md) for the inspected SIL contracts, D1/Worker architecture, operator preparation, test coverage and activation blockers. SCOUT registration and scoped SIL credentials plus approved Worker/D1 resources are still required. No live research, paid calls or notifications are enabled.

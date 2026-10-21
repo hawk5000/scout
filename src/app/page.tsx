@@ -20,6 +20,7 @@ export default function Home() {
           <a href="#scouts">The three scouts</a>
           <a href="#pricing">Pricing</a>
           <Link href="/demo">Full demo</Link>
+          <Link href="/app">Customer sign-in</Link>
           <Link href="/sample" className="button secondary">
             View sample <ArrowRight size={16} />
           </Link>

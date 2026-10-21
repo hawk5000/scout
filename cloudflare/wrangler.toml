@@ -1,0 +1,14 @@
+name = "scout-customer-foundation"
+main = "customer/worker.ts"
+compatibility_date = "2026-10-21"
+account_id = "c3f560c91d3ab485b7ecfdd40e94da78"
+workers_dev = true
+[vars]
+CUSTOMER_ENABLED = "true"
+SIL_ORIGIN = "https://sil-intelligence-layer.vercel.app"
+SIL_APP_KEY = "scout"
+[[d1_databases]]
+binding = "DB"
+database_name = "scout-customer-production"
+database_id = "9db09e19-f249-4317-af9d-530931fdf4af"
+migrations_dir = "migrations"
