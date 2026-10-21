@@ -8,7 +8,14 @@ import {
 } from "../../src/customer/contracts";
 import { SilAuth } from "../../src/customer/sil";
 import { CustomerStore, digest, type Database } from "../../src/customer/store";
+import { findingStateMutation } from "../../src/customer/market-contracts";
+import { MarketIngestion } from "../../src/customer/ingestion";
 export interface Env {
+  INGESTION_ENABLED?: string;
+  INGESTION_TOKEN?: string;
+  INGESTION_TENANT_ID?: string;
+  INGESTION_PROPERTY_ID?: string;
+  INGESTION_DATA_MODE?: string;
   DB: Database;
   CUSTOMER_ENABLED?: string;
   SERVICE_TOKEN?: string;
@@ -17,6 +24,13 @@ export interface Env {
   SIL_APP_KEY?: string;
 }
 const command = z.discriminatedUnion("operation", [
+  z
+    .object({
+      operation: z.literal("finding-state"),
+      token: z.string().max(128),
+      input: findingStateMutation,
+    })
+    .strict(),
   z
     .object({
       operation: z.literal("login"),
@@ -54,6 +68,35 @@ export async function handleCustomer(
       env.SERVICE_TOKEN.length < 32
     )
       throw new CustomerError("Customer access is not configured.");
+    if (new URL(request.url).pathname === "/ingestion") {
+      if (request.method !== "POST" || new URL(request.url).search)
+        throw new CustomerError("Not found.", 404);
+      if (
+        env.INGESTION_ENABLED !== "true" ||
+        !env.INGESTION_TOKEN ||
+        env.INGESTION_TOKEN.length < 32 ||
+        env.INGESTION_TOKEN === env.SERVICE_TOKEN ||
+        !env.INGESTION_TENANT_ID ||
+        !env.INGESTION_PROPERTY_ID ||
+        !["synthetic", "reviewed"].includes(env.INGESTION_DATA_MODE ?? "")
+      )
+        throw new CustomerError("Ingestion is disabled.", 403);
+      if (
+        (await digest(request.headers.get("authorization") ?? "")) !==
+        (await digest(`Bearer ${env.INGESTION_TOKEN}`))
+      )
+        throw new CustomerError("Access denied.", 403);
+      const result = await new MarketIngestion(env.DB).ingest(
+        {
+          tenantId: env.INGESTION_TENANT_ID,
+          propertyId: env.INGESTION_PROPERTY_ID,
+          actor: "scoped-ingestion-service",
+          dataMode: env.INGESTION_DATA_MODE as "synthetic" | "reviewed",
+        },
+        await readJson(request, 256000),
+      );
+      return Response.json(result, { headers: customerHeaders });
+    }
     if (
       request.method !== "POST" ||
       new URL(request.url).pathname !== "/customer" ||
@@ -86,9 +129,11 @@ export async function handleCustomer(
           )
         : input.operation === "logout"
           ? await store.logout(input.token)
-          : input.operation === "update"
-            ? await store.update(input.token, input.input)
-            : await store.workspace(input.token);
+          : input.operation === "finding-state"
+            ? await store.findingState(input.token, input.input)
+            : input.operation === "update"
+              ? await store.update(input.token, input.input)
+              : await store.workspace(input.token);
     return Response.json(result, { headers: customerHeaders });
   } catch (error) {
     return Response.json(

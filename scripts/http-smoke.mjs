@@ -136,6 +136,26 @@ await withServer(false, async (base) => {
   status(await fetch(`${base}/api/workspace`), 503);
   status(await fetch(`${base}/api/workspace?tenantId=forged`), 400);
   status(await fetch(`${base}/api/customer/export`), 503);
+  status(await fetch(`${base}/api/customer/findings`), 503);
+  status(
+    await fetch(`${base}/api/customer/findings`, {
+      method: "PATCH",
+      headers: {
+        origin: "https://outside.example",
+        "Content-Type": "application/json",
+      },
+      body: "{}",
+    }),
+    403,
+  );
+  status(
+    await fetch(`${base}/api/customer/findings?tenantId=forged`, {
+      method: "PATCH",
+      headers: { origin: base, "Content-Type": "application/json" },
+      body: "{}",
+    }),
+    400,
+  );
   status(await fetch(`${base}/api/customer/export?propertyId=forged`), 400);
   const customerLogin = (origin, input) =>
     fetch(`${base}/api/customer/login`, {

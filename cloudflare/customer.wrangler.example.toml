@@ -5,6 +5,11 @@ compatibility_date = "2026-10-21"
 workers_dev = false
 [vars]
 CUSTOMER_ENABLED = "false"
+INGESTION_ENABLED = "false"
+# Ingestion remains off. Future authorized imports require a separate secret
+# INGESTION_TOKEN plus fixed INGESTION_TENANT_ID, INGESTION_PROPERTY_ID and
+# INGESTION_DATA_MODE (synthetic or reviewed), and explicit D1 market enrollment.
+# Never reuse SERVICE_TOKEN. Never enroll a real customer for synthetic fixtures.
 # SIL_ORIGIN and SIL_APP_KEY require verified SCOUT registration. No defaults.
 # Configure SERVICE_TOKEN and SIL_SERVICE_TOKEN as secrets, never here.
 # Add an authorized D1 binding named DB and migrations_dir = "migrations".

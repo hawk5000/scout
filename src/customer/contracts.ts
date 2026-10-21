@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { categories, profileSchema } from "../lib/contracts";
+import { customerFinding, marketRun, marketMode } from "./market-contracts";
 export const loginInput = z
   .object({ email: z.email().max(254), password: z.string().min(1).max(200) })
   .strict();
@@ -51,7 +52,10 @@ export const customerWorkspace = z
     revision: z.number().int().nonnegative(),
     profile: customerDraftProfile.nullable(),
     coverage: coverageSchema,
-    findings: z.array(z.never()),
+    findings: z.array(customerFinding),
+    runs: z.array(marketRun).default([]),
+    marketRevision: z.number().int().nonnegative().default(0),
+    marketMode: marketMode.nullable().default(null),
     researchEnabled: z.literal(false),
     paidCallsEnabled: z.literal(false),
     notificationsEnabled: z.literal(false),

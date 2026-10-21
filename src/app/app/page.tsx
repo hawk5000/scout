@@ -8,7 +8,7 @@ export const metadata = {
   title: "Customer account",
   robots: { index: false, follow: false },
 };
-export default async function CustomerPage() {
+async function CustomerPage() {
   if (!customerConfigured())
     return (
       <main id="main" className="access-page">
@@ -37,4 +37,27 @@ export default async function CustomerPage() {
       </main>
     );
   }
+}
+
+export default async function AccountRoute() {
+  const acceptance = process.env.SCOUT_HOSTED_ACCEPTANCE === "true";
+  if (acceptance && process.env.VERCEL_ENV === "production")
+    return (
+      <main>
+        <h1>Acceptance is unavailable on production.</h1>
+      </main>
+    );
+  return (
+    <>
+      {acceptance && (
+        <aside className="notice" role="note">
+          Isolated hosted acceptance · fictional accounts and findings only.
+          Authentication is simulated; this is not SIL sign-in. Do not enter a
+          real customer password. Live research, paid calls and notifications
+          are disabled.
+        </aside>
+      )}
+      {await CustomerPage()}
+    </>
+  );
 }

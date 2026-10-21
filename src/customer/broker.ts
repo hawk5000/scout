@@ -10,6 +10,10 @@ import {
 export const cookieName = "__Host-scout-customer";
 export function customerConfigured() {
   return (
+    !(
+      process.env.SCOUT_HOSTED_ACCEPTANCE === "true" &&
+      process.env.VERCEL_ENV === "production"
+    ) &&
     process.env.SCOUT_CUSTOMER_ENABLED === "true" &&
     !!process.env.SCOUT_CUSTOMER_WORKER_ORIGIN &&
     !!process.env.SCOUT_CUSTOMER_SERVICE_TOKEN

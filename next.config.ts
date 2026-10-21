@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 const config: NextConfig = {
+  // Bound build workers for reliable builds on memory-constrained hosts.
+  experimental: { cpus: 2 },
   turbopack: { root: process.cwd() },
   outputFileTracingRoot: process.cwd(),
   poweredByHeader: false,

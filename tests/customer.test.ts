@@ -17,10 +17,9 @@ import {
 } from "../src/customer/contracts";
 import { SilAuth, type AuthProvider, type Identity } from "../src/customer/sil";
 import worker from "../cloudflare/customer/worker";
-const migration = readFileSync(
-  "cloudflare/migrations/0002_customer_accounts.sql",
-  "utf8",
-);
+const migration =
+  readFileSync("cloudflare/migrations/0002_customer_accounts.sql", "utf8") +
+  readFileSync("cloudflare/migrations/0003_customer_findings.sql", "utf8");
 function adapter(db: DatabaseSync): Database {
   return {
     prepare(sql) {

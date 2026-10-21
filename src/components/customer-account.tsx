@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { CustomerMarket } from "./customer-market";
 import { Brand } from "./ui";
 import { categories, categoryNames } from "@/lib/contracts";
 import type {
@@ -316,29 +317,17 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
               ? "Your hotel profile is saved. Market research has not been activated."
               : "Start by saving your hotel name. Add market details later."}
           </p>
-          <div className="empty-state">
-            <h2>
-              {tab === "updates"
-                ? "No research runs yet."
-                : "No researched findings yet."}
-            </h2>
-            <p>
-              Corporate SCOUT, Project SCOUT and Event SCOUT are paused. This
-              account contains no demo findings and no scheduled research.
-            </p>
-            {categories.includes(tab as (typeof categories)[number]) && (
-              <p>
-                {workspace.coverage[tab as (typeof categories)[number]] ||
-                  "Coverage instructions have not been added."}
-              </p>
-            )}
-            <button
-              className="button primary"
-              onClick={() => setTab("profile")}
-            >
-              Review hotel profile
-            </button>
-          </div>
+          <CustomerMarket
+            key={tab}
+            workspace={workspace}
+            onChange={setWorkspace}
+            updatesOnly={tab === "updates"}
+            category={
+              categories.includes(tab as (typeof categories)[number])
+                ? (tab as (typeof categories)[number])
+                : undefined
+            }
+          />
         </section>
       )}
     </main>
