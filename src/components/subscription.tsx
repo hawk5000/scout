@@ -1,4 +1,5 @@
 "use client";
+import { demoFetch } from "@/lib/demo-client";
 import { useEffect, useState } from "react";
 import type {
   SubscriptionCommand,
@@ -12,12 +13,16 @@ export function SubscriptionControls() {
     [error, setError] = useState("");
   const [runCredits, setRunCredits] = useState(1500),
     [monthCredits, setMonthCredits] = useState(10000);
-  async function request(command?: SubscriptionCommand) {
+  async function request(
+    command?: SubscriptionCommand | { action: "process" },
+  ) {
     setBusy(true);
     setError("");
     try {
-      const r = await fetch(
-        "/api/demo/subscription",
+      const r = await demoFetch(
+        command?.action === "process"
+          ? "/api/demo/worker"
+          : "/api/demo/subscription",
         command
           ? {
               method: "POST",
@@ -56,17 +61,18 @@ export function SubscriptionControls() {
       style={{ marginBottom: 28 }}
       aria-busy={busy}
     >
-      <span className="eyebrow">LOCAL FIXTURE LAB · DELIVERY DISABLED</span>
+      <span className="eyebrow">ISOLATED FIXTURE LAB · DELIVERY DISABLED</span>
       <h2>Subscription & delivery rehearsal</h2>
       <p>
         Queue one initial blueprint, then shared updates across all three
-        scouts. Jobs persist until the separate local worker runs.
+        scouts. Queue a job, then process it here. Demo history is saved only in
+        this browser.
       </p>
       <Notice>
         Fictional entitlement only. No SIL connection, live schedule, paid calls
-        or messages. To process queued fixtures, run{" "}
-        <code>npm run worker:fixtures</code> in the project folder, then refresh
-        below. The worker stops after at most 20 attempts.
+        or messages. Each click processes one queued fixture job in a disposable
+        server sandbox. No background scheduler runs. A demo allows 128 changes
+        and 12 fixture runs; export and clear it to start again.
       </Notice>
       {error && <p role="alert">{error}</p>}
       {data && (
@@ -203,7 +209,18 @@ export function SubscriptionControls() {
             Add recipients in Hotel Profile to preview delivery preparation.
             Nothing is sent.
           </p>
-          <h3>Durable job history</h3>
+          <button
+            className="button primary"
+            disabled={
+              busy ||
+              !data.controls.active ||
+              !data.jobs.some((j) => j.state === "queued")
+            }
+            onClick={() => void request({ action: "process" })}
+          >
+            Process next fixture job
+          </button>
+          <h3>Browser-local job history</h3>
           {!data.jobs.length && <p>No fixture jobs queued.</p>}
           {data.jobs.map((j) => (
             <div className="quiet-note" key={j.cycle_key}>
@@ -216,7 +233,7 @@ export function SubscriptionControls() {
               </small>
               {j.result && (
                 <p>
-                  <strong>{j.result}</strong> � {j.summary}
+                  <strong>{j.result}</strong> · {j.summary}
                 </p>
               )}
               {j.error && <p role="status">{j.error}</p>}
@@ -246,9 +263,8 @@ export function SubscriptionControls() {
         Refresh job & delivery status
       </button>
       <p className="fine-print">
-        Refresh the page after worker completion to load new blueprint findings
-        and run history. The most recent 50 jobs and delivery previews are
-        shown.
+        Blueprint findings and run history update after processing. The most
+        recent 50 jobs and delivery previews are shown. No messages are sent.
       </p>
     </section>
   );

@@ -1,4 +1,5 @@
 "use client";
+import { demoFetch } from "@/lib/demo-client";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -38,7 +39,7 @@ export async function exportCsv(
   try {
     const params = new URLSearchParams({ ...filters });
     if (ids.length) params.set("ids", ids.join(","));
-    const res = await fetch(`/api/demo/export?${params}`);
+    const res = await demoFetch(`/api/demo/export?${params}`);
     if (!res.ok) throw Error((await res.json()).error);
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);

@@ -82,8 +82,8 @@ export default function SamplePage() {
           a research preference, not an opportunity or an outreach action.
           Nothing is sent automatically.
         </p>
-        <Link href="/#how-it-works" className="button secondary">
-          See how SCOUT works
+        <Link href="/demo" className="button secondary">
+          Explore the full fictional demo
         </Link>
       </main>
       <footer className="public-footer public-width">

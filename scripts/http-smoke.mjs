@@ -68,7 +68,7 @@ function status(response, expected) {
 await withServer(false, async (base) => {
   status(await fetch(`${base}/`), 200);
   const gate = await (await fetch(`${base}/demo/blueprint`)).text();
-  assert.match(gate, /interactive workspace is not available yet/);
+  assert.match(gate, /Opening your market/);
   assert.ok(
     !gate.includes("npm run dev:demo") &&
       !gate.includes("Start my fictional demo"),
@@ -76,8 +76,43 @@ await withServer(false, async (base) => {
   checks++;
   const home = await (await fetch(base)).text();
   assert.ok(
-    home.includes('href="/sample#corporate"') && !home.includes('href="/demo"'),
+    home.includes('href="/sample#corporate"') && home.includes('href="/demo"'),
   );
+  checks++;
+  const sandbox = (body, origin = base) =>
+    fetch(`${base}/api/sandbox`, {
+      method: "POST",
+      headers: { origin, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  status(await sandbox({ journal: null }, "https://outside.example"), 403);
+  status(await sandbox({ journal: null, tenant_id: "forged" }), 400);
+  status(await sandbox({ journal: null, padding: "x".repeat(262144) }), 413);
+  const isolated = await sandbox({ journal: null });
+  status(isolated, 200);
+  assert.match(isolated.headers.get("cache-control"), /no-store/);
+  assert.equal(isolated.headers.get("set-cookie"), null);
+  checks++;
+  const initial = await isolated.json();
+  assert.equal(initial.workspace.findings.length, 9);
+  checks++;
+  const saved = await sandbox({
+    journal: initial.journal,
+    command: {
+      kind: "mutation",
+      input: {
+        action: "state",
+        findingId: initial.workspace.findings[0].id,
+        saved: true,
+        dismissed: false,
+      },
+    },
+  });
+  status(saved, 200);
+  assert.equal((await saved.json()).workspace.findings[0].saved, true);
+  checks++;
+  const clean = await (await sandbox({ journal: null })).json();
+  assert.equal(clean.workspace.findings[0].saved, false);
   checks++;
   const sample = await fetch(`${base}/sample`);
   status(sample, 200);

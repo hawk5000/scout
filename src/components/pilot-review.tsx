@@ -87,20 +87,12 @@ export function PilotReview() {
           </p>
         </div>
       )}
-      <h3>Repeat the two-market fixture rehearsal</h3>
+      <h3>Synthetic rehearsal only</h3>
       <p>
-        Run <code>npm run pilot:fixtures</code> in the project folder. It uses
-        disposable memory storage, writes labeled reports to{" "}
-        <code>reports/synthetic-pilot</code>, and never changes this demo
-        property. Seattle and Portland are fictional scenario labels, not
-        researched markets.
-      </p>
-      <p>
-        Human usefulness, correction time, onboarding effort and live accuracy
-        remain unmeasured. The generated review template accepts explicit manual
-        fixture-review observations. Cloud deployment, real
-        identity/entitlement, approved research spending, verified pilot
-        properties and browser acceptance remain launch gates.
+        Use the subscription and research controls below to explore changes,
+        quiet cycles and coverage gaps. All research results are fictional.
+        Human usefulness, real costs and profitable delivery remain unmeasured.
+        No notification provider is connected.
       </p>
     </section>
   );

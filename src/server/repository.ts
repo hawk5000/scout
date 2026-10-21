@@ -230,7 +230,7 @@ export class DemoRepository {
       .prepare("DELETE FROM properties WHERE tenant_id=? AND property_id=?")
       .run(c.tenant_id, c.property_id);
   }
-  replay(token: string, input: unknown) {
+  replay(token: string, input: unknown, now?: Date) {
     const c = this.context(token);
     if (c.role !== "demo_admin")
       throw new AccessError("Fixture replay requires administrator access.");
@@ -259,7 +259,7 @@ export class DemoRepository {
           !new SubscriptionStore(this.db, c).eligible(Date.now())
         )
           throw Error("The fictional subscription is paused or not entitled.");
-        replay(store, profile, request.scenario, request.cycleKey);
+        replay(store, profile, request.scenario, request.cycleKey, { now });
       });
     } catch (error) {
       throw new AccessError(

@@ -1,4 +1,5 @@
 "use client";
+import { demoFetch } from "@/lib/demo-client";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -59,7 +60,7 @@ export function WorkspaceApp() {
   }
   useEffect(() => {
     let active = true;
-    fetch("/api/demo/workspace", { cache: "no-store" })
+    demoFetch("/api/demo/workspace", { cache: "no-store" })
       .then(async (r) => {
         const d = await r.json();
         if (!r.ok) throw Error(d.error);
@@ -71,8 +72,20 @@ export function WorkspaceApp() {
       .finally(() => {
         if (active) setLoading(false);
       });
+    const refresh = () => {
+      void demoFetch("/api/demo/workspace").then(async (r) => {
+        if (active) {
+          if (r.ok) setData(await r.json());
+          else setData(null);
+        }
+      });
+    };
+    window.addEventListener("scout-demo-change", refresh);
+    window.addEventListener("storage", refresh);
     return () => {
       active = false;
+      window.removeEventListener("scout-demo-change", refresh);
+      window.removeEventListener("storage", refresh);
     };
   }, []);
   useEffect(() => {
@@ -82,7 +95,7 @@ export function WorkspaceApp() {
   async function mutate(input: Mutation) {
     setBusy(true);
     try {
-      const r = await fetch("/api/demo/workspace", {
+      const r = await demoFetch("/api/demo/workspace", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
@@ -108,7 +121,7 @@ export function WorkspaceApp() {
   async function exit() {
     setBusy(true);
     try {
-      const r = await fetch("/api/demo/session", { method: "DELETE" });
+      const r = await demoFetch("/api/demo/session", { method: "DELETE" });
       if (!r.ok) throw Error((await r.json()).error);
       window.location.assign("/");
     } catch (e) {
@@ -119,7 +132,7 @@ export function WorkspaceApp() {
   async function replayScenario(scenario: Scenario, cycleKey: string) {
     setBusy(true);
     try {
-      const response = await fetch("/api/demo/research", {
+      const response = await demoFetch("/api/demo/research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ scenario, cycleKey }),
@@ -154,7 +167,8 @@ export function WorkspaceApp() {
         <p>
           Explore a fictional hotel market with nine sample findings and all
           three SCOUT perspectives. Save, filter and export in your own isolated
-          demo workspace.
+          demo workspace. Changes stay in this browser for seven days. Use
+          fictional information only.
         </p>
         <Notice>{loadError || "Start a demo session to continue."}</Notice>
         <DemoEntry label="Start my fictional demo" />
@@ -313,8 +327,8 @@ export function WorkspaceApp() {
           <div>
             <strong>FICTIONAL DEMO</strong>
             <span>
-              Sample data only. Live research and automatic schedules are
-              inactive.
+              Browser-local fictional data · expires after 7 days. No live
+              research or sending.
             </span>
           </div>
           <Link href="/demo/profile" className="property-context">

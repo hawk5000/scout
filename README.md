@@ -45,11 +45,11 @@ See [Pass 3 acceptance and recovery limits](docs/PASS_3_ACCEPTANCE.md). Fixture 
 
 ## Persistence and isolation
 
-The application creates `local-data/scout-demo.sqlite` when demo access is used. Each demo receives random tenant/property IDs and a random session token; only its hash is stored. An HttpOnly, SameSite=Strict cookie carries the browser token. Private profiles, annotations, jobs, usage, previews and exports are scoped server-side; requests cannot choose another property. Private responses are not cached.
+The legacy local API and CLI create `local-data/scout-demo.sqlite` when used. The full browser UI now uses the isolated browser-backed sandbox described below. Each demo receives random tenant/property IDs and a random session token; only its hash is stored. An HttpOnly, SameSite=Strict cookie carries the browser token. Private profiles, annotations, jobs, usage, previews and exports are scoped server-side; requests cannot choose another property. Private responses are not cached.
 
 Sessions expire after seven days without renewal. Creating a new session cleans up expired private properties. **Exit & clear demo** deletes that property's private data, including jobs and previews; shared fictional facts remain. Clearing only the browser cookie leaves private rows until expiry cleanup. Do not enter real hotel/customer information.
 
-The local adapter is unavailable when `VERCEL` or `VERCEL_ENV` is present. An authorized preview requires isolated persistent storage and access controls. Production `/app` remains closed and `/api/workspace` returns 503; no mock identity fallback exists.
+The legacy local SQLite adapter remains unavailable when `VERCEL` or `VERCEL_ENV` is present. The full hosted demo uses browser-local state and disposable server computation instead; see [Hosted demo](docs/HOSTED_DEMO.md). Production `/app` remains closed and `/api/workspace` returns 503; no mock customer identity fallback exists.
 
 ## Verification
 
@@ -77,3 +77,10 @@ Dependency versions were checked against npm on 2026-10-21 and resolved in `pack
 Run `npm run pilot:fixtures` to evaluate two fictional Seattle/Portland profiles through one baseline and four shared update slots each. It uses disposable in-memory storage and writes `reports/synthetic-pilot/REPORT.md`, structured results, two CSV blueprints and a blank human-review template. No live work or changes to the existing demo database occur. Review the local public sample at `/sample` and its CSV at `/sample/export`. Administrator setup includes a cost-assumption calculator; unknown inputs remain unknown.
 
 See [Pass 4 acceptance](docs/PASS_4_ACCEPTANCE.md) for results, optional manual fixture review and live-launch gates. Production remains blocked; this is not a real pilot or a verified public market sample.
+
+
+## Full hosted demo
+
+The public **Explore the full fictional demo** button now opens the complete workspace on Vercel. Changes persist in that browser for seven days; separate browser profiles are isolated. **Exit & clear demo** removes the browser state. Use fictional information only. No hosted database or authenticated customer account is created.
+
+In Administrator setup, queue a baseline/update and click **Process next fixture job**. No terminal is required. No automatic schedule, live research, paid calls or notification transport is enabled. Limits: 128 changes and 12 fixture-run actions per demo; export and clear it to restart. See [Hosted demo architecture and review steps](docs/HOSTED_DEMO.md) for the stateless server boundary and limitations. Earlier local SQLite/CLI instructions describe the retained developer adapters, not hosted browser persistence.

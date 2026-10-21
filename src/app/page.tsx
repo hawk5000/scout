@@ -8,6 +8,7 @@ import {
   Compass,
 } from "lucide-react";
 import { Brand } from "@/components/ui";
+import { DemoEntry } from "@/components/demo-entry";
 import { BriefingForm } from "@/components/briefing-form";
 export default function Home() {
   return (
@@ -18,6 +19,7 @@ export default function Home() {
           <a href="#how-it-works">How it works</a>
           <a href="#scouts">The three scouts</a>
           <a href="#pricing">Pricing</a>
+          <Link href="/demo">Full demo</Link>
           <Link href="/sample" className="button secondary">
             View sample <ArrowRight size={16} />
           </Link>
@@ -36,15 +38,14 @@ export default function Home() {
               your hotel, so your team can decide what comes next.
             </p>
             <div className="hero-actions">
-              <Link href="/sample" className="button primary">
-                Explore the fictional sample <ArrowRight size={17} />
-              </Link>
+              <DemoEntry />
               <a className="text-link" href="#pricing">
                 See the offer <ArrowRight size={17} />
               </a>
             </div>
             <p className="fine-print">
-              Fictional sample available. Live research is not activated.
+              Full demo uses isolated synthetic data saved in your browser. No
+              live research or sending.
             </p>
           </div>
           <div className="sample-sheet">

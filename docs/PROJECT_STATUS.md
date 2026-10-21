@@ -1,6 +1,6 @@
 # Project status
 
-Current status (2026-10-21): **Build Pass 4 completed for the authorized synthetic-only scope. Repeatable two-market rehearsal, public fictional sample and commercial-assumption tools verified locally; not production-ready.** Live pilot research, paid calls, deployment and notifications remain disabled. See the appended Pass 4 entry and `docs/PASS_4_ACCEPTANCE.md`.
+Current status (2026-10-21): **Full hosted synthetic demo implemented with browser-local persistence and disposable server evaluation. Production customer access remains closed.** Live research, paid API calls and notification sending remain disabled. See the latest hosted-demo entry and `docs/HOSTED_DEMO.md`.
 
 ## Initial handoff — historical
 
@@ -250,3 +250,15 @@ Run `npm run pilot:fixtures` from the project root and open `reports/synthetic-p
 - Disabled hosted demo routes render a server-side availability message and sample link, without starting client workspace requests or offering a failing session button. Removed local CLI instructions from visitor-facing copy. Explicit local demo access remains supported; API production and Vercel gates remain unchanged.
 - Local validation passed: 43 tests, 91 compiled HTTP assertions, typecheck, format check and production build. Hosted browser recheck follows the authorized GitHub push and is reported in the task completion.
 - Live research, paid calls and notification delivery remain disabled. This update improves the public sample experience; it does not enable a hosted customer workspace or establish production readiness.
+
+
+## 2026-10-21 — Full isolated demo for Vercel
+
+- Implemented a dedicated public synthetic sandbox instead of enabling the unsafe filesystem adapter on Vercel. Each request creates a fresh in-memory repository with a server-generated tenant/property scope; only validated fixture commands are accepted. No customer identity, credentials, existing property scope, database path, provider or live endpoint is accepted from the browser.
+- Added browser-local action history and snapshots, seven-day expiry, explicit deletion and Web Locks for cross-tab mutation ordering. Reloads retain changes; different browser profiles/incognito contexts have separate state. Same-profile tabs intentionally share it. No cross-device account or hosted durable database is claimed.
+- Connected the entire workspace to this transport: Overview, searchable/filterable Blueprint, details, save/dismiss/restore, copy, CSV export, all three agents, coverage, profile, guided setup, Updates and research scenarios. Public entry buttons now start the full fictional demo. The sample page remains available.
+- Added an in-browser action to process one queued fixture job. Hosted activation, baseline, updates, quiet cycles, credit accounting and disabled delivery previews work without local commands. This manual sandbox computation is not a hosted durable worker or automatic scheduler. Existing local worker APIs and Vercel gates remain intact.
+- Added strict body/command/time limits: 256 KB, 128 changes, 12 research/worker actions, bounded engine execution. No network research/model tools or sending transport exists. Reads/filter/export use the saved browser snapshot; writes replay bounded pure fixture history to reconstruct state. This approach is unsuitable for paid or side-effecting provider calls.
+- Added `docs/HOSTED_DEMO.md` and updated README. Real customer information must not be entered; browser persistence is not a production access model.
+- Local verification: **47/47 tests passed**, including sandbox reconstruction, isolation, retained save state, idempotent jobs, quiet updates, pause/entitlement gates, expiry, strict identity/provider rejection and ceilings. **100 compiled HTTP assertions passed**, including same-origin, oversized input, no-store and fresh-request isolation. Typecheck, formatting and production build passed. Hosted browser acceptance follows the authorized push.
+- No new package, credential, cloud database or paid API resource was introduced. Production `/api/workspace` still returns 503. Live research, paid calls and notification delivery remain disabled. Hosted deployment is authorized for this requested demo update; it does not activate the production service.

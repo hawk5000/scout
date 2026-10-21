@@ -1,8 +1,9 @@
 "use client";
+import { demoFetch } from "@/lib/demo-client";
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 export function DemoEntry({
-  label = "Explore the fictional demo",
+  label = "Explore the full fictional demo",
 }: {
   label?: string;
 }) {
@@ -12,7 +13,7 @@ export function DemoEntry({
     setBusy(true);
     setError("");
     try {
-      const r = await fetch("/api/demo/session", { method: "POST" });
+      const r = await demoFetch("/api/demo/session", { method: "POST" });
       const data = await r.json();
       if (!r.ok) throw Error(data.error);
       window.location.assign("/demo");
