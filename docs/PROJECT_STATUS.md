@@ -314,4 +314,23 @@ Next: an explicitly authorized SIL registration and infrastructure integration p
 - Created dedicated `scout-customer-production` D1, applied migrations 0001/0002, deployed `scout-customer-foundation`, and configured private Vercel/Worker secrets. Both internal accounts passed actual SIL and Worker workspace checks. No research/provider/notification bindings or schedulers exist.
 - Fixed Cloudflare redirect compatibility and D1 trigger-inclusive mutation counts; writes now use RETURNING rows for reliable success/conflict detection.
 - SIL validation: 2,226 tests passed, 12 existing skips, typecheck and production webpack build passed. SIL lint command reports no configured ESLint check. SCOUT local and deployed acceptance results will be recorded after this release check.
-- Customer browser acceptance is pending deployment of the account UI. Research, paid calls and notifications remain disabled. No real market findings are populated.
+- Account foundation commit `ebd6591` is pushed and deployed to Vercel. Research, paid calls and notifications remain disabled. No real market findings are populated.
+
+### Deployed acceptance results
+
+- **Passed on Vercel:** public customer sign-in link; invalid account denial; both real SIL-authenticated internal accounts; Secure/HttpOnly/SameSite=Strict host cookie; empty customer findings and disabled capability flags. No browser request contacted SIL or the Worker directly.
+- **Passed:** profile/coverage save and reload; the same account in an independent browser sees the saved profile; a second tenant remains empty. Three scout pages show saved coverage and paused/empty research, Updates shows no runs, authenticated profile download works.
+- **Passed:** forged tenant/property inputs and cross-origin writes denied; concurrent same-revision writes produce one success and one 409 conflict; logout invalidates replay of the old cookie.
+- **Passed:** temporary SIL entitlement revocation blocks an active session and restoring the grant does not resurrect it. Viewer role disables UI edits and returns 403 for direct writes while allowing read/export; restoring editor membership invalidates old sessions and permits a fresh login. Only the two newly provisioned internal QA scopes were used; both were restored to their intended grants/roles.
+- **Passed:** 390px and 320px customer layout without outer overflow; no uncaught browser errors. Visual review found cramped status-banner typography, corrected with a dedicated customer notice style.
+- **Passed full existing hosted-demo regression:** entry, search/filter, save/dismiss/restore, reload, copy, CSV, profile isolation, all agents, fixture jobs/baseline/update/quiet cycle, guided setup, mobile navigation and demo deletion. No browser console errors; delivery previews stayed disabled and actual research charges stayed zero.
+- **SCOUT checks:** 59 tests passed (including redirect rejection), typecheck, format check, production build and 108 compiled HTTP assertions passed. No new dependency or lockfile change was required.
+- **Recovery evidence:** dedicated remote D1 export restored into a new isolated local SQLite file; two properties, one saved profile, revision 1 and integrity_check=ok. Export/restore artifacts remain private and ignored. This is not a remote D1 recovery rehearsal or an RTO guarantee.
+
+### Remaining boundaries and next pass
+
+The account/persistent-profile foundation is activated for two clearly labeled internal acceptance hotels. This is not an unrestricted customer launch. New real customer accounts require verified SIL onboarding, explicit principal scope, mappings/entitlement and restrictive SCOUT membership. No existing customer account or password was changed.
+
+Customer findings ingestion, evidence storage integration, researched finding save/dismiss/export, live research and twice-weekly execution are not activated. Research, paid API calls and notifications remain disabled; no scheduler, provider or sender binding was created. The public synthetic demo remains separate.
+
+Next: onboard an approved real hotel through the verified SIL/local membership process; establish retention, operational monitoring and backup policy; rehearse recovery into an isolated remote target. Any real research integration or notification work requires a separate explicit authorization and provider/cost gates. The SIL/Worker/D1 dependency blockers from the local pass are resolved; commercial/live-research readiness is not claimed.

@@ -2362,3 +2362,18 @@ details p {
     padding: 14px;
   }
 }
+
+.customer-notice {
+  padding: 20px 24px;
+  background: #eeeee5;
+  border: 1px solid #d9ddd5;
+  border-radius: 6px;
+}
+.customer-notice strong {
+  display: block;
+  color: #183e32;
+  font-size: 16px;
+}
+.customer-notice p {
+  margin: 8px 0 0;
+}

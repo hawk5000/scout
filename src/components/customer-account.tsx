@@ -145,7 +145,7 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
           Sign out
         </button>
       </header>
-      <div className="demo-banner">
+      <div className="customer-notice">
         <strong>Research is disabled</strong>
         <p>
           Hotel profile changes are saved to your account when you select Save.

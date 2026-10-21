@@ -6,12 +6,12 @@ This section supersedes the historical local-only blockers below. SCOUT is regis
 
 The deployed customer boundary is Vercel -> `scout-customer-foundation` Worker -> SIL authentication / dedicated `scout-customer-production` D1. `cloudflare/wrangler.toml` contains the verified resource identifiers. Migrations 0001 and 0002 are applied. Credentials are stored only in provider secrets and ignored operator files. There are no research, AI, cron, queue or delivery bindings.
 
-Both customer flags are enabled for this scoped integration. Actual SIL login and Worker/D1 workspace checks passed for both internal accounts. Deployed browser acceptance is in progress; see the latest PROJECT_STATUS entry for final results. New customer onboarding requires verified SIL identities, active mappings and entitlements, an explicit principal scope, and local SCOUT membership. No self-registration or broad service access was enabled.
+Both customer flags are enabled for this scoped integration. Actual SIL login and Worker/D1 workspace checks passed for both internal accounts. Deployed browser acceptance passed for sign-in/out, secure cookies, profile/coverage saves, separate-browser persistence, cross-tenant isolation, conflict handling, exports, read-only enforcement and SIL/local revocation. See the latest PROJECT_STATUS entry for evidence and remaining limits. New customer onboarding requires verified SIL identities, active mappings and entitlements, an explicit principal scope, and local SCOUT membership. No self-registration or broad service access was enabled.
 
 Worker transport rejects redirects using manual handling (Cloudflare does not support redirect:error). SQL writes use RETURNING rows instead of D1 meta.changes, which includes audit-trigger writes. Auth calls have a bounded 15-second timeout; the Vercel broker has 25 seconds.
 
 
-## Inspected contracts (2026-10-21)
+## Historical local-pass inspection (superseded by activation above)
 
 Read the sibling SIL checkout's `CANONICAL_APP_ACCESS_STANDARD.md`, `PRODUCTION_PERSISTENCE_STANDARD.md`, `src/schemas/customer-portal.ts`, `src/services/customer-app-auth-service.ts`, `src/services/customer-app-auth-resolver.ts`, `src/services/auth.ts`, and its two customer-auth API routes. Also inspected Hotel Review Desk's server-side SIL client for trusted-context patterns. No sibling repository was modified.
 
@@ -34,7 +34,7 @@ Login limits are durable: ten attempts per normalized email and sixty across the
 
 The customer UI includes sign-in/out, Overview, Blueprint and all three scout empty states, Updates, editable hotel profile/market/coverage preferences, read-only accounts, conflict feedback, reload and authenticated JSON profile export. No researched finding ingestion or customer research jobs are exposed in this phase. Account creation, password resets, property selection/defaults and primary entitlement administration remain in SIL; SCOUT does not fork them. Multiple authorized properties require SIL's verified default resolution; ambiguity denies login.
 
-## Configuration and activation dependencies
+## Configuration templates and original activation dependencies
 
 Vercel: `SCOUT_CUSTOMER_ENABLED=false`, `SCOUT_CUSTOMER_WORKER_ORIGIN` (approved HTTPS origin), `SCOUT_CUSTOMER_SERVICE_TOKEN` (dedicated secret).
 
@@ -56,6 +56,18 @@ Before live activation: check database identity and schema, both auth contracts,
 
 Customer contracts hardcode researchEnabled=false, paidCallsEnabled=false and notificationsEnabled=false. Worker accepts only login, logout, read and profile update operations. No research, scheduling, payment, notification, queue, model or tool bindings are configured. HTTP transport is limited to SIL authentication and the private Worker. The existing synthetic demo remains independent.
 
-## Verification boundary
+## Local test methodology
 
 Tests use a disposable SQLite implementation of the D1 statement interface and a stub of the inspected SIL HTTP response contract. They verify real SQL persistence/reopen, isolation, role enforcement, stale writes, audit atomicity, session invalidation, throttling, transport validation and deny-by-default boundaries. This is evidence of local implementation correctness, not live D1 or real SIL acceptance. Browser acceptance remains reserved for an authorized Vercel deployment with the real external dependencies configured.
+
+
+## Operating the activated foundation
+
+- Customer route: https://scout-olive-ten.vercel.app/app. Public synthetic demo remains separate at `/demo`; customer records never inherit its fixtures.
+- Worker: https://scout-customer-foundation.parrieb.workers.dev. It accepts only authenticated POST `/customer` commands. Direct browser access has no service grant.
+- Vercel production customer flag and Worker CUSTOMER_ENABLED are true; all research/paid/notification fields remain false. To close customer access, set both customer flags false and redeploy the relevant hosts. Preserve D1 data.
+- Onboard only after SIL identity, active tenant/property/user, property access/default, `scout` mapping and explicit direct entitlement are verified. Extend the dedicated principal with that exact scope through secure server-side configuration, then prepare/review local membership SQL. Never use another app credential or a wildcard tenant scope.
+- SIL handles account creation/reset and credential invalidation; SCOUT handles its restrictive membership. A role change deletes local sessions. SIL entitlement revocation was tested against an active internal account; restoring entitlement does not revive a deleted session.
+- Secrets and acceptance credentials are in provider secret stores and ignored operator files, never source control or browser JSON. Rotate by coordinating the dedicated SIL credential hash/Worker secret and the Vercel/Worker service-token pair. Do not overwrite the existing SIL principal registry.
+- Remote D1 export restored into an isolated local SQLite database with two properties, one saved profile, matching revision and integrity_check=ok. This verifies export portability, not a remote restore, recovery time objective or scheduled backup policy. Do not restore over production during routine checks.
+- Remaining operational gates: approved retention/erasure and backup policy, isolated remote recovery rehearsal, operational monitoring/alert ownership, and actual customer onboarding. Customer notifications remain prohibited. These account checks do not validate research quality, live provider costs, finding ingestion or scheduled delivery.

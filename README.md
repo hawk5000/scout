@@ -87,4 +87,4 @@ In Administrator setup, queue a baseline/update and click **Process next fixture
 
 ## Customer account foundation
 
-The separate customer foundation is implemented locally and disabled by default. See [Customer foundation](docs/CUSTOMER_FOUNDATION.md) for the inspected SIL contracts, D1/Worker architecture, operator preparation, test coverage and activation blockers. SCOUT registration and scoped SIL credentials plus approved Worker/D1 resources are still required. No live research, paid calls or notifications are enabled.
+Customer sign-in is deployed at `/app` with SIL authentication and a dedicated SCOUT Worker/D1 database. The initial service grant is restricted to two internal acceptance hotels; new customers require explicit SIL onboarding and local membership. Profiles and coverage persist across browsers; customer findings are empty. See [Customer foundation](docs/CUSTOMER_FOUNDATION.md) and the latest [project status](docs/PROJECT_STATUS.md) for deployed acceptance, operations and remaining release gates. Local templates stay disabled by default. Live research, paid calls and notifications remain disabled.
