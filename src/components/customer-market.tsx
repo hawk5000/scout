@@ -77,6 +77,22 @@ export function CustomerMarket({
   const runs = workspace.runs.filter(
     (r) => !category || r.categories.includes(category),
   );
+  async function downloadCsv(url: string) {
+    try {
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok)
+        throw Error((await response.json()).error || "Export unavailable.");
+      const blob = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = blob;
+      link.download = "scout-findings.csv";
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(blob), 1000);
+      setMessage("CSV downloaded. Fictional imports are labeled in every row.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Export failed.");
+    }
+  }
   async function state(id: string, saved: boolean, dismissed: boolean) {
     const f = workspace.findings.find((f) => f.id === id)!;
     setBusy(true);
@@ -243,6 +259,10 @@ export function CustomerMarket({
               <a
                 className="button secondary"
                 href={`/api/customer/findings?${params}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  void downloadCsv(`/api/customer/findings?${params}`);
+                }}
               >
                 {shownSelected.length
                   ? "Export selected CSV"
@@ -335,6 +355,12 @@ export function CustomerMarket({
             <a
               className="button small"
               href={`/api/customer/findings?state=all&ids=${current.id}`}
+              onClick={(e) => {
+                e.preventDefault();
+                void downloadCsv(
+                  `/api/customer/findings?state=all&ids=${current.id}`,
+                );
+              }}
             >
               Export CSV
             </a>
