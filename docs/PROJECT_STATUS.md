@@ -357,3 +357,9 @@ Next: onboard an approved real hotel through the verified SIL/local membership p
 - Customer form now requires only name and explains draft saving. Worker and Vercel use the same draft contract. Existing complete profiles remain compatible; auth, role, revision and tenant isolation checks are unchanged.
 - Local verification: 60 tests passed, including name-only save/logout/login persistence, invalid optional values and complete-profile compatibility. Typecheck, production build and 108 HTTP assertions passed. Deployed ABC Hotel save/re-login verification follows deployment.
 - Live research, paid calls and notifications remain disabled.
+
+### Draft deployment and ABC Hotel acceptance
+
+- Pushed/deployed SCOUT revision cecfa24; Worker version fbe72237-89dc-4c7a-a70b-2997a2b68c03. The initial local Next build worker exited unexpectedly during page collection; an unchanged rerun passed, followed by all 108 HTTP assertions. Vercel deployment is Ready.
+- On the deployed ABC Hotel session, saved only Hotel name = ABC Hotel, leaving optional fields empty. UI confirmed Hotel profile saved; remote D1 confirmed revision 1, name ABC Hotel, blank website and null radius. Signed out successfully and returned to the login form.
+- Final production persistence check PASSED: owner entered the existing SIL password directly in Chrome and signed in again. The authenticated UI opened ABC Hotel, stated the profile was saved, and Profile showed Hotel name ABC Hotel with all optional fields still blank. This completes actual save -> sign-out -> fresh sign-in -> profile read verification. No password was requested in chat, read, reset, or stored by the operator. Research, paid calls and notifications remain disabled.
