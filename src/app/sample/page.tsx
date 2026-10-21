@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Brand, CategoryTag } from "@/components/ui";
 import { publicSample } from "@/lib/public-sample";
 export const metadata = {
-  title: "Fictional market blueprint sample | SCOUT",
+  title: "Fictional market blueprint sample",
   description:
     "A clearly labeled fictional example of SCOUT evidence, lodging relevance and unknowns. No live research or customer results.",
 };
@@ -39,6 +39,7 @@ export default function SamplePage() {
           <article
             className="panel coverage-editor"
             key={f.id}
+            id={f.category}
             style={{ marginBlock: 24 }}
           >
             <CategoryTag category={f.category} />
@@ -81,8 +82,8 @@ export default function SamplePage() {
           a research preference, not an opportunity or an outreach action.
           Nothing is sent automatically.
         </p>
-        <Link href="/demo" className="button secondary">
-          Explore the fictional workspace
+        <Link href="/#how-it-works" className="button secondary">
+          See how SCOUT works
         </Link>
       </main>
       <footer className="public-footer public-width">

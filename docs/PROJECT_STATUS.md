@@ -241,3 +241,12 @@ After those gates are satisfied, implement real adapters and receipt-based recov
 ### Local review
 
 Run `npm run pilot:fixtures` from the project root and open `reports/synthetic-pilot/REPORT.md`. Run `npm run dev:demo` to review `/sample`, its downloadable CSV and **Administrator setup -> Test the offer against your assumptions**. For optional manual fixture review, copy `review-template.json` to a separate file, enter actual fixture-review observations, and run `npm run pilot:fixtures -- --review-file <your-file.json>`. Detailed semantics and launch gates are in `docs/PASS_4_ACCEPTANCE.md`.
+
+
+## 2026-10-21 — Deployed QA fixes
+
+- Public header/hero and production access-page actions now lead to the working fictional sample. Each scout example links directly to its sample section. Removed the sample page's unavailable workspace CTA.
+- Mobile navigation wraps visibly instead of hiding the sample and section links. Removed duplicated SCOUT branding from sample metadata.
+- Disabled hosted demo routes render a server-side availability message and sample link, without starting client workspace requests or offering a failing session button. Removed local CLI instructions from visitor-facing copy. Explicit local demo access remains supported; API production and Vercel gates remain unchanged.
+- Local validation passed: 43 tests, 91 compiled HTTP assertions, typecheck, format check and production build. Hosted browser recheck follows the authorized GitHub push and is reported in the task completion.
+- Live research, paid calls and notification delivery remain disabled. This update improves the public sample experience; it does not enable a hosted customer workspace or establish production readiness.

@@ -8,7 +8,6 @@ import {
   Compass,
 } from "lucide-react";
 import { Brand } from "@/components/ui";
-import { DemoEntry } from "@/components/demo-entry";
 import { BriefingForm } from "@/components/briefing-form";
 export default function Home() {
   return (
@@ -19,9 +18,8 @@ export default function Home() {
           <a href="#how-it-works">How it works</a>
           <a href="#scouts">The three scouts</a>
           <a href="#pricing">Pricing</a>
-          <Link href="/sample">Fictional sample</Link>
-          <Link href="/demo" className="button secondary">
-            Open demo <ArrowRight size={16} />
+          <Link href="/sample" className="button secondary">
+            View sample <ArrowRight size={16} />
           </Link>
         </nav>
       </header>
@@ -38,13 +36,15 @@ export default function Home() {
               your hotel, so your team can decide what comes next.
             </p>
             <div className="hero-actions">
-              <DemoEntry />
+              <Link href="/sample" className="button primary">
+                Explore the fictional sample <ArrowRight size={17} />
+              </Link>
               <a className="text-link" href="#pricing">
                 See the offer <ArrowRight size={17} />
               </a>
             </div>
             <p className="fine-print">
-              Fictional demo available. Live research is not activated.
+              Fictional sample available. Live research is not activated.
             </p>
           </div>
           <div className="sample-sheet">
@@ -121,7 +121,7 @@ export default function Home() {
                   <s.icon size={29} strokeWidth={1.3} />
                   <h3>{s.title}</h3>
                   <p>{s.text}</p>
-                  <Link href={`/demo/agents/${s.id}`} className="text-link">
+                  <Link href={`/sample#${s.id}`} className="text-link">
                     View fictional examples <ArrowRight size={16} />
                   </Link>
                 </article>

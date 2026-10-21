@@ -9,8 +9,8 @@ export default function ProductionGate() {
         SCOUT requires verified hotel access and service activation before
         production records are available.
       </p>
-      <Link className="button primary" href="/demo">
-        Explore the fictional demo
+      <Link className="button primary" href="/sample">
+        View the fictional sample
       </Link>
     </main>
   );

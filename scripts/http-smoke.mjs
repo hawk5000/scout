@@ -67,9 +67,27 @@ function status(response, expected) {
 }
 await withServer(false, async (base) => {
   status(await fetch(`${base}/`), 200);
+  const gate = await (await fetch(`${base}/demo/blueprint`)).text();
+  assert.match(gate, /interactive workspace is not available yet/);
+  assert.ok(
+    !gate.includes("npm run dev:demo") &&
+      !gate.includes("Start my fictional demo"),
+  );
+  checks++;
+  const home = await (await fetch(base)).text();
+  assert.ok(
+    home.includes('href="/sample#corporate"') && !home.includes('href="/demo"'),
+  );
+  checks++;
   const sample = await fetch(`${base}/sample`);
   status(sample, 200);
-  assert.match(await sample.text(), /FICTIONAL SAMPLE/);
+  const sampleHtml = await sample.text();
+  assert.match(sampleHtml, /FICTIONAL SAMPLE/);
+  assert.match(
+    sampleHtml,
+    /<title>Fictional market blueprint sample · SCOUT<\/title>/,
+  );
+  assert.ok(sampleHtml.includes('id="corporate"'));
   checks++;
   const download = await fetch(`${base}/sample/export`);
   status(download, 200);

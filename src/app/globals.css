@@ -1769,8 +1769,14 @@ details p {
   .public-header {
     padding: 20px;
   }
-  .public-header nav > a:not(.button) {
-    display: none;
+  .public-header:has(nav) {
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+  .public-header nav {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 12px 18px;
   }
   .public-header .brand > span {
     font-size: 28px;

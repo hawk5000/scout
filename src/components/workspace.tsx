@@ -159,8 +159,8 @@ export function WorkspaceApp() {
         <Notice>{loadError || "Start a demo session to continue."}</Notice>
         <DemoEntry label="Start my fictional demo" />
         <p className="fine-print">
-          Local demo: run npm run dev:demo from the project folder. Customer
-          production access remains closed.
+          This workspace uses fictional data. Customer service is not yet
+          activated.
         </p>
         <Link className="text-link" href="/">
           Back to the service
