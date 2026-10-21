@@ -16,9 +16,6 @@ import {
   ArrowUpRight,
   ArrowRight,
   LogOut,
-  Bookmark,
-  ListChecks,
-  CircleAlert,
 } from "lucide-react";
 import {
   categories,
@@ -28,10 +25,11 @@ import {
   type Workspace,
 } from "@/lib/contracts";
 import { Brand, ArrowLink, DateText, Empty, Notice, PageHeading } from "./ui";
+import { latestMaterialUpdate, sortFindings } from "@/lib/finding-presentation";
 import { DemoEntry } from "./demo-entry";
 import { Blueprint, FindingDetail, FindingTable } from "./findings";
 import { ProfileEditor, Setup } from "./profile";
-import { AgentDetail, AgentList, RunHistory, scoutIcons } from "./agents";
+import { AgentDetail, AgentList, RunHistory } from "./agents";
 import { PilotReview } from "./pilot-review";
 import { SubscriptionControls } from "./subscription";
 import { ResearchReplay } from "./research-replay";
@@ -192,7 +190,7 @@ export function WorkspaceApp() {
           title="Your market blueprint."
           description="The accumulated picture of your market. Search, review and take useful intelligence into your own workflow."
         />
-        <Blueprint findings={data.findings} notify={notify} />
+        <Blueprint runs={data.runs} findings={data.findings} notify={notify} />
       </>
     );
   else if (segment === "exports")
@@ -202,7 +200,12 @@ export function WorkspaceApp() {
           title="Take the intelligence with you."
           description="Select findings or export your filtered blueprint to the sales tools you already use."
         />
-        <Blueprint findings={data.findings} notify={notify} exportMode />
+        <Blueprint
+          runs={data.runs}
+          findings={data.findings}
+          notify={notify}
+          exportMode
+        />
       </>
     );
   else if (segment === "agents") content = <AgentList data={data} />;
@@ -232,7 +235,7 @@ export function WorkspaceApp() {
           />
           . Next cycle: not scheduled.
         </Notice>
-        <RunHistory runs={data.runs} />
+        <RunHistory runs={data.runs} findings={data.findings} />
       </>
     );
   else if (segment === "profile")
@@ -325,11 +328,21 @@ export function WorkspaceApp() {
       <div className="workspace-main">
         <div className="demo-banner">
           <div>
-            <strong>FICTIONAL DEMO</strong>
             <span>
-              Browser-local fictional data · expires after 7 days. No live
-              research or sending.
+              Demo workspace � All findings are fictional. Changes stay in this
+              browser for seven days.
             </span>
+            <details className="demo-disclosure">
+              <summary>About this demo</summary>
+              <p>
+                Changes are stored only in this browser and expire seven days
+                after the demo starts. Clearing browser data or exiting the demo
+                also removes them. This is separate from customer accounts. Live
+                research, paid API calls, scheduled research and sending are
+                disabled. Sample updates are fictional and run only when
+                requested in administrator setup.
+              </p>
+            </details>
           </div>
           <Link href="/demo/profile" className="property-context">
             <Hotel size={18} />
@@ -365,148 +378,122 @@ export function WorkspaceApp() {
   );
 }
 function Overview({ data }: { data: Workspace }) {
-  const changed = new Set(
-    data.runs.filter((r) => r.type === "update").flatMap((r) => r.changedIds),
-  );
+  const changed = latestMaterialUpdate(data.runs, data.findings);
+  const latest = [...data.runs].sort((a, b) => b.at.localeCompare(a.at))[0];
   const verification = data.findings.filter(
     (f) => f.quality === "Needs verification",
   ).length;
-  const latest = data.runs[0];
   return (
     <>
       <PageHeading
         title="Your market, in focus."
-        description="One blueprint. Three perspectives. A clearer view of what may bring business."
+        description="One blueprint. Three perspectives on your fictional market."
         action={
           <Link href="/demo/blueprint" className="button gold">
             View blueprint <ArrowRight size={17} />
           </Link>
         }
       />
-      <div className="overview-grid">
-        <div>
-          <div className="stat-row">
-            {[
-              {
-                value: data.findings.length,
-                label: "Market findings",
-                icon: ListChecks,
-              },
-              {
-                value: changed.size,
-                label: "Meaningful changes",
-                icon: ArrowRight,
-              },
-              {
-                value: verification,
-                label: "Need verification",
-                icon: CircleAlert,
-              },
-            ].map(({ value, label, icon: Icon }) => (
-              <div className="stat" key={label}>
-                <span>
-                  <Icon size={22} strokeWidth={1.5} />
-                </span>
-                <div>
-                  <strong>{value}</strong>
-                  <small>{label}</small>
-                </div>
-              </div>
-            ))}
-          </div>
-          <section className="panel recent-panel">
-            <div className="section-heading">
-              <div>
-                <h2>Recent intelligence</h2>
-                <p>Three perspectives from your fictional market.</p>
-              </div>
-              <ArrowLink href="/demo/blueprint">View all</ArrowLink>
-            </div>
-            <FindingTable
-              findings={data.findings.filter((f) => !f.dismissed).slice(0, 4)}
-            />
-          </section>
-          <div className="overview-bottom">
-            <section>
-              <Bookmark size={20} />
-              <h3>A little context goes a long way.</h3>
-              <p>
-                Save useful findings for your next review. Dismiss items without
-                losing their history.
-              </p>
-              <ArrowLink href="/demo/exports">Export your findings</ArrowLink>
-            </section>
-            <section>
-              <h3>Your research area</h3>
-              <p>
-                {data.profile.marketCenter}
-                <br />
-                {data.profile.radiusMiles}-mile radius ·{" "}
-                {data.profile.includedPlaces.join(", ")}
-              </p>
-              <ArrowLink href="/demo/profile">Review hotel profile</ArrowLink>
-            </section>
-          </div>
+      <div className="coverage-strip" aria-label="Research coverage">
+        {categories.map((c) => (
+          <Link key={c} href={`/demo/agents/${c}`}>
+            <strong>{categoryNames[c]}</strong>
+            <span>{data.coverage[c].paused ? "Paused" : "Demo only"}</span>
+          </Link>
+        ))}
+        <span>No research scheduled</span>
+      </div>
+      <div className="stat-row overview-stats">
+        <Link className="stat" href="/demo/blueprint?state=all">
+          <strong>{data.findings.length}</strong>
+          <span>
+            Market findings
+            <small>All recorded findings, including dismissed</small>
+          </span>
+        </Link>
+        <Link className="stat" href="/demo/blueprint?view=updated&state=all">
+          <strong>{changed.ids.size}</strong>
+          <span>
+            Materially changed
+            <small>
+              {changed.run ? (
+                <>
+                  In the <DateText value={changed.run.at} /> update
+                </>
+              ) : (
+                "No recorded material updates"
+              )}
+            </small>
+          </span>
+        </Link>
+        <Link
+          className="stat"
+          href="/demo/blueprint?state=all&quality=Needs%20verification"
+        >
+          <strong>{verification}</strong>
+          <span>
+            Need verification
+            <small>Current evidence status � all records</small>
+          </span>
+        </Link>
+      </div>
+      {latest && (
+        <div className="latest-cycle">
+          <span>
+            <strong>
+              Latest sample cycle � <DateText value={latest.at} />
+            </strong>
+            <br />
+            {latest.status !== "Completed"
+              ? "Incomplete coverage � this is not a successful quiet check."
+              : latest.newIds.length || latest.changedIds.length
+                ? "Completed sample check."
+                : "Completed quiet check � no new findings or material changes."}{" "}
+            <Link href={`/demo/updates#${latest.id}`}>
+              {latest.newIds.length} new � {latest.changedIds.length} materially
+              changed in this cycle
+            </Link>
+          </span>
+          <ArrowLink href={`/demo/updates#${latest.id}`}>
+            Review cycle
+          </ArrowLink>
         </div>
-        <aside className="overview-aside">
-          <section className="panel">
-            <h2>Research coverage</h2>
-            <p>Three scouts. One shared blueprint.</p>
-            {categories.map((c) => {
-              const Icon = scoutIcons[c];
-              return (
-                <Link
-                  key={c}
-                  href={`/demo/agents/${c}`}
-                  className="coverage-row"
-                >
-                  <span className="icon-disc">
-                    <Icon size={19} />
-                  </span>
-                  <span>
-                    <strong>{categoryNames[c]}</strong>
-                    <small>
-                      {data.coverage[c].paused ? "Paused" : "Ready · demo only"}{" "}
-                      ·{" "}
-                      {
-                        data.findings.filter((f) =>
-                          (f.categories ?? [f.category]).includes(c),
-                        ).length
-                      }{" "}
-                      sample findings
-                    </small>
-                  </span>
-                  <ArrowRight size={15} />
-                </Link>
-              );
-            })}
-            <div className="quiet-note">
-              <strong>Two cycles weekly</strong>
-              <p>
-                {data.profile.scheduleDays.join(" & ")} ·{" "}
-                {data.profile.scheduleTime}
-                <br />
-                {data.profile.timezone}
-              </p>
-              <small>Draft preferences. No next cycle is scheduled.</small>
-            </div>
-          </section>
-          <section className="panel">
-            <span className="eyebrow">Latest sample update</span>
-            <h2>
-              {latest.status !== "Completed"
-                ? "Coverage needs attention."
-                : latest.newIds.length || latest.changedIds.length
-                  ? "Your market has updates."
-                  : "A quiet cycle."}
-            </h2>
-            <p>
-              <DateText value={latest.at} />
-            </p>
-            <p>{latest.summary}</p>
-            <ArrowLink href="/demo/updates">View update history</ArrowLink>
-          </section>
-        </aside>
+      )}
+      <section className="panel recent-panel">
+        <div className="section-heading">
+          <div>
+            <h2>Recent intelligence</h2>
+            <p>Most recent material changes first. Not dismissed.</p>
+          </div>
+          <ArrowLink href="/demo/blueprint">View all</ArrowLink>
+        </div>
+        <FindingTable
+          findings={sortFindings(
+            data.findings.filter((f) => !f.dismissed),
+            "changed",
+          ).slice(0, 4)}
+        />
+      </section>
+      <div className="overview-bottom">
+        <section>
+          <h3>Keep useful context close.</h3>
+          <p>
+            Save findings for your next review, then export to the sales tools
+            you already use.
+          </p>
+          <ArrowLink href="/demo/blueprint?view=saved">
+            Review saved findings
+          </ArrowLink>
+        </section>
+        <section>
+          <h3>Your research area</h3>
+          <p>
+            {data.profile.marketCenter} � {data.profile.radiusMiles}-mile radius
+            <br />
+            {data.profile.includedPlaces.join(", ")}
+          </p>
+          <ArrowLink href="/demo/profile">Review hotel profile</ArrowLink>
+        </section>
       </div>
     </>
   );

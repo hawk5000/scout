@@ -8,9 +8,11 @@ import {
   categoryNames,
   type Category,
   type ResearchRun,
+  type FindingView,
   type Workspace,
 } from "@/lib/contracts";
 import { ArrowLink, DateText, Notice, PageHeading } from "./ui";
+import { runFindingSummary } from "@/lib/finding-presentation";
 import { Blueprint, type Mutate, type Notify } from "./findings";
 export const scoutIcons = {
   corporate: Building2,
@@ -25,9 +27,9 @@ export function AgentList({ data }: { data: Workspace }) {
         description="Three perspectives on one market. Review the fictional findings, coverage and run history."
       />
       <Notice>
-        Live research is inactive. The administrator workbench can replay
-        offline synthetic scenarios through all three playbooks. Nothing runs
-        when you view a page.
+        Live research is inactive. The administrator workbench can replay sample
+        updates through all three research categories. Nothing runs when you
+        view a page.
       </Notice>
       <div className="agent-grid">
         {categories.map((c) => {
@@ -87,16 +89,26 @@ export function AgentList({ data }: { data: Workspace }) {
     </>
   );
 }
-export function RunHistory({ runs }: { runs: ResearchRun[] }) {
+export function RunHistory({
+  runs,
+  findings,
+}: {
+  runs: ResearchRun[];
+  findings: FindingView[];
+}) {
   return (
     <div className="run-history">
       {runs.map((r) => (
-        <article className="panel run-card" key={r.id}>
+        <article
+          className={`panel run-card ${r.status === "Completed" && !r.newIds.length && !r.changedIds.length ? "quiet-run" : ""}`}
+          key={r.id}
+          id={r.id}
+        >
           <div className="run-date">
             <DateText value={r.at} />
             <small>
               {r.type === "baseline" ? "Initial blueprint" : "Market update"} ·
-              {r.engine ? "synthetic engine replay" : "preloaded sample"}
+              {r.engine ? "sample update" : "preloaded sample"}
             </small>
           </div>
           <div>
@@ -105,80 +117,95 @@ export function RunHistory({ runs }: { runs: ResearchRun[] }) {
             >
               {r.status}
             </span>
-            <h3>{r.summary}</h3>
+            <h3>
+              {r.status !== "Completed"
+                ? "Incomplete coverage"
+                : !r.newIds.length && !r.changedIds.length
+                  ? "Completed quiet check"
+                  : r.summary}
+            </h3>
             <p>
               {r.newIds.length} new findings · {r.changedIds.length} meaningful
               changes · all three scouts
             </p>
-            {r.warnings.map((w) => (
-              <p className="muted" key={w}>
-                {w}
+            {r.status !== "Completed" && (
+              <p>
+                Some coverage is incomplete. Zero changes does not mean a
+                successful quiet check.
               </p>
-            ))}
-            {r.reviewItems?.map((item, i) => (
-              <details key={i}>
-                <summary>Review: {item.label}</summary>
-                <p>{item.reason}</p>
-                <ul>
-                  {item.sourceUrls.map((url) => (
-                    <li key={url}>
-                      <a href={url} target="_blank" rel="noreferrer">
-                        {url}
-                      </a>
-                    </li>
+            )}
+            {[...new Set([...r.newIds, ...r.changedIds])].map((id) => {
+              const finding = findings.find((f) => f.id === id);
+              return (
+                <div className="run-finding" key={id}>
+                  {finding ? (
+                    <>
+                      <Link href={`/demo/findings/${id}`}>{finding.title}</Link>
+                      <p>{runFindingSummary(finding, r)}</p>
+                    </>
+                  ) : (
+                    <p>Historical finding unavailable in this workspace.</p>
+                  )}
+                </div>
+              );
+            })}
+            <details className="run-details">
+              <summary>Full update details</summary>
+              <p>{r.summary}</p>
+              {r.warnings.map((w) => (
+                <p className="muted" key={w}>
+                  {w}
+                </p>
+              ))}
+              {r.reviewItems?.map((item, i) => (
+                <details key={i}>
+                  <summary>Review: {item.label}</summary>
+                  <p>{item.reason}</p>
+                  <ul>
+                    {item.sourceUrls.map((url) => (
+                      <li key={url}>
+                        <a href={url} target="_blank" rel="noreferrer">
+                          {url}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                  <p>Fictional .example source references only.</p>
+                </details>
+              ))}
+              {r.coverage && (
+                <dl className="fact-grid">
+                  {Object.entries(r.coverage).map(([key, value]) => (
+                    <div key={key}>
+                      <dt>{key}</dt>
+                      <dd>{value}</dd>
+                    </div>
                   ))}
-                </ul>
-                <p>Fictional .example source references only.</p>
-              </details>
-            ))}
-            {r.coverage && (
-              <dl className="fact-grid">
-                {Object.entries(r.coverage).map(([key, value]) => (
-                  <div key={key}>
-                    <dt>{key}</dt>
-                    <dd>{value}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-            {r.usage && (
-              <details>
-                <summary>Synthetic usage and reservations</summary>
-                <p>
-                  Actual charged: $0. Test credits are artificial and do not
-                  estimate commercial API costs.
-                </p>
-                <p>
-                  Rate card: {r.usage.rateCard} · reserved{" "}
-                  {r.usage.estimatedCredits} · reconciled{" "}
-                  {r.usage.reconciledCredits} · held {r.usage.heldCredits}{" "}
-                  credits
-                </p>
-                <p>
-                  Tokens: {r.usage.inputTokens} input (
-                  {r.usage.cachedInputTokens} cached), {r.usage.outputTokens}{" "}
-                  output, {r.usage.reasoningTokens} reasoning. Searches:{" "}
-                  {r.usage.searchCalls}; tools: {r.usage.toolCalls}. All counts
-                  are simulated.
-                </p>
-              </details>
-            )}
-            {[...r.newIds, ...r.changedIds].length > 0 && (
-              <details>
-                <summary>View affected findings</summary>
-                <ul>
-                  {[...r.newIds, ...r.changedIds].map((id) => (
-                    <li key={id}>
-                      <Link href={`/demo/findings/${id}`}>
-                        {id
-                          .replace(/^(corporate|project|event)-/, "")
-                          .replaceAll("-", " ")}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            )}
+                </dl>
+              )}
+              {r.usage && (
+                <details>
+                  <summary>Synthetic usage and reservations</summary>
+                  <p>
+                    Actual charged: $0. Test credits are artificial and do not
+                    estimate commercial API costs.
+                  </p>
+                  <p>
+                    Rate card: {r.usage.rateCard} · reserved{" "}
+                    {r.usage.estimatedCredits} · reconciled{" "}
+                    {r.usage.reconciledCredits} · held {r.usage.heldCredits}{" "}
+                    credits
+                  </p>
+                  <p>
+                    Tokens: {r.usage.inputTokens} input (
+                    {r.usage.cachedInputTokens} cached), {r.usage.outputTokens}{" "}
+                    output, {r.usage.reasoningTokens} reasoning. Searches:{" "}
+                    {r.usage.searchCalls}; tools: {r.usage.toolCalls}. All
+                    counts are simulated.
+                  </p>
+                </details>
+              )}
+            </details>
           </div>
         </article>
       ))}
@@ -296,7 +323,12 @@ export function AgentDetail({
         aria-labelledby={`tab-${tab.replace(" ", "-")}`}
       >
         {tab === "Findings" && (
-          <Blueprint findings={data.findings} notify={notify} category={c} />
+          <Blueprint
+            runs={data.runs}
+            findings={data.findings}
+            notify={notify}
+            category={c}
+          />
         )}
         {tab === "Coverage" && (
           <form className="panel coverage-editor" onSubmit={save}>
@@ -338,6 +370,7 @@ export function AgentDetail({
         )}
         {tab === "Run history" && (
           <RunHistory
+            findings={data.findings}
             runs={data.runs.filter((r) => r.categories.includes(c))}
           />
         )}

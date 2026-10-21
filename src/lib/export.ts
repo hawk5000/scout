@@ -54,5 +54,5 @@ export function toCsv(findings: FindingView[]) {
   );
 }
 export function toBrief(f: FindingView) {
-  return `FICTIONAL SCOUT DEMO — not researched or verified\n${f.title}\n\nSample fact: ${f.summary}\nLocation: ${f.location}\nDates: ${f.start ?? "Unknown"} to ${f.end ?? "Unknown"}\nStatus: ${f.status}\n\nLodging inference: ${f.inference}\nUnknowns: ${f.unknowns.join("; ")}\nPublic contact: ${f.publicContact ?? "Not verified"}\nEvidence examples: ${f.evidence.map((e) => e.url).join(", ")}\nLast verified: ${f.lastVerifiedAt ?? "Never — fictional data"}\nChange: ${f.versions.at(-1)?.summary}\nFinding ID: ${f.id}`;
+  return `FICTIONAL SCOUT DEMO — not researched or verified\n${f.title}\n\nSample fact: ${f.summary}\nLocation: ${f.location}\nDates: ${f.start ?? "Unknown"} to ${f.end ?? "Unknown"}\nStatus: ${f.status}\n\nLodging inference: ${f.inference}\nUnknowns: ${f.unknowns.join("; ")}\nPublic contact: ${f.publicContact ?? "Not verified"}\nEvidence examples: ${f.evidence.map((e) => e.url).join(", ")}\nLast verified: ${f.lastVerifiedAt ?? "Never — fictional data"}\nChange: ${f.versions.at(-1)?.summary}`;
 }

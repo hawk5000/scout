@@ -1,6 +1,6 @@
 "use client";
 import { demoFetch } from "@/lib/demo-client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Bookmark,
@@ -15,11 +15,14 @@ import {
 import {
   categories,
   filterFindings,
+  filtersSchema,
+  type ResearchRun,
   type Category,
   type Filters,
   type FindingView,
   type Mutation,
 } from "@/lib/contracts";
+import { latestMaterialUpdate, sortFindings } from "@/lib/finding-presentation";
 import { toBrief } from "@/lib/export";
 import {
   ArrowLink,
@@ -121,10 +124,12 @@ export function FindingTable({
   findings,
   selected = [],
   onSelect,
+  hideScout = false,
 }: {
   findings: FindingView[];
   selected?: string[];
   onSelect?: (id: string) => void;
+  hideScout?: boolean;
 }) {
   return (
     <div className="table-scroll">
@@ -137,7 +142,7 @@ export function FindingTable({
               </th>
             )}
             <th>Finding / location</th>
-            <th>Scout</th>
+            {!hideScout && <th>Scout</th>}
             <th>Sample observation</th>
             <th>Relevant dates</th>
             <th>Review</th>
@@ -171,11 +176,19 @@ export function FindingTable({
                   {f.dismissed && <span>Dismissed</span>}
                 </div>
               </td>
+              {!hideScout && (
+                <td>
+                  <CategoryTag category={f.category} />
+                </td>
+              )}
               <td>
-                <CategoryTag category={f.category} />
-              </td>
-              <td>
-                <p>{f.summary}</p>
+                <p className="finding-summary">{f.summary}</p>
+                <p className="finding-relevance">
+                  <strong>Potential hotel relevance � inference</strong>
+                  <span>
+                    {f.inference?.trim() || "Hotel relevance not assessed."}
+                  </span>
+                </p>
                 <span
                   className={`quality ${f.quality === "Sample evidence" ? "" : "attention"}`}
                 >
@@ -184,7 +197,9 @@ export function FindingTable({
               </td>
               <td>
                 <DateText value={f.start} />
-                <small>{f.status}</small>
+                <small>
+                  <span className="tag neutral">{f.status}</span>
+                </small>
               </td>
               <td>
                 <ArrowLink href={`/demo/findings/${f.id}`}>Details</ArrowLink>
@@ -201,11 +216,13 @@ export function Blueprint({
   notify,
   category,
   exportMode = false,
+  runs = [],
 }: {
   findings: FindingView[];
   notify: Notify;
   category?: Category;
   exportMode?: boolean;
+  runs?: ResearchRun[];
 }) {
   const [filters, setFilters] = useState<Filters>({
       q: "",
@@ -214,9 +231,44 @@ export function Blueprint({
       quality: "all",
     }),
     [selected, setSelected] = useState<string[]>([]);
+  const [view, setView] = useState("all");
+  const [sort, setSort] = useState<"changed" | "date">("changed");
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    const parsed = filtersSchema.safeParse(
+      Object.fromEntries(
+        ["q", "category", "state", "quality"]
+          .filter((key) => query.has(key))
+          .map((key) => [key, query.get(key)]),
+      ),
+    );
+    if (parsed.success)
+      setFilters({
+        ...parsed.data,
+        category: category ?? parsed.data.category,
+      });
+    setView(
+      query.get("view") === "updated"
+        ? "updated"
+        : query.get("view") === "saved"
+          ? "saved"
+          : "all",
+    );
+  }, [category]);
+  const changed = latestMaterialUpdate(runs, findings);
   const list = useMemo(
-    () => filterFindings(findings, filters),
-    [findings, filters],
+    () =>
+      sortFindings(
+        filterFindings(findings, filters).filter((f) =>
+          view === "saved"
+            ? f.saved
+            : view === "updated"
+              ? changed.ids.has(f.id)
+              : true,
+        ),
+        sort,
+      ),
+    [findings, filters, view, sort, runs],
   );
   const visibleSelected = selected.filter((id) =>
     list.some((f) => f.id === id),
@@ -227,120 +279,206 @@ export function Blueprint({
   }
   return (
     <>
-      <div className="filter-bar">
-        <label className="search-field">
-          <Search size={18} />
-          <span className="sr-only">Search findings</span>
-          <input
-            placeholder="Search companies, projects, events…"
-            value={filters.q}
-            maxLength={200}
-            onChange={(e) => update("q", e.target.value)}
-          />
-        </label>
-        {!category && (
+      <div className="tabs" role="tablist" aria-label="Finding views">
+        {["all", "saved", "updated"].map((name, index) => (
+          <button
+            key={name}
+            role="tab"
+            id={`finding-tab-${name}`}
+            aria-controls="finding-results"
+            aria-selected={view === name}
+            tabIndex={view === name ? 0 : -1}
+            onClick={() => {
+              setView(name);
+              setSelected([]);
+            }}
+            onKeyDown={(event) => {
+              const next =
+                event.key === "ArrowRight"
+                  ? (index + 1) % 3
+                  : event.key === "ArrowLeft"
+                    ? (index + 2) % 3
+                    : event.key === "Home"
+                      ? 0
+                      : event.key === "End"
+                        ? 2
+                        : -1;
+              if (next < 0) return;
+              event.preventDefault();
+              const name = ["all", "saved", "updated"][next];
+              setView(name);
+              setSelected([]);
+              document.getElementById(`finding-tab-${name}`)?.focus();
+            }}
+          >
+            {name[0].toUpperCase() + name.slice(1)}
+          </button>
+        ))}
+      </div>
+      <div
+        role="tabpanel"
+        id="finding-results"
+        aria-labelledby={`finding-tab-${view}`}
+      >
+        {view === "updated" && (
+          <p className="period-note">
+            {changed.run ? (
+              <>
+                Materially changed findings recorded in the{" "}
+                <DateText value={changed.run.at} /> sample update.{" "}
+                <Link href={`/demo/updates#${changed.run.id}`}>
+                  Review that update
+                </Link>
+                . Later quiet cycles do not clear this view.
+              </>
+            ) : (
+              "No material changes have been recorded."
+            )}
+          </p>
+        )}
+        <div className="filter-bar">
+          <label className="search-field">
+            <Search size={18} />
+            <span className="sr-only">Search findings</span>
+            <input
+              placeholder="Search companies, projects, events…"
+              value={filters.q}
+              maxLength={200}
+              onChange={(e) => update("q", e.target.value)}
+            />
+          </label>
+          {!category && (
+            <label>
+              Scout
+              <select
+                value={filters.category}
+                onChange={(e) =>
+                  update("category", e.target.value as Filters["category"])
+                }
+              >
+                <option value="all">All scouts</option>
+                {categories.map((c) => (
+                  <option key={c} value={c}>
+                    {c[0].toUpperCase() + c.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <label>
-            Scout
+            View
             <select
-              value={filters.category}
+              value={filters.state}
               onChange={(e) =>
-                update("category", e.target.value as Filters["category"])
+                update("state", e.target.value as Filters["state"])
               }
             >
-              <option value="all">All scouts</option>
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {c[0].toUpperCase() + c.slice(1)}
+              <option value="visible">Not dismissed</option>
+              <option value="saved">Saved</option>
+              <option value="dismissed">Dismissed</option>
+              <option value="all">All records</option>
+            </select>
+          </label>
+          <label>
+            Evidence
+            <select
+              value={filters.quality}
+              onChange={(e) =>
+                update("quality", e.target.value as Filters["quality"])
+              }
+            >
+              {[
+                "all",
+                "Sample evidence",
+                "Needs verification",
+                "Stale",
+                "Conflicting evidence",
+              ].map((v) => (
+                <option key={v} value={v}>
+                  {v === "all" ? "Any evidence status" : v}
                 </option>
               ))}
             </select>
           </label>
-        )}
-        <label>
-          View
-          <select
-            value={filters.state}
-            onChange={(e) =>
-              update("state", e.target.value as Filters["state"])
-            }
-          >
-            <option value="visible">Active list</option>
-            <option value="saved">Saved</option>
-            <option value="dismissed">Dismissed</option>
-            <option value="all">All records</option>
-          </select>
-        </label>
-        <label>
-          Evidence
-          <select
-            value={filters.quality}
-            onChange={(e) =>
-              update("quality", e.target.value as Filters["quality"])
-            }
-          >
-            {[
-              "all",
-              "Sample evidence",
-              "Needs verification",
-              "Stale",
-              "Conflicting evidence",
-            ].map((v) => (
-              <option key={v} value={v}>
-                {v === "all" ? "Any evidence status" : v}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div className="results-bar">
-        <span>
-          {list.length} finding{list.length !== 1 ? "s" : ""}{" "}
-          {visibleSelected.length > 0 && `· ${visibleSelected.length} selected`}
-        </span>
-        <div>
-          <button
-            className="text-button"
-            onClick={() =>
+          <label>
+            Sort by
+            <select
+              value={sort}
+              onChange={(e) => {
+                setSort(e.target.value as "changed" | "date");
+                setSelected([]);
+              }}
+            >
+              <option value="changed">Most recent change</option>
+              <option value="date">Relevant date � earliest first</option>
+            </select>
+          </label>
+        </div>
+        <p className="sort-note">
+          {sort === "changed"
+            ? "Recorded material changes, newest first. Findings without a recorded change appear last."
+            : "Relevant start date, earliest first. Unknown dates appear last."}
+        </p>
+        <div className="results-bar">
+          <span>
+            {list.length} finding{list.length !== 1 ? "s" : ""}{" "}
+            {visibleSelected.length > 0 &&
+              `· ${visibleSelected.length} selected`}
+          </span>
+          <div>
+            <button
+              className="text-button"
+              onClick={() =>
+                setSelected(
+                  visibleSelected.length === list.length
+                    ? []
+                    : list.map((f) => f.id),
+                )
+              }
+              disabled={!list.length}
+            >
+              {visibleSelected.length === list.length && list.length
+                ? "Clear selection"
+                : "Select all results"}
+            </button>
+            <button
+              className="button secondary small"
+              disabled={!list.length}
+              onClick={() =>
+                void exportCsv(
+                  filters,
+                  visibleSelected.length
+                    ? visibleSelected
+                    : list.map((f) => f.id),
+                  notify,
+                )
+              }
+            >
+              <Download size={16} />
+              {visibleSelected.length ? "Export selected" : "Export filtered"}
+            </button>
+          </div>
+        </div>
+        {list.length ? (
+          <FindingTable
+            findings={list}
+            hideScout={Boolean(category)}
+            selected={visibleSelected}
+            onSelect={(id) =>
               setSelected(
-                visibleSelected.length === list.length
-                  ? []
-                  : list.map((f) => f.id),
+                selected.includes(id)
+                  ? selected.filter((x) => x !== id)
+                  : [...selected, id],
               )
             }
-            disabled={!list.length}
-          >
-            {visibleSelected.length === list.length && list.length
-              ? "Clear selection"
-              : "Select all results"}
-          </button>
-          <button
-            className="button secondary small"
-            disabled={!list.length}
-            onClick={() => void exportCsv(filters, visibleSelected, notify)}
-          >
-            <Download size={16} />
-            {visibleSelected.length ? "Export selected" : "Export filtered"}
-          </button>
-        </div>
+          />
+        ) : (
+          <Empty title="No findings match these filters">
+            Try a different search, scout or evidence status. Dismissed findings
+            remain available in the Dismissed view.
+          </Empty>
+        )}
       </div>
-      {list.length ? (
-        <FindingTable
-          findings={list}
-          selected={visibleSelected}
-          onSelect={(id) =>
-            setSelected(
-              selected.includes(id)
-                ? selected.filter((x) => x !== id)
-                : [...selected, id],
-            )
-          }
-        />
-      ) : (
-        <Empty title="No findings match these filters">
-          Try a different search, scout or evidence status. Dismissed findings
-          remain available in the Dismissed view.
-        </Empty>
-      )}
       {exportMode && (
         <Notice>
           Exports use the same filters and selections shown above. CSV includes
@@ -406,18 +544,6 @@ export function FindingDetail({
             <p className="lead-copy">{f.summary}</p>
             <dl className="fact-grid">
               <div>
-                <dt>Relevant start</dt>
-                <dd>
-                  <DateText value={f.start} />
-                </dd>
-              </div>
-              <div>
-                <dt>Relevant end</dt>
-                <dd>
-                  <DateText value={f.end} />
-                </dd>
-              </div>
-              <div>
                 <dt>Organizations</dt>
                 <dd>{f.organizations.join(", ")}</dd>
               </div>
@@ -432,11 +558,15 @@ export function FindingDetail({
           </section>
           <section className="panel detail-section relevance">
             <span className="eyebrow">Assessment · inference, not demand</span>
-            <h2>Why it may matter</h2>
-            <p className="lead-copy">{f.inference}</p>
-            <p>
-              <strong>Supporting rationale:</strong> {f.rationale}
+            <h2>Potential hotel relevance</h2>
+            <p className="lead-copy">
+              {f.inference?.trim() || "Hotel relevance not assessed."}
             </p>
+            {f.rationale && f.rationale !== f.summary && (
+              <p>
+                <strong>Supporting rationale:</strong> {f.rationale}
+              </p>
+            )}
             <h3>What we don’t know</h3>
             <ul className="unknowns">
               {f.unknowns.map((u) => (
@@ -445,7 +575,25 @@ export function FindingDetail({
             </ul>
           </section>
           <section className="panel detail-section">
-            <h2>Evidence & source lineage</h2>
+            <h2>Relevant dates</h2>
+            <dl className="fact-grid">
+              {" "}
+              <div>
+                <dt>Relevant start</dt>
+                <dd>
+                  <DateText value={f.start} />
+                </dd>
+              </div>
+              <div>
+                <dt>Relevant end</dt>
+                <dd>
+                  <DateText value={f.end} />
+                </dd>
+              </div>
+            </dl>
+          </section>
+          <section className="panel detail-section">
+            <h2>Sources</h2>
             <p className="muted">
               These are fictional evidence examples. The reserved .example
               addresses are not real sources.
@@ -505,12 +653,10 @@ export function FindingDetail({
               <dd>Never · fictional data</dd>
               <dt>Distance from hotel</dt>
               <dd>Not calculated</dd>
-              <dt>Stable finding ID</dt>
-              <dd className="mono">{f.id}</dd>
             </dl>
           </section>
-          <section className="panel detail-section">
-            <h2>Version history</h2>
+          <details className="panel detail-section version-history">
+            <summary>Version history</summary>
             {[...f.versions].reverse().map((v) => (
               <div className="timeline-item" key={v.id}>
                 <small>
@@ -529,7 +675,7 @@ export function FindingDetail({
                 </small>
               </div>
             ))}
-          </section>
+          </details>
         </aside>
       </div>
       <details className="brief-output">

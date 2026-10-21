@@ -9,10 +9,20 @@ export function Brand({ light = false }: { light?: boolean }) {
       className={`brand ${light ? "brand-light" : ""}`}
       aria-label="SCOUT by SalesHospitality home"
     >
-      <span>
-        <Compass size={25} strokeWidth={1.4} /> SCOUT
-      </span>
-      <small>by SalesHospitality</small>
+      <img
+        className="brand-main"
+        src="/brand/scout-main.webp"
+        width={864}
+        height={576}
+        alt="SCOUT by SalesHospitality"
+      />
+      <img
+        className="brand-icon"
+        src="/brand/scout-icon.webp"
+        width={256}
+        height={256}
+        alt="SCOUT by SalesHospitality"
+      />
     </Link>
   );
 }
