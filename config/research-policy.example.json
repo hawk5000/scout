@@ -1,0 +1,17 @@
+{
+  "template_only": true,
+  "live_research_enabled": false,
+  "cycles_per_week": 2,
+  "schedule_days": [],
+  "schedule_time_local": null,
+  "timezone": "America/Los_Angeles",
+  "manual_rescan_role": "admin",
+  "per_run_budget_usd": 0,
+  "monthly_property_budget_usd": 0,
+  "max_search_calls_per_run": 0,
+  "max_model_calls_per_run": 0,
+  "max_retries": 0,
+  "model_id": null,
+  "rate_card_version": null,
+  "notification_delivery_enabled": false
+}

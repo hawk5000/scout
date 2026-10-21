@@ -1,0 +1,11 @@
+Build Pass 1 of SCOUT by SalesHospitality in this local folder.
+
+Read AGENTS.md, START_HERE.md, docs/PRODUCT.md, docs/BUILD_PLAN.md, docs/PROJECT_STATUS.md and .agents/skills/hotel-market-intelligence-builder/SKILL.md, then relevant specification files. Use the approved names and tagline throughout.
+
+Inspect the folder before editing. This is the project specification package; create the application source here while retaining these documents. Follow the existing repository if source already exists. Choose current supported dependencies from official documentation and generate a lockfile. Use TypeScript with the intended Vercel/Cloudflare direction. Do not migrate this work into a different site platform.
+
+Complete Pass 1 in one cohesive implementation: public site, customer workspace, all three scout detail views, market blueprint, finding detail/evidence, filtering/search/saved/dismissed state, working copy/CSV export, hotel-profile form and admin setup shell. Model access and tenancy correctly. Use clearly fictional demo findings isolated from production, with no paid API calls. Show unsupported live operations as unavailable, not functioning buttons.
+
+Implement schema/repository interfaces and focused tests for tenant boundaries and safe exports. Run typecheck, relevant tests and production build. Do not run local browser acceptance; report deployed browser verification pending authorization. No cloud provisioning, publishing, deployment, notifications or paid research in this pass.
+
+Do not add CRM stages, outreach automation, daily lead quotas, voice, PMS or payments. Preserve the $99 setup/$50 monthly offer as a working assumption. Document absent external contracts; never fabricate SIL endpoints or auth fallbacks. Continue all unblocked local implementation without repeated clarification. Update docs/PROJECT_STATUS.md with what is actually complete, tests, blockers, and next steps.

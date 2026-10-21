@@ -1,0 +1,24 @@
+{
+  "template_only": true,
+  "tenant_id": null,
+  "property_id": null,
+  "hotel_name": null,
+  "website": null,
+  "address": null,
+  "timezone": "America/Los_Angeles",
+  "profile_confirmed": false,
+  "market": {
+    "center": null,
+    "radius_miles": null,
+    "included_places": [],
+    "excluded_places": []
+  },
+  "categories": [
+    "corporate",
+    "project",
+    "event"
+  ],
+  "exclusions": [],
+  "notification_recipients": [],
+  "active": false
+}

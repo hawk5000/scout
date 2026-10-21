@@ -1,0 +1,15 @@
+{
+  "mode": "synthetic-review",
+  "Seattle": {
+    "onboardingMinutes": null,
+    "correctionMinutes": null,
+    "usefulFindings": null,
+    "notes": "Not reviewed by a human."
+  },
+  "Portland": {
+    "onboardingMinutes": null,
+    "correctionMinutes": null,
+    "usefulFindings": null,
+    "notes": "Not reviewed by a human."
+  }
+}

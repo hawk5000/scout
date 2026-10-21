@@ -1,0 +1,14 @@
+interface:
+  display_name: Hotel Market Intelligence Builder
+  short_description: Build the three-agent hotel research subscription
+  default_prompt: Use $hotel-market-intelligence-builder to build the hotel research
+    platform with three scouts, a market blueprint, twice-weekly updates, and exports.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

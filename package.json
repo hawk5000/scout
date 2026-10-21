@@ -1,0 +1,37 @@
+{
+  "name": "scout-by-saleshospitality",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=24.0.0 <25"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "dev:demo": "node scripts/demo.mjs dev",
+    "start:demo": "node scripts/demo.mjs start",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "pilot:fixtures": "tsx scripts/pilot-fixtures.ts",
+    "worker:fixtures": "tsx scripts/fixture-worker.ts",
+    "test:http": "node scripts/http-smoke.mjs",
+    "format:check": "prettier --check src tests scripts next.config.ts"
+  },
+  "dependencies": {
+    "lucide-react": "1.61.0",
+    "next": "16.4.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "server-only": "0.0.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "prettier": "3.9.10",
+    "tsx": "^4.0.0",
+    "typescript": "5.9.3"
+  }
+}

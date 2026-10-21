@@ -1,0 +1,1347 @@
+{
+  "schemaVersion": "synthetic-pilot-v1",
+  "mode": "synthetic-only",
+  "fixtureWindow": "2026-10-19 through 2026-10-30 (virtual clock)",
+  "passed": true,
+  "marketIsolation": true,
+  "markets": [
+    {
+      "market": "Seattle",
+      "hotel": "Seattle Fictional Pilot Hotel",
+      "scope": "Fictional district; no real hotel or geographic coverage evaluated.",
+      "cycles": [
+        {
+          "fixtureScenario": "baseline",
+          "at": "2026-10-19T16:00:00Z",
+          "cycleKey": "subscription-baseline-v1",
+          "status": "Completed",
+          "newFindings": 3,
+          "materialUpdates": 0,
+          "coverage": {
+            "corporate": "Completed · corporate-v1",
+            "project": "Completed · project-v1",
+            "event": "Completed · event-v1"
+          },
+          "preparedDisabledPreviews": 3,
+          "credits": 84,
+          "heldCredits": 0,
+          "actualChargedUsd": 0
+        },
+        {
+          "fixtureScenario": "update",
+          "at": "2026-10-20T16:00:00Z",
+          "cycleKey": "scheduled-2026-10-19-1",
+          "status": "Completed",
+          "newFindings": 0,
+          "materialUpdates": 3,
+          "coverage": {
+            "corporate": "Completed · corporate-v1",
+            "project": "Completed · project-v1",
+            "event": "Completed · event-v1"
+          },
+          "preparedDisabledPreviews": 3,
+          "credits": 84,
+          "heldCredits": 0,
+          "actualChargedUsd": 0
+        },
+        {
+          "fixtureScenario": "quiet",
+          "at": "2026-10-23T16:00:00Z",
+          "cycleKey": "scheduled-2026-10-19-2",
+          "status": "Completed",
+          "newFindings": 0,
+          "materialUpdates": 0,
+          "coverage": {
+            "corporate": "Completed · corporate-v1",
+            "project": "Completed · project-v1",
+            "event": "Completed · event-v1"
+          },
+          "preparedDisabledPreviews": 0,
+          "credits": 84,
+          "heldCredits": 0,
+          "actualChargedUsd": 0
+        },
+        {
+          "fixtureScenario": "outage",
+          "at": "2026-10-27T16:00:00Z",
+          "cycleKey": "scheduled-2026-10-26-1",
+          "status": "Partial",
+          "newFindings": 0,
+          "materialUpdates": 0,
+          "coverage": {
+            "corporate": "Completed · corporate-v1",
+            "project": "Partial: rejected candidate or evidence",
+            "event": "Completed · event-v1"
+          },
+          "preparedDisabledPreviews": 0,
+          "credits": 84,
+          "heldCredits": 0,
+          "actualChargedUsd": 0
+        },
+        {
+          "fixtureScenario": "cancellation",
+          "at": "2026-10-30T16:00:00Z",
+          "cycleKey": "scheduled-2026-10-26-2",
+          "status": "Completed",
+          "newFindings": 0,
+          "materialUpdates": 3,
+          "coverage": {
+            "corporate": "Completed · corporate-v1",
+            "project": "Completed · project-v1",
+            "event": "Completed · event-v1"
+          },
+          "preparedDisabledPreviews": 3,
+          "credits": 84,
+          "heldCredits": 0,
+          "actualChargedUsd": 0
+        }
+      ],
+      "checks": [
+        {
+          "name": "baseline: expected research outcome",
+          "passed": true
+        },
+        {
+          "name": "baseline: no duplicate canonical records",
+          "passed": true
+        },
+        {
+          "name": "baseline: safe evidence and explicit uncertainty",
+          "passed": true
+        },
+        {
+          "name": "baseline: meaningful-only delivery preparation",
+          "passed": true
+        },
+        {
+          "name": "update: expected research outcome",
+          "passed": true
+        },
+        {
+          "name": "update: no duplicate canonical records",
+          "passed": true
+        },
+        {
+          "name": "update: safe evidence and explicit uncertainty",
+          "passed": true
+        },
+        {
+          "name": "update: meaningful-only delivery preparation",
+          "passed": true
+        },
+        {
+          "name": "quiet: expected research outcome",
+          "passed": true
+        },
+        {
+          "name": "quiet: no duplicate canonical records",
+          "passed": true
+        },
+        {
+          "name": "quiet: safe evidence and explicit uncertainty",
+          "passed": true
+        },
+        {
+          "name": "quiet: meaningful-only delivery preparation",
+          "passed": true
+        },
+        {
+          "name": "outage: expected research outcome",
+          "passed": true
+        },
+        {
+          "name": "outage: no duplicate canonical records",
+          "passed": true
+        },
+        {
+          "name": "outage: safe evidence and explicit uncertainty",
+          "passed": true
+        },
+        {
+          "name": "Outage preserves accepted contractor",
+          "passed": true
+        },
+        {
+          "name": "outage: meaningful-only delivery preparation",
+          "passed": true
+        },
+        {
+          "name": "cancellation: expected research outcome",
+          "passed": true
+        },
+        {
+          "name": "cancellation: no duplicate canonical records",
+          "passed": true
+        },
+        {
+          "name": "cancellation: safe evidence and explicit uncertainty",
+          "passed": true
+        },
+        {
+          "name": "cancellation: meaningful-only delivery preparation",
+          "passed": true
+        },
+        {
+          "name": "Export retains fixture labeling without new research",
+          "passed": true
+        },
+        {
+          "name": "Baseline plus four shared slots only",
+          "passed": true
+        },
+        {
+          "name": "No delivery marked sent",
+          "passed": true
+        }
+      ],
+      "metrics": {
+        "uniqueFindings": 3,
+        "duplicateRecords": 0,
+        "duplicateRecordDenominator": 3,
+        "materialUpdates": 6,
+        "baselineCredits": 84,
+        "recurringCredits": 336,
+        "actualChargedUsd": 0,
+        "liveEvidenceAccuracy": null,
+        "liveCoverage": null,
+        "humanReview": {
+          "onboardingMinutes": null,
+          "correctionMinutes": null,
+          "usefulFindings": null,
+          "notes": "Not reviewed by a human."
+        }
+      },
+      "findings": [
+        {
+          "id": "synthetic-f3e54e495f929f74b2db43d0",
+          "entityId": "synthetic-entity-f3e54e495f929f74b2db43d0",
+          "category": "corporate",
+          "categories": [
+            "corporate"
+          ],
+          "title": "Seattle Fictional Cedar Technical Center",
+          "summary": "Fictional expansion: completed. Organizations: Seattle Fictional Cedar Technical Center.",
+          "location": "Seattle fixture district",
+          "start": null,
+          "end": null,
+          "status": "Completed",
+          "organizations": [
+            "Seattle Fictional Cedar Technical Center"
+          ],
+          "publicContact": null,
+          "firstSeenAt": "2026-10-19T16:00:00.000Z",
+          "lastCheckedAt": "2026-10-30T16:00:00.000Z",
+          "lastVerifiedAt": null,
+          "quality": "Sample evidence",
+          "evidence": [
+            {
+              "id": "syn-source-61449dff94e6d4ca2ec48fb1",
+              "url": "https://sources.example/replay/corporate/seattle-baseline-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-01",
+              "retrievedAt": "2026-10-19T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: facility\nstatus: status: Announced\norganizations: organizations: Seattle Fictional Cedar Technical Center",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-1417533b4334e686785d4b19",
+              "url": "https://sources.example/replay/corporate/seattle-update-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-08",
+              "retrievedAt": "2026-10-23T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: expansion\nstatus: status: Announced\norganizations: organizations: Seattle Fictional Cedar Technical Center",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-8a5bb88ad4bb0fcc141e496e",
+              "url": "https://sources.example/replay/corporate/seattle-outage-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-01",
+              "retrievedAt": "2026-10-27T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: facility\nstatus: status: Announced\norganizations: organizations: Seattle Fictional Cedar Technical Center",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-72cb6bc6d4c4b6406362ee50",
+              "url": "https://sources.example/replay/corporate/seattle-cancellation-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-15",
+              "retrievedAt": "2026-10-30T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: expansion\nstatus: status: Completed\norganizations: organizations: Seattle Fictional Cedar Technical Center",
+              "verification": "fictional"
+            }
+          ],
+          "versions": [
+            {
+              "id": "synthetic-f3e54e495f929f74b2db43d0-v1",
+              "at": "2026-10-19T16:00:00.000Z",
+              "summary": "Synthetic baseline finding established.",
+              "material": true,
+              "before": null,
+              "after": "{\"activity\":\"facility\",\"status\":\"Announced\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":null,\"organizations\":[\"Seattle Fictional Cedar Technical Center\"]}",
+              "evidenceIds": [
+                "syn-source-61449dff94e6d4ca2ec48fb1"
+              ]
+            },
+            {
+              "id": "synthetic-f3e54e495f929f74b2db43d0-v2",
+              "at": "2026-10-20T16:00:00.000Z",
+              "summary": "Changed: activity.",
+              "material": true,
+              "before": "{\"activity\":\"facility\",\"status\":\"Announced\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":null,\"organizations\":[\"Seattle Fictional Cedar Technical Center\"]}",
+              "after": "{\"activity\":\"expansion\",\"status\":\"Announced\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":null,\"organizations\":[\"Seattle Fictional Cedar Technical Center\"]}",
+              "evidenceIds": [
+                "syn-source-1417533b4334e686785d4b19"
+              ]
+            },
+            {
+              "id": "synthetic-f3e54e495f929f74b2db43d0-v3",
+              "at": "2026-10-30T16:00:00.000Z",
+              "summary": "Changed: status.",
+              "material": true,
+              "before": "{\"activity\":\"expansion\",\"status\":\"Announced\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":null,\"organizations\":[\"Seattle Fictional Cedar Technical Center\"]}",
+              "after": "{\"activity\":\"expansion\",\"status\":\"Completed\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":null,\"organizations\":[\"Seattle Fictional Cedar Technical Center\"]}",
+              "evidenceIds": [
+                "syn-source-72cb6bc6d4c4b6406362ee50"
+              ]
+            }
+          ],
+          "findingId": "synthetic-f3e54e495f929f74b2db43d0",
+          "inference": "This activity is canceled or completed; do not treat it as current lodging demand.",
+          "rationale": "Fictional expansion: completed. Organizations: Seattle Fictional Cedar Technical Center.",
+          "unknowns": [
+            "No live evidence has been verified.",
+            "No public lodging contact is verified.",
+            "Actual overnight demand and room requirements are unknown."
+          ],
+          "version": 3,
+          "saved": false,
+          "dismissed": false
+        },
+        {
+          "id": "synthetic-e869efca3d16e24a76bea6e9",
+          "entityId": "synthetic-entity-e869efca3d16e24a76bea6e9",
+          "category": "project",
+          "categories": [
+            "project"
+          ],
+          "title": "Seattle Fictional Westbank Pump Renewal",
+          "summary": "Fictional construction: completed. Contractor: Juniper Works. Organizations: Seattle Fictional Westbank Pump Renewal.",
+          "location": "Seattle fixture district",
+          "start": null,
+          "end": null,
+          "status": "Completed",
+          "organizations": [
+            "Seattle Fictional Westbank Pump Renewal"
+          ],
+          "publicContact": null,
+          "firstSeenAt": "2026-10-19T16:00:00.000Z",
+          "lastCheckedAt": "2026-10-30T16:00:00.000Z",
+          "lastVerifiedAt": null,
+          "quality": "Sample evidence",
+          "evidence": [
+            {
+              "id": "syn-source-dda41d8daae874ece8337629",
+              "url": "https://sources.example/replay/project/seattle-baseline-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-01",
+              "retrievedAt": "2026-10-19T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\norganizations: organizations: Seattle Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-faf3b86f0f3cce2fa4a34006",
+              "url": "https://sources.example/replay/project/seattle-baseline-1",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-01",
+              "retrievedAt": "2026-10-19T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\norganizations: organizations: Seattle Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-dc42ee883bab3ee56e85493f",
+              "url": "https://sources.example/replay/project/seattle-baseline-2",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-01",
+              "retrievedAt": "2026-10-19T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\norganizations: organizations: Seattle Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-3c39d21fa6a7f733b33fb931",
+              "url": "https://sources.example/replay/project/seattle-baseline-3",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-01",
+              "retrievedAt": "2026-10-19T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\norganizations: organizations: Seattle Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-88453deadeef91e2841283f6",
+              "url": "https://sources.example/replay/project/seattle-baseline-4",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-01",
+              "retrievedAt": "2026-10-19T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\norganizations: organizations: Seattle Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-d07cb4c2d5960815a0e40223",
+              "url": "https://sources.example/replay/project/seattle-update-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-08",
+              "retrievedAt": "2026-10-23T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\ncontractor: contractor: Juniper Works\norganizations: organizations: Seattle Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-0c4b850c3ce3a7572fe9b588",
+              "url": "https://sources.example/replay/project/seattle-update-1",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-08",
+              "retrievedAt": "2026-10-23T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\ncontractor: contractor: Juniper Works\norganizations: organizations: Seattle Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-a6eb733800eb48244b54e487",
+              "url": "https://sources.example/replay/project/seattle-update-2",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-08",
+              "retrievedAt": "2026-10-23T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\ncontractor: contractor: Juniper Works\norganizations: organizations: Seattle Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-f1f19f15d0683d4899e72d4e",
+              "url": "https://sources.example/replay/project/seattle-update-3",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-08",
+              "retrievedAt": "2026-10-23T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\ncontractor: contractor: Juniper Works\norganizations: organizations: Seattle Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-dda854b580a9e0b104e087a7",
+              "url": "https://sources.example/replay/project/seattle-update-4",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-08",
+              "retrievedAt": "2026-10-23T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\ncontractor: contractor: Juniper Works\norganizations: organizations: Seattle Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-679ae004e4596d26c1e761e4",
+              "url": "https://sources.example/replay/project/seattle-cancellation-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-15",
+              "retrievedAt": "2026-10-30T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Completed\ncontractor: contractor: Juniper Works\norganizations: organizations: Seattle Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-ea9e1ded41b3a4db289a8ac9",
+              "url": "https://sources.example/replay/project/seattle-cancellation-1",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-15",
+              "retrievedAt": "2026-10-30T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Completed\ncontractor: contractor: Juniper Works\norganizations: organizations: Seattle Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-ff27fe3de2627c8ddf0b2799",
+              "url": "https://sources.example/replay/project/seattle-cancellation-2",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-15",
+              "retrievedAt": "2026-10-30T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Completed\ncontractor: contractor: Juniper Works\norganizations: organizations: Seattle Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-3c25dc99f6d03050b4d679dc",
+              "url": "https://sources.example/replay/project/seattle-cancellation-3",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-15",
+              "retrievedAt": "2026-10-30T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Completed\ncontractor: contractor: Juniper Works\norganizations: organizations: Seattle Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-b1108cf69308be37a3d85b18",
+              "url": "https://sources.example/replay/project/seattle-cancellation-4",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-15",
+              "retrievedAt": "2026-10-30T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Completed\ncontractor: contractor: Juniper Works\norganizations: organizations: Seattle Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            }
+          ],
+          "versions": [
+            {
+              "id": "synthetic-e869efca3d16e24a76bea6e9-v1",
+              "at": "2026-10-19T16:00:00.000Z",
+              "summary": "Synthetic baseline finding established.",
+              "material": true,
+              "before": null,
+              "after": "{\"activity\":\"construction\",\"status\":\"Announced\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":null,\"organizations\":[\"Seattle Fictional Westbank Pump Renewal\"]}",
+              "evidenceIds": [
+                "syn-source-dda41d8daae874ece8337629",
+                "syn-source-faf3b86f0f3cce2fa4a34006",
+                "syn-source-dc42ee883bab3ee56e85493f",
+                "syn-source-3c39d21fa6a7f733b33fb931",
+                "syn-source-88453deadeef91e2841283f6"
+              ]
+            },
+            {
+              "id": "synthetic-e869efca3d16e24a76bea6e9-v2",
+              "at": "2026-10-20T16:00:00.000Z",
+              "summary": "Changed: contractor.",
+              "material": true,
+              "before": "{\"activity\":\"construction\",\"status\":\"Announced\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":null,\"organizations\":[\"Seattle Fictional Westbank Pump Renewal\"]}",
+              "after": "{\"activity\":\"construction\",\"status\":\"Announced\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":\"Juniper Works\",\"organizations\":[\"Seattle Fictional Westbank Pump Renewal\"]}",
+              "evidenceIds": [
+                "syn-source-d07cb4c2d5960815a0e40223",
+                "syn-source-0c4b850c3ce3a7572fe9b588",
+                "syn-source-a6eb733800eb48244b54e487",
+                "syn-source-f1f19f15d0683d4899e72d4e",
+                "syn-source-dda854b580a9e0b104e087a7"
+              ]
+            },
+            {
+              "id": "synthetic-e869efca3d16e24a76bea6e9-v3",
+              "at": "2026-10-30T16:00:00.000Z",
+              "summary": "Changed: status.",
+              "material": true,
+              "before": "{\"activity\":\"construction\",\"status\":\"Announced\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":\"Juniper Works\",\"organizations\":[\"Seattle Fictional Westbank Pump Renewal\"]}",
+              "after": "{\"activity\":\"construction\",\"status\":\"Completed\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":\"Juniper Works\",\"organizations\":[\"Seattle Fictional Westbank Pump Renewal\"]}",
+              "evidenceIds": [
+                "syn-source-679ae004e4596d26c1e761e4",
+                "syn-source-ea9e1ded41b3a4db289a8ac9",
+                "syn-source-ff27fe3de2627c8ddf0b2799",
+                "syn-source-3c25dc99f6d03050b4d679dc",
+                "syn-source-b1108cf69308be37a3d85b18"
+              ]
+            }
+          ],
+          "findingId": "synthetic-e869efca3d16e24a76bea6e9",
+          "inference": "This activity is canceled or completed; do not treat it as current lodging demand.",
+          "rationale": "Fictional construction: completed. Contractor: Juniper Works. Organizations: Seattle Fictional Westbank Pump Renewal.",
+          "unknowns": [
+            "No live evidence has been verified.",
+            "No public lodging contact is verified.",
+            "Actual overnight demand and room requirements are unknown."
+          ],
+          "version": 3,
+          "saved": false,
+          "dismissed": false
+        },
+        {
+          "id": "synthetic-464a5294295b6672833f1b96",
+          "entityId": "synthetic-entity-464a5294295b6672833f1b96",
+          "category": "event",
+          "categories": [
+            "event"
+          ],
+          "title": "Seattle Fictional Harbor Skills Forum · 2027",
+          "summary": "Fictional event: canceled. Starts 2027-03-17. Ends 2027-03-19. Venue: Harbor Exchange. Organizations: Seattle Fictional Harbor Skills Forum.",
+          "location": "Seattle fixture district",
+          "start": "2027-03-17",
+          "end": "2027-03-19",
+          "status": "Canceled",
+          "organizations": [
+            "Seattle Fictional Harbor Skills Forum"
+          ],
+          "publicContact": null,
+          "firstSeenAt": "2026-10-19T16:00:00.000Z",
+          "lastCheckedAt": "2026-10-30T16:00:00.000Z",
+          "lastVerifiedAt": null,
+          "quality": "Sample evidence",
+          "evidence": [
+            {
+              "id": "syn-source-7a752af4d2f4989676f82cbf",
+              "url": "https://sources.example/replay/event/seattle-baseline-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-01",
+              "retrievedAt": "2026-10-19T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: event\nstatus: status: Confirmed\nstart: start: 2027-03-10\nend: end: 2027-03-12\nvenue: venue: Harbor Exchange\norganizations: organizations: Seattle Fictional Harbor Skills Forum",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-32151da4f6d232bdee2ff27b",
+              "url": "https://sources.example/replay/event/seattle-update-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-08",
+              "retrievedAt": "2026-10-23T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: event\nstatus: status: Confirmed\nstart: start: 2027-03-17\nend: end: 2027-03-19\nvenue: venue: Harbor Exchange\norganizations: organizations: Seattle Fictional Harbor Skills Forum",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-8255cc3eeb352e0fd0018d4a",
+              "url": "https://sources.example/replay/event/seattle-outage-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-01",
+              "retrievedAt": "2026-10-27T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: event\nstatus: status: Confirmed\nstart: start: 2027-03-10\nend: end: 2027-03-12\nvenue: venue: Harbor Exchange\norganizations: organizations: Seattle Fictional Harbor Skills Forum",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-333f7c6d731ef6c08a34e6e7",
+              "url": "https://sources.example/replay/event/seattle-cancellation-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-15",
+              "retrievedAt": "2026-10-30T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: event\nstatus: status: Canceled\nstart: start: 2027-03-17\nend: end: 2027-03-19\nvenue: venue: Harbor Exchange\norganizations: organizations: Seattle Fictional Harbor Skills Forum",
+              "verification": "fictional"
+            }
+          ],
+          "versions": [
+            {
+              "id": "synthetic-464a5294295b6672833f1b96-v1",
+              "at": "2026-10-19T16:00:00.000Z",
+              "summary": "Synthetic baseline finding established.",
+              "material": true,
+              "before": null,
+              "after": "{\"activity\":\"event\",\"status\":\"Confirmed\",\"start\":\"2027-03-10\",\"end\":\"2027-03-12\",\"venue\":\"Harbor Exchange\",\"contractor\":null,\"organizations\":[\"Seattle Fictional Harbor Skills Forum\"]}",
+              "evidenceIds": [
+                "syn-source-7a752af4d2f4989676f82cbf"
+              ]
+            },
+            {
+              "id": "synthetic-464a5294295b6672833f1b96-v2",
+              "at": "2026-10-20T16:00:00.000Z",
+              "summary": "Changed: start, end.",
+              "material": true,
+              "before": "{\"activity\":\"event\",\"status\":\"Confirmed\",\"start\":\"2027-03-10\",\"end\":\"2027-03-12\",\"venue\":\"Harbor Exchange\",\"contractor\":null,\"organizations\":[\"Seattle Fictional Harbor Skills Forum\"]}",
+              "after": "{\"activity\":\"event\",\"status\":\"Confirmed\",\"start\":\"2027-03-17\",\"end\":\"2027-03-19\",\"venue\":\"Harbor Exchange\",\"contractor\":null,\"organizations\":[\"Seattle Fictional Harbor Skills Forum\"]}",
+              "evidenceIds": [
+                "syn-source-32151da4f6d232bdee2ff27b"
+              ]
+            },
+            {
+              "id": "synthetic-464a5294295b6672833f1b96-v3",
+              "at": "2026-10-30T16:00:00.000Z",
+              "summary": "Changed: status.",
+              "material": true,
+              "before": "{\"activity\":\"event\",\"status\":\"Confirmed\",\"start\":\"2027-03-17\",\"end\":\"2027-03-19\",\"venue\":\"Harbor Exchange\",\"contractor\":null,\"organizations\":[\"Seattle Fictional Harbor Skills Forum\"]}",
+              "after": "{\"activity\":\"event\",\"status\":\"Canceled\",\"start\":\"2027-03-17\",\"end\":\"2027-03-19\",\"venue\":\"Harbor Exchange\",\"contractor\":null,\"organizations\":[\"Seattle Fictional Harbor Skills Forum\"]}",
+              "evidenceIds": [
+                "syn-source-333f7c6d731ef6c08a34e6e7"
+              ]
+            }
+          ],
+          "findingId": "synthetic-464a5294295b6672833f1b96",
+          "inference": "This activity is canceled or completed; do not treat it as current lodging demand.",
+          "rationale": "Fictional event: canceled. Starts 2027-03-17. Ends 2027-03-19. Venue: Harbor Exchange. Organizations: Seattle Fictional Harbor Skills Forum.",
+          "unknowns": [
+            "No live evidence has been verified.",
+            "No public lodging contact is verified.",
+            "Actual overnight demand and room requirements are unknown."
+          ],
+          "version": 3,
+          "saved": false,
+          "dismissed": false
+        }
+      ],
+      "csv": "﻿finding_id,category,name,factual_summary,location,relevant_start,relevant_end,status,organizations,public_contact,lodging_relevance_inference,unknowns,source_urls,last_verified_at,change_summary,data_mode\r\n\"synthetic-f3e54e495f929f74b2db43d0\",\"corporate\",\"Seattle Fictional Cedar Technical Center\",\"Fictional expansion: completed. Organizations: Seattle Fictional Cedar Technical Center.\",\"Seattle fixture district\",\"\",\"\",\"Completed\",\"Seattle Fictional Cedar Technical Center\",\"\",\"This activity is canceled or completed; do not treat it as current lodging demand.\",\"No live evidence has been verified.; No public lodging contact is verified.; Actual overnight demand and room requirements are unknown.\",\"https://sources.example/replay/corporate/seattle-baseline-0; https://sources.example/replay/corporate/seattle-update-0; https://sources.example/replay/corporate/seattle-outage-0; https://sources.example/replay/corporate/seattle-cancellation-0\",\"\",\"Changed: status.\",\"FICTIONAL DEMO\"\r\n\"synthetic-e869efca3d16e24a76bea6e9\",\"project\",\"Seattle Fictional Westbank Pump Renewal\",\"Fictional construction: completed. Contractor: Juniper Works. Organizations: Seattle Fictional Westbank Pump Renewal.\",\"Seattle fixture district\",\"\",\"\",\"Completed\",\"Seattle Fictional Westbank Pump Renewal\",\"\",\"This activity is canceled or completed; do not treat it as current lodging demand.\",\"No live evidence has been verified.; No public lodging contact is verified.; Actual overnight demand and room requirements are unknown.\",\"https://sources.example/replay/project/seattle-baseline-0; https://sources.example/replay/project/seattle-baseline-1; https://sources.example/replay/project/seattle-baseline-2; https://sources.example/replay/project/seattle-baseline-3; https://sources.example/replay/project/seattle-baseline-4; https://sources.example/replay/project/seattle-update-0; https://sources.example/replay/project/seattle-update-1; https://sources.example/replay/project/seattle-update-2; https://sources.example/replay/project/seattle-update-3; https://sources.example/replay/project/seattle-update-4; https://sources.example/replay/project/seattle-cancellation-0; https://sources.example/replay/project/seattle-cancellation-1; https://sources.example/replay/project/seattle-cancellation-2; https://sources.example/replay/project/seattle-cancellation-3; https://sources.example/replay/project/seattle-cancellation-4\",\"\",\"Changed: status.\",\"FICTIONAL DEMO\"\r\n\"synthetic-464a5294295b6672833f1b96\",\"event\",\"Seattle Fictional Harbor Skills Forum · 2027\",\"Fictional event: canceled. Starts 2027-03-17. Ends 2027-03-19. Venue: Harbor Exchange. Organizations: Seattle Fictional Harbor Skills Forum.\",\"Seattle fixture district\",\"2027-03-17\",\"2027-03-19\",\"Canceled\",\"Seattle Fictional Harbor Skills Forum\",\"\",\"This activity is canceled or completed; do not treat it as current lodging demand.\",\"No live evidence has been verified.; No public lodging contact is verified.; Actual overnight demand and room requirements are unknown.\",\"https://sources.example/replay/event/seattle-baseline-0; https://sources.example/replay/event/seattle-update-0; https://sources.example/replay/event/seattle-outage-0; https://sources.example/replay/event/seattle-cancellation-0\",\"\",\"Changed: status.\",\"FICTIONAL DEMO\""
+    },
+    {
+      "market": "Portland",
+      "hotel": "Portland Fictional Pilot Hotel",
+      "scope": "Fictional district; no real hotel or geographic coverage evaluated.",
+      "cycles": [
+        {
+          "fixtureScenario": "baseline",
+          "at": "2026-10-19T16:00:00Z",
+          "cycleKey": "subscription-baseline-v1",
+          "status": "Completed",
+          "newFindings": 3,
+          "materialUpdates": 0,
+          "coverage": {
+            "corporate": "Completed · corporate-v1",
+            "project": "Completed · project-v1",
+            "event": "Completed · event-v1"
+          },
+          "preparedDisabledPreviews": 3,
+          "credits": 84,
+          "heldCredits": 0,
+          "actualChargedUsd": 0
+        },
+        {
+          "fixtureScenario": "update",
+          "at": "2026-10-20T16:00:00Z",
+          "cycleKey": "scheduled-2026-10-19-1",
+          "status": "Completed",
+          "newFindings": 0,
+          "materialUpdates": 3,
+          "coverage": {
+            "corporate": "Completed · corporate-v1",
+            "project": "Completed · project-v1",
+            "event": "Completed · event-v1"
+          },
+          "preparedDisabledPreviews": 3,
+          "credits": 84,
+          "heldCredits": 0,
+          "actualChargedUsd": 0
+        },
+        {
+          "fixtureScenario": "quiet",
+          "at": "2026-10-23T16:00:00Z",
+          "cycleKey": "scheduled-2026-10-19-2",
+          "status": "Completed",
+          "newFindings": 0,
+          "materialUpdates": 0,
+          "coverage": {
+            "corporate": "Completed · corporate-v1",
+            "project": "Completed · project-v1",
+            "event": "Completed · event-v1"
+          },
+          "preparedDisabledPreviews": 0,
+          "credits": 84,
+          "heldCredits": 0,
+          "actualChargedUsd": 0
+        },
+        {
+          "fixtureScenario": "outage",
+          "at": "2026-10-27T16:00:00Z",
+          "cycleKey": "scheduled-2026-10-26-1",
+          "status": "Partial",
+          "newFindings": 0,
+          "materialUpdates": 0,
+          "coverage": {
+            "corporate": "Completed · corporate-v1",
+            "project": "Partial: rejected candidate or evidence",
+            "event": "Completed · event-v1"
+          },
+          "preparedDisabledPreviews": 0,
+          "credits": 84,
+          "heldCredits": 0,
+          "actualChargedUsd": 0
+        },
+        {
+          "fixtureScenario": "cancellation",
+          "at": "2026-10-30T16:00:00Z",
+          "cycleKey": "scheduled-2026-10-26-2",
+          "status": "Completed",
+          "newFindings": 0,
+          "materialUpdates": 3,
+          "coverage": {
+            "corporate": "Completed · corporate-v1",
+            "project": "Completed · project-v1",
+            "event": "Completed · event-v1"
+          },
+          "preparedDisabledPreviews": 3,
+          "credits": 84,
+          "heldCredits": 0,
+          "actualChargedUsd": 0
+        }
+      ],
+      "checks": [
+        {
+          "name": "baseline: expected research outcome",
+          "passed": true
+        },
+        {
+          "name": "baseline: no duplicate canonical records",
+          "passed": true
+        },
+        {
+          "name": "baseline: safe evidence and explicit uncertainty",
+          "passed": true
+        },
+        {
+          "name": "baseline: meaningful-only delivery preparation",
+          "passed": true
+        },
+        {
+          "name": "update: expected research outcome",
+          "passed": true
+        },
+        {
+          "name": "update: no duplicate canonical records",
+          "passed": true
+        },
+        {
+          "name": "update: safe evidence and explicit uncertainty",
+          "passed": true
+        },
+        {
+          "name": "update: meaningful-only delivery preparation",
+          "passed": true
+        },
+        {
+          "name": "quiet: expected research outcome",
+          "passed": true
+        },
+        {
+          "name": "quiet: no duplicate canonical records",
+          "passed": true
+        },
+        {
+          "name": "quiet: safe evidence and explicit uncertainty",
+          "passed": true
+        },
+        {
+          "name": "quiet: meaningful-only delivery preparation",
+          "passed": true
+        },
+        {
+          "name": "outage: expected research outcome",
+          "passed": true
+        },
+        {
+          "name": "outage: no duplicate canonical records",
+          "passed": true
+        },
+        {
+          "name": "outage: safe evidence and explicit uncertainty",
+          "passed": true
+        },
+        {
+          "name": "Outage preserves accepted contractor",
+          "passed": true
+        },
+        {
+          "name": "outage: meaningful-only delivery preparation",
+          "passed": true
+        },
+        {
+          "name": "cancellation: expected research outcome",
+          "passed": true
+        },
+        {
+          "name": "cancellation: no duplicate canonical records",
+          "passed": true
+        },
+        {
+          "name": "cancellation: safe evidence and explicit uncertainty",
+          "passed": true
+        },
+        {
+          "name": "cancellation: meaningful-only delivery preparation",
+          "passed": true
+        },
+        {
+          "name": "Export retains fixture labeling without new research",
+          "passed": true
+        },
+        {
+          "name": "Baseline plus four shared slots only",
+          "passed": true
+        },
+        {
+          "name": "No delivery marked sent",
+          "passed": true
+        }
+      ],
+      "metrics": {
+        "uniqueFindings": 3,
+        "duplicateRecords": 0,
+        "duplicateRecordDenominator": 3,
+        "materialUpdates": 6,
+        "baselineCredits": 84,
+        "recurringCredits": 336,
+        "actualChargedUsd": 0,
+        "liveEvidenceAccuracy": null,
+        "liveCoverage": null,
+        "humanReview": {
+          "onboardingMinutes": null,
+          "correctionMinutes": null,
+          "usefulFindings": null,
+          "notes": "Not reviewed by a human."
+        }
+      },
+      "findings": [
+        {
+          "id": "synthetic-271c6951a68448d2aa6b6478",
+          "entityId": "synthetic-entity-271c6951a68448d2aa6b6478",
+          "category": "corporate",
+          "categories": [
+            "corporate"
+          ],
+          "title": "Portland Fictional Cedar Technical Center",
+          "summary": "Fictional expansion: completed. Organizations: Portland Fictional Cedar Technical Center.",
+          "location": "Portland fixture district",
+          "start": null,
+          "end": null,
+          "status": "Completed",
+          "organizations": [
+            "Portland Fictional Cedar Technical Center"
+          ],
+          "publicContact": null,
+          "firstSeenAt": "2026-10-19T16:00:00.000Z",
+          "lastCheckedAt": "2026-10-30T16:00:00.000Z",
+          "lastVerifiedAt": null,
+          "quality": "Sample evidence",
+          "evidence": [
+            {
+              "id": "syn-source-dd91689275ae169c2804576e",
+              "url": "https://sources.example/replay/corporate/portland-baseline-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-01",
+              "retrievedAt": "2026-10-19T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: facility\nstatus: status: Announced\norganizations: organizations: Portland Fictional Cedar Technical Center",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-581f66dd8cd3e6408736fef1",
+              "url": "https://sources.example/replay/corporate/portland-update-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-08",
+              "retrievedAt": "2026-10-23T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: expansion\nstatus: status: Announced\norganizations: organizations: Portland Fictional Cedar Technical Center",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-976eb5c59c9c3ca7b253b95e",
+              "url": "https://sources.example/replay/corporate/portland-outage-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-01",
+              "retrievedAt": "2026-10-27T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: facility\nstatus: status: Announced\norganizations: organizations: Portland Fictional Cedar Technical Center",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-a68402467c07ff05de14159b",
+              "url": "https://sources.example/replay/corporate/portland-cancellation-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-15",
+              "retrievedAt": "2026-10-30T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: expansion\nstatus: status: Completed\norganizations: organizations: Portland Fictional Cedar Technical Center",
+              "verification": "fictional"
+            }
+          ],
+          "versions": [
+            {
+              "id": "synthetic-271c6951a68448d2aa6b6478-v1",
+              "at": "2026-10-19T16:00:00.000Z",
+              "summary": "Synthetic baseline finding established.",
+              "material": true,
+              "before": null,
+              "after": "{\"activity\":\"facility\",\"status\":\"Announced\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":null,\"organizations\":[\"Portland Fictional Cedar Technical Center\"]}",
+              "evidenceIds": [
+                "syn-source-dd91689275ae169c2804576e"
+              ]
+            },
+            {
+              "id": "synthetic-271c6951a68448d2aa6b6478-v2",
+              "at": "2026-10-20T16:00:00.000Z",
+              "summary": "Changed: activity.",
+              "material": true,
+              "before": "{\"activity\":\"facility\",\"status\":\"Announced\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":null,\"organizations\":[\"Portland Fictional Cedar Technical Center\"]}",
+              "after": "{\"activity\":\"expansion\",\"status\":\"Announced\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":null,\"organizations\":[\"Portland Fictional Cedar Technical Center\"]}",
+              "evidenceIds": [
+                "syn-source-581f66dd8cd3e6408736fef1"
+              ]
+            },
+            {
+              "id": "synthetic-271c6951a68448d2aa6b6478-v3",
+              "at": "2026-10-30T16:00:00.000Z",
+              "summary": "Changed: status.",
+              "material": true,
+              "before": "{\"activity\":\"expansion\",\"status\":\"Announced\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":null,\"organizations\":[\"Portland Fictional Cedar Technical Center\"]}",
+              "after": "{\"activity\":\"expansion\",\"status\":\"Completed\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":null,\"organizations\":[\"Portland Fictional Cedar Technical Center\"]}",
+              "evidenceIds": [
+                "syn-source-a68402467c07ff05de14159b"
+              ]
+            }
+          ],
+          "findingId": "synthetic-271c6951a68448d2aa6b6478",
+          "inference": "This activity is canceled or completed; do not treat it as current lodging demand.",
+          "rationale": "Fictional expansion: completed. Organizations: Portland Fictional Cedar Technical Center.",
+          "unknowns": [
+            "No live evidence has been verified.",
+            "No public lodging contact is verified.",
+            "Actual overnight demand and room requirements are unknown."
+          ],
+          "version": 3,
+          "saved": false,
+          "dismissed": false
+        },
+        {
+          "id": "synthetic-49bcd9626800d4c7d050f4af",
+          "entityId": "synthetic-entity-49bcd9626800d4c7d050f4af",
+          "category": "project",
+          "categories": [
+            "project"
+          ],
+          "title": "Portland Fictional Westbank Pump Renewal",
+          "summary": "Fictional construction: completed. Contractor: Juniper Works. Organizations: Portland Fictional Westbank Pump Renewal.",
+          "location": "Portland fixture district",
+          "start": null,
+          "end": null,
+          "status": "Completed",
+          "organizations": [
+            "Portland Fictional Westbank Pump Renewal"
+          ],
+          "publicContact": null,
+          "firstSeenAt": "2026-10-19T16:00:00.000Z",
+          "lastCheckedAt": "2026-10-30T16:00:00.000Z",
+          "lastVerifiedAt": null,
+          "quality": "Sample evidence",
+          "evidence": [
+            {
+              "id": "syn-source-8c1e1766293941ca8696ce0b",
+              "url": "https://sources.example/replay/project/portland-baseline-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-01",
+              "retrievedAt": "2026-10-19T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\norganizations: organizations: Portland Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-33003049f720156766e61015",
+              "url": "https://sources.example/replay/project/portland-baseline-1",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-01",
+              "retrievedAt": "2026-10-19T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\norganizations: organizations: Portland Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-69f9e1be1b008999feef2097",
+              "url": "https://sources.example/replay/project/portland-baseline-2",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-01",
+              "retrievedAt": "2026-10-19T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\norganizations: organizations: Portland Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-0d5fc8b46721967794c097a7",
+              "url": "https://sources.example/replay/project/portland-baseline-3",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-01",
+              "retrievedAt": "2026-10-19T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\norganizations: organizations: Portland Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-ccec24cfecdfde1c75d2495b",
+              "url": "https://sources.example/replay/project/portland-baseline-4",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-01",
+              "retrievedAt": "2026-10-19T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\norganizations: organizations: Portland Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-022323ffd1d2b1a12e10c9a6",
+              "url": "https://sources.example/replay/project/portland-update-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-08",
+              "retrievedAt": "2026-10-23T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\ncontractor: contractor: Juniper Works\norganizations: organizations: Portland Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-30512654545a6172c7016718",
+              "url": "https://sources.example/replay/project/portland-update-1",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-08",
+              "retrievedAt": "2026-10-23T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\ncontractor: contractor: Juniper Works\norganizations: organizations: Portland Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-03edf7505236da29daeb6fa7",
+              "url": "https://sources.example/replay/project/portland-update-2",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-08",
+              "retrievedAt": "2026-10-23T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\ncontractor: contractor: Juniper Works\norganizations: organizations: Portland Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-6cd53ad741e512b0bbb6e865",
+              "url": "https://sources.example/replay/project/portland-update-3",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-08",
+              "retrievedAt": "2026-10-23T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\ncontractor: contractor: Juniper Works\norganizations: organizations: Portland Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-7f7b0a5a3c722886d283ed67",
+              "url": "https://sources.example/replay/project/portland-update-4",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-08",
+              "retrievedAt": "2026-10-23T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Announced\ncontractor: contractor: Juniper Works\norganizations: organizations: Portland Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-218e8f0e7d1e4189f1021b38",
+              "url": "https://sources.example/replay/project/portland-cancellation-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-15",
+              "retrievedAt": "2026-10-30T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Completed\ncontractor: contractor: Juniper Works\norganizations: organizations: Portland Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-4e7812c7cca226f9ca9fd27f",
+              "url": "https://sources.example/replay/project/portland-cancellation-1",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-15",
+              "retrievedAt": "2026-10-30T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Completed\ncontractor: contractor: Juniper Works\norganizations: organizations: Portland Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-5f884422c3cce96705451322",
+              "url": "https://sources.example/replay/project/portland-cancellation-2",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-15",
+              "retrievedAt": "2026-10-30T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Completed\ncontractor: contractor: Juniper Works\norganizations: organizations: Portland Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-9c9401de7501cbc3d5f1bedb",
+              "url": "https://sources.example/replay/project/portland-cancellation-3",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-15",
+              "retrievedAt": "2026-10-30T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Completed\ncontractor: contractor: Juniper Works\norganizations: organizations: Portland Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-6caf5d962caeef0f612666e6",
+              "url": "https://sources.example/replay/project/portland-cancellation-4",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-15",
+              "retrievedAt": "2026-10-30T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: construction\nstatus: status: Completed\ncontractor: contractor: Juniper Works\norganizations: organizations: Portland Fictional Westbank Pump Renewal",
+              "verification": "fictional"
+            }
+          ],
+          "versions": [
+            {
+              "id": "synthetic-49bcd9626800d4c7d050f4af-v1",
+              "at": "2026-10-19T16:00:00.000Z",
+              "summary": "Synthetic baseline finding established.",
+              "material": true,
+              "before": null,
+              "after": "{\"activity\":\"construction\",\"status\":\"Announced\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":null,\"organizations\":[\"Portland Fictional Westbank Pump Renewal\"]}",
+              "evidenceIds": [
+                "syn-source-8c1e1766293941ca8696ce0b",
+                "syn-source-33003049f720156766e61015",
+                "syn-source-69f9e1be1b008999feef2097",
+                "syn-source-0d5fc8b46721967794c097a7",
+                "syn-source-ccec24cfecdfde1c75d2495b"
+              ]
+            },
+            {
+              "id": "synthetic-49bcd9626800d4c7d050f4af-v2",
+              "at": "2026-10-20T16:00:00.000Z",
+              "summary": "Changed: contractor.",
+              "material": true,
+              "before": "{\"activity\":\"construction\",\"status\":\"Announced\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":null,\"organizations\":[\"Portland Fictional Westbank Pump Renewal\"]}",
+              "after": "{\"activity\":\"construction\",\"status\":\"Announced\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":\"Juniper Works\",\"organizations\":[\"Portland Fictional Westbank Pump Renewal\"]}",
+              "evidenceIds": [
+                "syn-source-022323ffd1d2b1a12e10c9a6",
+                "syn-source-30512654545a6172c7016718",
+                "syn-source-03edf7505236da29daeb6fa7",
+                "syn-source-6cd53ad741e512b0bbb6e865",
+                "syn-source-7f7b0a5a3c722886d283ed67"
+              ]
+            },
+            {
+              "id": "synthetic-49bcd9626800d4c7d050f4af-v3",
+              "at": "2026-10-30T16:00:00.000Z",
+              "summary": "Changed: status.",
+              "material": true,
+              "before": "{\"activity\":\"construction\",\"status\":\"Announced\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":\"Juniper Works\",\"organizations\":[\"Portland Fictional Westbank Pump Renewal\"]}",
+              "after": "{\"activity\":\"construction\",\"status\":\"Completed\",\"start\":null,\"end\":null,\"venue\":null,\"contractor\":\"Juniper Works\",\"organizations\":[\"Portland Fictional Westbank Pump Renewal\"]}",
+              "evidenceIds": [
+                "syn-source-218e8f0e7d1e4189f1021b38",
+                "syn-source-4e7812c7cca226f9ca9fd27f",
+                "syn-source-5f884422c3cce96705451322",
+                "syn-source-9c9401de7501cbc3d5f1bedb",
+                "syn-source-6caf5d962caeef0f612666e6"
+              ]
+            }
+          ],
+          "findingId": "synthetic-49bcd9626800d4c7d050f4af",
+          "inference": "This activity is canceled or completed; do not treat it as current lodging demand.",
+          "rationale": "Fictional construction: completed. Contractor: Juniper Works. Organizations: Portland Fictional Westbank Pump Renewal.",
+          "unknowns": [
+            "No live evidence has been verified.",
+            "No public lodging contact is verified.",
+            "Actual overnight demand and room requirements are unknown."
+          ],
+          "version": 3,
+          "saved": false,
+          "dismissed": false
+        },
+        {
+          "id": "synthetic-5e2994308d99db9998e0f9fc",
+          "entityId": "synthetic-entity-5e2994308d99db9998e0f9fc",
+          "category": "event",
+          "categories": [
+            "event"
+          ],
+          "title": "Portland Fictional Harbor Skills Forum · 2027",
+          "summary": "Fictional event: canceled. Starts 2027-03-17. Ends 2027-03-19. Venue: Harbor Exchange. Organizations: Portland Fictional Harbor Skills Forum.",
+          "location": "Portland fixture district",
+          "start": "2027-03-17",
+          "end": "2027-03-19",
+          "status": "Canceled",
+          "organizations": [
+            "Portland Fictional Harbor Skills Forum"
+          ],
+          "publicContact": null,
+          "firstSeenAt": "2026-10-19T16:00:00.000Z",
+          "lastCheckedAt": "2026-10-30T16:00:00.000Z",
+          "lastVerifiedAt": null,
+          "quality": "Sample evidence",
+          "evidence": [
+            {
+              "id": "syn-source-a100c9aa17ada8c089a23a18",
+              "url": "https://sources.example/replay/event/portland-baseline-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-01",
+              "retrievedAt": "2026-10-19T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: event\nstatus: status: Confirmed\nstart: start: 2027-03-10\nend: end: 2027-03-12\nvenue: venue: Harbor Exchange\norganizations: organizations: Portland Fictional Harbor Skills Forum",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-d5119d5ad7e42e2c6e6c57b2",
+              "url": "https://sources.example/replay/event/portland-update-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-08",
+              "retrievedAt": "2026-10-23T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: event\nstatus: status: Confirmed\nstart: start: 2027-03-17\nend: end: 2027-03-19\nvenue: venue: Harbor Exchange\norganizations: organizations: Portland Fictional Harbor Skills Forum",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-2fc5c68f5c00ea212b29060e",
+              "url": "https://sources.example/replay/event/portland-outage-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-01",
+              "retrievedAt": "2026-10-27T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: event\nstatus: status: Confirmed\nstart: start: 2027-03-10\nend: end: 2027-03-12\nvenue: venue: Harbor Exchange\norganizations: organizations: Portland Fictional Harbor Skills Forum",
+              "verification": "fictional"
+            },
+            {
+              "id": "syn-source-4accecd3eabd6c5349a59309",
+              "url": "https://sources.example/replay/event/portland-cancellation-0",
+              "publisher": "Synthetic primary-source fixture",
+              "publishedAt": "2026-10-15",
+              "retrievedAt": "2026-10-30T16:00:00.000Z",
+              "lastVerifiedAt": null,
+              "claim": "activity: activity: event\nstatus: status: Canceled\nstart: start: 2027-03-17\nend: end: 2027-03-19\nvenue: venue: Harbor Exchange\norganizations: organizations: Portland Fictional Harbor Skills Forum",
+              "verification": "fictional"
+            }
+          ],
+          "versions": [
+            {
+              "id": "synthetic-5e2994308d99db9998e0f9fc-v1",
+              "at": "2026-10-19T16:00:00.000Z",
+              "summary": "Synthetic baseline finding established.",
+              "material": true,
+              "before": null,
+              "after": "{\"activity\":\"event\",\"status\":\"Confirmed\",\"start\":\"2027-03-10\",\"end\":\"2027-03-12\",\"venue\":\"Harbor Exchange\",\"contractor\":null,\"organizations\":[\"Portland Fictional Harbor Skills Forum\"]}",
+              "evidenceIds": [
+                "syn-source-a100c9aa17ada8c089a23a18"
+              ]
+            },
+            {
+              "id": "synthetic-5e2994308d99db9998e0f9fc-v2",
+              "at": "2026-10-20T16:00:00.000Z",
+              "summary": "Changed: start, end.",
+              "material": true,
+              "before": "{\"activity\":\"event\",\"status\":\"Confirmed\",\"start\":\"2027-03-10\",\"end\":\"2027-03-12\",\"venue\":\"Harbor Exchange\",\"contractor\":null,\"organizations\":[\"Portland Fictional Harbor Skills Forum\"]}",
+              "after": "{\"activity\":\"event\",\"status\":\"Confirmed\",\"start\":\"2027-03-17\",\"end\":\"2027-03-19\",\"venue\":\"Harbor Exchange\",\"contractor\":null,\"organizations\":[\"Portland Fictional Harbor Skills Forum\"]}",
+              "evidenceIds": [
+                "syn-source-d5119d5ad7e42e2c6e6c57b2"
+              ]
+            },
+            {
+              "id": "synthetic-5e2994308d99db9998e0f9fc-v3",
+              "at": "2026-10-30T16:00:00.000Z",
+              "summary": "Changed: status.",
+              "material": true,
+              "before": "{\"activity\":\"event\",\"status\":\"Confirmed\",\"start\":\"2027-03-17\",\"end\":\"2027-03-19\",\"venue\":\"Harbor Exchange\",\"contractor\":null,\"organizations\":[\"Portland Fictional Harbor Skills Forum\"]}",
+              "after": "{\"activity\":\"event\",\"status\":\"Canceled\",\"start\":\"2027-03-17\",\"end\":\"2027-03-19\",\"venue\":\"Harbor Exchange\",\"contractor\":null,\"organizations\":[\"Portland Fictional Harbor Skills Forum\"]}",
+              "evidenceIds": [
+                "syn-source-4accecd3eabd6c5349a59309"
+              ]
+            }
+          ],
+          "findingId": "synthetic-5e2994308d99db9998e0f9fc",
+          "inference": "This activity is canceled or completed; do not treat it as current lodging demand.",
+          "rationale": "Fictional event: canceled. Starts 2027-03-17. Ends 2027-03-19. Venue: Harbor Exchange. Organizations: Portland Fictional Harbor Skills Forum.",
+          "unknowns": [
+            "No live evidence has been verified.",
+            "No public lodging contact is verified.",
+            "Actual overnight demand and room requirements are unknown."
+          ],
+          "version": 3,
+          "saved": false,
+          "dismissed": false
+        }
+      ],
+      "csv": "﻿finding_id,category,name,factual_summary,location,relevant_start,relevant_end,status,organizations,public_contact,lodging_relevance_inference,unknowns,source_urls,last_verified_at,change_summary,data_mode\r\n\"synthetic-271c6951a68448d2aa6b6478\",\"corporate\",\"Portland Fictional Cedar Technical Center\",\"Fictional expansion: completed. Organizations: Portland Fictional Cedar Technical Center.\",\"Portland fixture district\",\"\",\"\",\"Completed\",\"Portland Fictional Cedar Technical Center\",\"\",\"This activity is canceled or completed; do not treat it as current lodging demand.\",\"No live evidence has been verified.; No public lodging contact is verified.; Actual overnight demand and room requirements are unknown.\",\"https://sources.example/replay/corporate/portland-baseline-0; https://sources.example/replay/corporate/portland-update-0; https://sources.example/replay/corporate/portland-outage-0; https://sources.example/replay/corporate/portland-cancellation-0\",\"\",\"Changed: status.\",\"FICTIONAL DEMO\"\r\n\"synthetic-49bcd9626800d4c7d050f4af\",\"project\",\"Portland Fictional Westbank Pump Renewal\",\"Fictional construction: completed. Contractor: Juniper Works. Organizations: Portland Fictional Westbank Pump Renewal.\",\"Portland fixture district\",\"\",\"\",\"Completed\",\"Portland Fictional Westbank Pump Renewal\",\"\",\"This activity is canceled or completed; do not treat it as current lodging demand.\",\"No live evidence has been verified.; No public lodging contact is verified.; Actual overnight demand and room requirements are unknown.\",\"https://sources.example/replay/project/portland-baseline-0; https://sources.example/replay/project/portland-baseline-1; https://sources.example/replay/project/portland-baseline-2; https://sources.example/replay/project/portland-baseline-3; https://sources.example/replay/project/portland-baseline-4; https://sources.example/replay/project/portland-update-0; https://sources.example/replay/project/portland-update-1; https://sources.example/replay/project/portland-update-2; https://sources.example/replay/project/portland-update-3; https://sources.example/replay/project/portland-update-4; https://sources.example/replay/project/portland-cancellation-0; https://sources.example/replay/project/portland-cancellation-1; https://sources.example/replay/project/portland-cancellation-2; https://sources.example/replay/project/portland-cancellation-3; https://sources.example/replay/project/portland-cancellation-4\",\"\",\"Changed: status.\",\"FICTIONAL DEMO\"\r\n\"synthetic-5e2994308d99db9998e0f9fc\",\"event\",\"Portland Fictional Harbor Skills Forum · 2027\",\"Fictional event: canceled. Starts 2027-03-17. Ends 2027-03-19. Venue: Harbor Exchange. Organizations: Portland Fictional Harbor Skills Forum.\",\"Portland fixture district\",\"2027-03-17\",\"2027-03-19\",\"Canceled\",\"Portland Fictional Harbor Skills Forum\",\"\",\"This activity is canceled or completed; do not treat it as current lodging demand.\",\"No live evidence has been verified.; No public lodging contact is verified.; Actual overnight demand and room requirements are unknown.\",\"https://sources.example/replay/event/portland-baseline-0; https://sources.example/replay/event/portland-update-0; https://sources.example/replay/event/portland-outage-0; https://sources.example/replay/event/portland-cancellation-0\",\"\",\"Changed: status.\",\"FICTIONAL DEMO\""
+    }
+  ],
+  "commercial": {
+    "label": "Assumption sensitivity only; excludes acquisition, payment, tax and other overhead. Not measured profit.",
+    "monthlyContributionUsd": null,
+    "setupContributionUsd": null
+  },
+  "launchDecision": "BLOCKED — fixture success does not authorize launch.",
+  "pending": [
+    "Verified identity, membership and SIL entitlement contracts",
+    "Authorized cloud resources and isolated preview storage",
+    "Approved provider, credentials, verified pricing and spend limits",
+    "Real confirmed pilot hotels and human quality review",
+    "Authorized Vercel responsive/browser acceptance",
+    "Authorized notification provider, sender and recipients"
+  ]
+}
