@@ -39,3 +39,8 @@ Local synthetic tests cover pending invisibility, exact approval/retry, stale/ha
 ## Hosted acceptance completed
 
 The isolated acceptance pass is recorded in PROJECT_STATUS.md. Preview: https://scout-qetynj336-parrieb-9172s-projects.vercel.app/app . Only synthetic fixture identities/evidence were used. Operator report generation and explicit approval ran against the deployed acceptance Worker; pending/rejected records stayed out of customer results. Both review and direct-ingestion access were disabled again afterward. Production activation remains a separate step; never promote this preview with its synthetic environment overrides.
+
+
+## Production activation — 2026-10-21
+
+Production migration and workflow are now enabled for verified tenant_abc / property_abc_abc_hotel only, in reviewed mode. Enrollment is revision 0 with no findings or reviews. The operator CLI uses the production Worker origin and its independent secured credential; customer credentials cannot authorize /reviews. No actual evidence has been staged or approved. This supersedes earlier activation-pending notes. Live research, paid calls, notifications and direct ingestion remain off. See PROJECT_STATUS.md for deployed versions and verification boundaries.

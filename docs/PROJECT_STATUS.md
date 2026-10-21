@@ -1,6 +1,6 @@
 # Project status
 
-Current status (2026-10-21): **Customer accounts and findings persistence foundation are deployed to production. ABC Hotel profile and membership are preserved. Fresh owner-entered SIL sign-in and profile persistence are verified.** Live research, paid calls, notifications and production ingestion remain disabled.
+Current status (2026-10-21): **Customer accounts and findings persistence foundation are deployed to production. ABC Hotel profile and membership are preserved. Fresh owner-entered SIL sign-in and profile persistence are verified.** Live research, paid calls, notifications and direct ingestion remain disabled. Reviewed-import operator access is enabled only for ABC Hotel.
 
 ## Initial handoff — historical
 
@@ -467,3 +467,15 @@ Remaining: apply migration/deploy in an authorized isolated hosted acceptance pa
 - Next release gate: separately promote the workflow/migration to production, establish verified fixed-scope operator configuration and reviewed enrollment, then review and approve actual source-backed evidence. This pass validates synthetic transport/storage/approval, not real source quality or live research. Live research, paid calls and notifications remain disabled.
 
 Final browser persistence check passed: after sign-out and fresh fixture sign-in, the approved campus finding remained visible and Saved, with Unsave shown in details. Its private state is saved=1, dismissed=0, revision=1; market revision remains 4. The finding also survived the acceptance Worker redeployment that closed operator access. The preview is left open for review; only fictional credentials/data are present.
+
+
+## 2026-10-21 — Reviewed-import production activation for ABC Hotel
+
+- Promoted to main and deployed application revision `56a9c73`, Vercel production `dpl_DMECEHyD2wv9NTxbd1xXBuySHWc3` (Ready, https://scout-4fcj7fdva-parrieb-9172s-projects.vercel.app), aliased to https://scout-olive-ten.vercel.app. Used normal production environment, not the synthetic preview or its overrides.
+- Applied only pending additive 0004_reviewed_imports.sql to production D1. Deployed production customer/worker.ts version `662c6f2b-4813-4904-9444-a52821c76515`. REVIEW_ENABLED=true with fixed tenant_abc / property_abc_abc_hotel, reviewed mode, operator service identity scout-abc-review-operator. INGESTION_ENABLED=false.
+- Existing SIL session-status response was validated against exact tenant/property/user/app/credential version and sessionValid=true, mustChangePassword=false before activation. Existing active editor membership remains unchanged. No password reset, customer role expansion or SIL configuration change.
+- Installed an independent Worker review secret, distinct from customer/fixture secrets; never printed or committed. Local ignored credential file is restricted to the current Windows operator. Credential remains an operator-service credential, not separate human SIL operator login or two-person approval.
+- Actual production CLI enrollment succeeded twice and reused a single reviewed market at revision 0. CLI list returned empty queue. Customer service credential rejected by review endpoint (403); forged tenant input rejected (400); direct ingestion rejected (403). Production contains one ABC reviewed market, zero findings, zero review rows and zero ingestion batches. No synthetic fixtures or fabricated approvals were inserted.
+- Before/after full-row comparisons prove ABC profile and membership are identical; profile revision remains 3. Browser on the promoted production alias opens ABC Hotel using its existing real SIL-backed session, shows no findings, and displays the preserved name/address/timezone/radius. No profile write was performed. This pass revalidated an existing real session; it did not perform another password-entry login.
+- Fresh 78/78 tests and TypeScript passed; Vercel production build passed. Prior isolated hosted acceptance covered actual stage/report/approve/reject, stale/retry/isolation, CSV and persistence. Production stage/approval publication is intentionally untested until genuine prepared evidence exists; do not infer it from enrollment/list HTTP success alone.
+- Live research, paid calls and notifications remain disabled; synthetic resources remain separate and their operator gates remain closed. Next: prepare a source-backed batch for ABC Hotel, stage it with current revision 0, inspect its evidence/change report, then explicitly approve it. No finding should appear until that review occurs.
