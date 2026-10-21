@@ -579,3 +579,52 @@ test("SIL redirects fail closed without following credentials to another origin"
     status: 503,
   });
 });
+
+test("name-only customer draft persists after logout/login without research defaults", async () => {
+  const db = setup();
+  try {
+    const store = new CustomerStore(adapter(db), auth());
+    const first = await store.login("draft@example.com", "test", "test");
+    const input = customerMutation.parse({
+      revision: 0,
+      profile: { name: "ABC Hotel" },
+      coverage: emptyCoverage,
+    });
+    await store.update(first.token, input);
+    await store.logout(first.token);
+    const second = await store.login("draft@example.com", "test", "test");
+    const state = await store.workspace(second.token);
+    assert.equal(state.profile!.name, "ABC Hotel");
+    assert.equal(state.profile!.website, "");
+    assert.equal(state.profile!.radiusMiles, null);
+    assert.deepEqual(state.profile!.scheduleDays, []);
+    assert.equal(state.profile!.confirmed, false);
+    assert.equal(
+      state.researchEnabled ||
+        state.paidCallsEnabled ||
+        state.notificationsEnabled,
+      false,
+    );
+    for (const patch of [
+      { name: "" },
+      { name: "   " },
+      { website: "javascript:alert(1)" },
+      { timezone: "Invalid/Zone" },
+      { radiusMiles: 0 },
+      { tenantId: "forged" },
+    ])
+      assert.throws(() =>
+        customerMutation.parse({
+          ...input,
+          profile: { name: "ABC Hotel", ...patch },
+        }),
+      );
+    assert.deepEqual(
+      customerMutation.parse({ revision: 0, profile, coverage: emptyCoverage })
+        .profile,
+      profile,
+    );
+  } finally {
+    db.close();
+  }
+});

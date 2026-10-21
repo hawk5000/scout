@@ -1,8 +1,11 @@
 "use client";
 import { useState } from "react";
 import { Brand } from "./ui";
-import { categories, categoryNames, type Profile } from "@/lib/contracts";
-import type { CustomerWorkspace } from "@/customer/contracts";
+import { categories, categoryNames } from "@/lib/contracts";
+import type {
+  CustomerWorkspace,
+  CustomerDraftProfile,
+} from "@/customer/contracts";
 export function CustomerLogin() {
   const [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
@@ -96,22 +99,24 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
         .split("\n")
         .map((s) => s.trim())
         .filter(Boolean);
-    const profile: Profile = {
+    const profile: CustomerDraftProfile = {
       name: String(f.get("name")),
       website: String(f.get("website")),
       address: String(f.get("address")),
       timezone: String(f.get("timezone")),
       confirmed: f.get("confirmed") === "on",
       marketCenter: String(f.get("marketCenter")),
-      radiusMiles: Number(f.get("radiusMiles")),
+      radiusMiles: String(f.get("radiusMiles") || "").trim()
+        ? Number(f.get("radiusMiles"))
+        : null,
       includedPlaces: list("includedPlaces"),
       excludedPlaces: list("excludedPlaces"),
       priorities: list("priorities"),
       exclusions: list("exclusions"),
       categories: categories.filter((c) => f.get(c) === "on"),
       recipients: workspace.profile?.recipients ?? [],
-      scheduleDays: workspace.profile?.scheduleDays ?? ["Tuesday", "Friday"],
-      scheduleTime: workspace.profile?.scheduleTime ?? "09:00",
+      scheduleDays: workspace.profile?.scheduleDays ?? [],
+      scheduleTime: workspace.profile?.scheduleTime ?? "",
     };
     try {
       const r = await fetch("/api/workspace", {
@@ -181,8 +186,8 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
         <section>
           <h1>Your hotel profile.</h1>
           <p>
-            Set your hotel’s market boundaries and research priorities. Saving
-            does not start research or schedule updates.
+            Only Hotel name is required to save a draft. Add other details when
+            you are ready. Saving does not start research or schedule updates.
           </p>
           <form
             key={workspace.revision}
@@ -206,7 +211,7 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
                   <input
                     name={name}
                     defaultValue={value}
-                    required
+                    required={name === "name"}
                     maxLength={300}
                     placeholder={
                       name === "timezone" ? "America/Los_Angeles" : undefined
@@ -221,8 +226,7 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
                   type="number"
                   min={1}
                   max={100}
-                  defaultValue={profile?.radiusMiles ?? 10}
-                  required
+                  defaultValue={profile?.radiusMiles ?? ""}
                 />
               </label>
               {(
@@ -246,7 +250,6 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
                   <textarea
                     name={name}
                     defaultValue={profile?.[name].join("\n") ?? ""}
-                    required={name === "includedPlaces"}
                   />
                 </label>
               ))}
@@ -256,7 +259,7 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
                     <input
                       name={c}
                       type="checkbox"
-                      defaultChecked={profile?.categories.includes(c) ?? true}
+                      defaultChecked={profile?.categories.includes(c) ?? false}
                     />
                     {categoryNames[c]}
                   </label>
@@ -311,7 +314,7 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
           <p>
             {profile
               ? "Your hotel profile is saved. Market research has not been activated."
-              : "Start by confirming your hotel profile and market boundaries."}
+              : "Start by saving your hotel name. Add market details later."}
           </p>
           <div className="empty-state">
             <h2>

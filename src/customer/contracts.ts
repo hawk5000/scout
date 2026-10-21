@@ -10,10 +10,35 @@ export const coverageSchema = z
     event: z.string().max(2000),
   })
   .strict();
+// Draft storage is separate from the complete research-brief contract.
+export const customerDraftProfile = profileSchema.extend({
+  website: profileSchema.shape.website.or(z.literal("")).default(""),
+  address: profileSchema.shape.address.or(z.literal("")).default(""),
+  timezone: profileSchema.shape.timezone.or(z.literal("")).default(""),
+  marketCenter: profileSchema.shape.marketCenter.or(z.literal("")).default(""),
+  radiusMiles: profileSchema.shape.radiusMiles.nullable().default(null),
+  includedPlaces: profileSchema.shape.includedPlaces.element
+    .array()
+    .max(30)
+    .default([]),
+  excludedPlaces: profileSchema.shape.excludedPlaces.default([]),
+  categories: z
+    .array(z.enum(categories))
+    .max(3)
+    .refine((v) => new Set(v).size === v.length)
+    .default([]),
+  priorities: profileSchema.shape.priorities.default([]),
+  exclusions: profileSchema.shape.exclusions.default([]),
+  recipients: profileSchema.shape.recipients.default([]),
+  scheduleDays: profileSchema.shape.scheduleDays.or(z.tuple([])).default([]),
+  scheduleTime: profileSchema.shape.scheduleTime.or(z.literal("")).default(""),
+  confirmed: z.boolean().default(false),
+});
+export type CustomerDraftProfile = z.infer<typeof customerDraftProfile>;
 export const customerMutation = z
   .object({
     revision: z.number().int().nonnegative(),
-    profile: profileSchema,
+    profile: customerDraftProfile,
     coverage: coverageSchema,
   })
   .strict();
@@ -24,7 +49,7 @@ export const customerWorkspace = z
     propertyName: z.string(),
     role: z.enum(["viewer", "editor", "admin"]),
     revision: z.number().int().nonnegative(),
-    profile: profileSchema.nullable(),
+    profile: customerDraftProfile.nullable(),
     coverage: coverageSchema,
     findings: z.array(z.never()),
     researchEnabled: z.literal(false),

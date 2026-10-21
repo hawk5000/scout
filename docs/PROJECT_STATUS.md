@@ -341,3 +341,19 @@ Next: onboard an approved real hotel through the verified SIL/local membership p
 - Remote D1 read-only verification confirmed two properties, one saved profile, revision 2 and two corresponding workspace audit records. Final 320px/390px screenshots confirmed the corrected customer notice and no overflow.
 - Repeated acceptance sign-ins reached the intended per-account rate limit (429). The test waited for the normal 15-minute window to expire; no limit was reset or bypassed. Fresh sign-in then succeeded.
 - The SQLite test adapter now reproduces D1 trigger-inclusive change counts, and Worker tests explicitly reject a non-SCOUT app key. Final regression: 59 tests, typecheck and formatting passed. This final follow-up changes tests/documentation only; deployed runtime remains the verified account foundation.
+
+
+## 2026-10-21 — ABC Hotel local onboarding
+
+- Verified the supplied ABC Hotel tenant/property/user/email against live SIL: active tenant, property and user, GM property access, enabled SCOUT entitlement and active mapping. The SCOUT service scope now passes SIL validation. No SIL configuration or credential was changed by this pass.
+- Used customer:prepare-access to generate reviewed local assignment SQL. Added a conflict-ignore guard to the operator SQL for the exact membership key, preserving existing roles, activation flags and profile data. Applied it to dedicated SCOUT D1 and replayed it: second application wrote zero rows; one active ABC Hotel property and one active editor membership exist.
+- Actual deployed sign-in succeeded using the credentials already entered by the owner in Chrome; the UI opened ABC Hotel and displayed its customer workspace with research disabled. No credential value was inspected, copied, reset or persisted. Deployed app revision remains 977794b; no runtime code fix or deployment was needed.
+- Persistence acceptance is pending owner-supplied required profile details (website, address, timezone, market center and included places). Profile form is open for entry. Do not substitute invented hotel details or claim save/sign-out/sign-in persistence until the full browser sequence is complete.
+- Live research, paid calls and notifications remain disabled.
+
+## 2026-10-21 — Name-only customer draft profile
+
+- Added a separate customer draft schema: Hotel name is the only required profile field. Blank optional website/address/timezone/market fields, empty lists and a null radius are retained honestly; no research schedule or market radius is invented. Supplied website/timezone/radius values remain validated. The complete research-brief schema remains unchanged.
+- Customer form now requires only name and explains draft saving. Worker and Vercel use the same draft contract. Existing complete profiles remain compatible; auth, role, revision and tenant isolation checks are unchanged.
+- Local verification: 60 tests passed, including name-only save/logout/login persistence, invalid optional values and complete-profile compatibility. Typecheck, production build and 108 HTTP assertions passed. Deployed ABC Hotel save/re-login verification follows deployment.
+- Live research, paid calls and notifications remain disabled.
