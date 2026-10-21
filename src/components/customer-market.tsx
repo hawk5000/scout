@@ -144,7 +144,7 @@ export function CustomerMarket({
     <>
       {workspace.marketMode === "synthetic" && (
         <div className="notice">
-          Demo findings � fictional examples only. All findings and sources in
+          Demo findings - fictional examples only. All findings and sources in
           this test workspace are synthetic.
         </div>
       )}
@@ -286,16 +286,20 @@ export function CustomerMarket({
                 <strong>{f.title}</strong>
               </label>
               <p>
-                {f.categories.join(" · ")} · {f.location} · {f.facts.status}
+                {f.categories.map((c) => categoryLabels[c]).join(" / ")} ·{" "}
+                {f.location} · {f.facts.status}
               </p>
               <p className="finding-summary">{f.summary}</p>
               <p>
-                <strong>Potential hotel relevance · inference:</strong>{" "}
+                <strong>Why it may matter to {hotelName}:</strong>{" "}
                 {f.assessment.inference ||
                   "Potential hotel business has not been assessed."}
               </p>
               <p>
-                <DateText value={f.facts.start} /> · {f.quality}
+                <DateText value={f.facts.start} /> /{" "}
+                {f.quality === "Conflicting evidence"
+                  ? "Sources disagree"
+                  : "Sources provided"}
                 {f.saved ? " · Saved" : ""}
                 {f.dismissed ? " · Dismissed" : ""}
               </p>
@@ -390,7 +394,7 @@ export function CustomerMarket({
                 {e.publisher}
               </a>
               <p>
-                Published <DateText value={e.publishedAt} /> · Retrieved{" "}
+                Published <DateText value={e.publishedAt} /> · Collected{" "}
                 <DateText value={e.retrievedAt} />
               </p>
               <ul>

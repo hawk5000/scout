@@ -285,7 +285,7 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
           </h1>
           <p>
             {tab === "updates"
-              ? "See what�s new, what changed and which findings are worth another look."
+              ? "See what's new, what changed and which findings are worth another look."
               : "Local companies, projects and events that may bring business to your hotel. Save useful findings or export them to your sales tools."}
           </p>
           <CustomerMarket
