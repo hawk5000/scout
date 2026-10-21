@@ -6,7 +6,11 @@ workers_dev = true
 [vars]
 CUSTOMER_ENABLED = "true"
 INGESTION_ENABLED = "false"
-REVIEW_ENABLED = "false"
+REVIEW_ENABLED = "true"
+REVIEW_TENANT_ID = "tenant_abc"
+REVIEW_PROPERTY_ID = "property_abc_abc_hotel"
+REVIEW_DATA_MODE = "reviewed"
+REVIEW_ACTOR = "scout-abc-review-operator"
 SIL_ORIGIN = "https://sil-intelligence-layer.vercel.app"
 SIL_APP_KEY = "scout"
 [[d1_databases]]
