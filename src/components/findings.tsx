@@ -601,7 +601,11 @@ export function FindingDetail({
             {f.evidence.map((e) => (
               <article key={e.id} className="evidence">
                 <h3>{e.publisher}</h3>
-                <p>{e.claim}</p>
+                <p>
+                  {e.claim === f.summary
+                    ? "Supports the observation above."
+                    : e.claim}
+                </p>
                 <a
                   href={e.url}
                   target="_blank"
