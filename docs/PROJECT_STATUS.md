@@ -489,3 +489,8 @@ Final browser persistence check passed: after sign-out and fresh fixture sign-in
 - ABC Hotel has not been edited; all existing values and research-off settings remain preserved.
 
 Production verification: application `6818cc6`, Vercel deployment `dpl_CAohVALMGkAnvR7cmpQ2eGs4gAtS` Ready and production alias updated; Worker `f9af7400-5233-457d-ab5c-7fc58bda484c` supports structured address storage. Browser confirmed eight hotel/address inputs, zero form checkboxes, only name required, legacy address visible, no coverage/research-settings fields. Narrow responsive layout had no horizontal overflow (browser-reported 585 CSS pixels with current zoom). Full production ABC profile and membership matched baseline exactly, profile revision 3; no production save or invented address performed. Local persistence tests cover the new address save path; hosted real-address save awaits owner entry. Live research, paid calls and notifications remain disabled.
+
+
+## 2026-10-21 — Hotel identity and profile wording
+
+Made the active hotel prominent throughout the customer workspace: Your hotel label, larger saved hotel name, saved locality, hotel-specific profile heading and findings/blueprint/update titles. Identity follows the authenticated workspace and saved profile, never a hard-coded ABC Hotel label. Narrow screens give the hotel identity its own row. No profile values, access, research, paid-call or notification settings changed. Typecheck and production build passed; this is a presentation-only change.

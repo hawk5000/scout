@@ -2949,3 +2949,45 @@ details p {
 .profile-address-grid {
   row-gap: 18px;
 }
+
+.customer-hotel-identity {
+  display: grid;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  margin-left: 32px;
+}
+.customer-hotel-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #52675e;
+}
+.customer-hotel-identity strong {
+  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+  line-height: 1.2;
+  color: #183e32;
+  overflow-wrap: anywhere;
+}
+.customer-hotel-location {
+  font-size: 0.95rem;
+  color: #52675e;
+  overflow-wrap: anywhere;
+}
+.customer-shell h1 {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .customer-header {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .customer-hotel-identity {
+    order: 3;
+    flex-basis: 100%;
+    margin-left: 0;
+    border-top: 1px solid #d9ddd5;
+    padding-top: 16px;
+  }
+}

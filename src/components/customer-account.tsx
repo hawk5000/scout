@@ -114,11 +114,27 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
     }
   }
   const profile = workspace.profile;
+  const hotelName = profile?.name || workspace.propertyName;
+  const hotelLocation = profile?.postalAddress
+    ? [
+        profile.postalAddress.city,
+        profile.postalAddress.region,
+        profile.postalAddress.country,
+      ]
+        .filter(Boolean)
+        .join(", ")
+    : profile?.address;
   return (
     <main id="main" className="customer-shell">
       <header className="customer-header">
         <Brand />
-        <span>{workspace.propertyName}</span>
+        <div className="customer-hotel-identity" aria-label="Current hotel">
+          <span className="customer-hotel-label">Your hotel</span>
+          <strong>{hotelName}</strong>
+          {hotelLocation && (
+            <span className="customer-hotel-location">{hotelLocation}</span>
+          )}
+        </div>
         <button className="button secondary" disabled={busy} onClick={logout}>
           Sign out
         </button>
@@ -157,10 +173,11 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
       <p role="status">{message}</p>
       {tab === "profile" ? (
         <section>
-          <h1>Your hotel profile.</h1>
+          <p className="eyebrow">Hotel profile</p>
+          <h1>{hotelName}</h1>
           <p>
-            Your hotel details help us focus findings on the right location.
-            Only hotel name is required.
+            Keep {hotelName}’s details up to date so findings focus on the area
+            around your hotel. Only hotel name is required.
           </p>
           <form
             key={workspace.revision}
@@ -270,16 +287,16 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
           <p className="eyebrow">SCOUT by SalesHospitality</p>
           <h1>
             {tab === "overview"
-              ? "Your market workspace."
+              ? `Findings for ${hotelName}`
               : tab === "blueprint"
-                ? "Your market blueprint."
+                ? `${hotelName} market blueprint`
                 : tab === "updates"
-                  ? "Your market updates."
+                  ? `Updates for ${hotelName}`
                   : categoryNames[tab as (typeof categories)[number]]}
           </h1>
           <p>
             {profile
-              ? "Your hotel profile is saved. Market research has not been activated."
+              ? `${hotelName}’s profile is saved. Market research has not been activated.`
               : "Start by saving your hotel name and address."}
           </p>
           <CustomerMarket
