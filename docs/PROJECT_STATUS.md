@@ -334,3 +334,10 @@ The account/persistent-profile foundation is activated for two clearly labeled i
 Customer findings ingestion, evidence storage integration, researched finding save/dismiss/export, live research and twice-weekly execution are not activated. Research, paid API calls and notifications remain disabled; no scheduler, provider or sender binding was created. The public synthetic demo remains separate.
 
 Next: onboard an approved real hotel through the verified SIL/local membership process; establish retention, operational monitoring and backup policy; rehearse recovery into an isolated remote target. Any real research integration or notification work requires a separate explicit authorization and provider/cost gates. The SIL/Worker/D1 dependency blockers from the local pass are resolved; commercial/live-research readiness is not claimed.
+
+### Final redeployment recheck
+
+- Vercel application revision `c1bf890` and SIL revision `304029a` are Ready. After redeploying both SCOUT Vercel and its Worker, the existing session still read the saved profile and coverage at revision 2. A fresh browser login, persistent profile read and logout also passed. Direct unauthenticated Worker access returned 403.
+- Remote D1 read-only verification confirmed two properties, one saved profile, revision 2 and two corresponding workspace audit records. Final 320px/390px screenshots confirmed the corrected customer notice and no overflow.
+- Repeated acceptance sign-ins reached the intended per-account rate limit (429). The test waited for the normal 15-minute window to expire; no limit was reset or bypassed. Fresh sign-in then succeeded.
+- The SQLite test adapter now reproduces D1 trigger-inclusive change counts, and Worker tests explicitly reject a non-SCOUT app key. Final regression: 59 tests, typecheck and formatting passed. This final follow-up changes tests/documentation only; deployed runtime remains the verified account foundation.

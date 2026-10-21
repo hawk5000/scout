@@ -35,13 +35,12 @@ function adapter(db: DatabaseSync): Database {
             null) as T | null;
         },
         async run() {
-          return {
-            meta: {
-              changes: Number(
-                db.prepare(sql).run(...(values as never[])).changes,
-              ),
-            },
-          };
+          // D1 reports trigger writes in meta.changes, unlike SQLite's run().changes.
+          const total = () =>
+            Number(db.prepare("SELECT total_changes() AS n").get()!.n);
+          const before = total();
+          db.prepare(sql).run(...(values as never[]));
+          return { meta: { changes: total() - before } };
         },
       };
       return statement;
@@ -384,6 +383,11 @@ test("worker and input boundaries fail closed without credentials or for browser
           : {},
         body: JSON.stringify(body),
       });
+    assert.equal(
+      (await worker.fetch(request({}), { ...env, SIL_APP_KEY: "another-app" }))
+        .status,
+      503,
+    );
     assert.equal(
       (await worker.fetch(request({}), { ...env, CUSTOMER_ENABLED: "false" }))
         .status,
