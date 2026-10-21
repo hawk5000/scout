@@ -57,7 +57,7 @@ export class MarketIngestion {
     private db: Database,
     private now: () => number = Date.now,
   ) {}
-  async ingest(scope: IngestionScope, raw: unknown) {
+  async ingest(scope: IngestionScope, raw: unknown, previewOnly = false) {
     const input = ingestionSchema.parse(raw);
     if (
       scope.dataMode === "synthetic" &&
@@ -110,6 +110,14 @@ export class MarketIngestion {
         "Market storage limit reached; archive review required.",
         413,
       );
+    if (previewOnly)
+      return {
+        batchKey: input.batchKey,
+        replayed: false,
+        revision: input.expectedRevision + 1,
+        document: result,
+        payloadHash: hash,
+      };
     try {
       await this.db
         .prepare(

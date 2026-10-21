@@ -10,7 +10,14 @@ import { SilAuth } from "../../src/customer/sil";
 import { CustomerStore, digest, type Database } from "../../src/customer/store";
 import { findingStateMutation } from "../../src/customer/market-contracts";
 import { MarketIngestion } from "../../src/customer/ingestion";
+import { ReviewedImports } from "../../src/customer/reviewed-imports";
 export interface Env {
+  REVIEW_ENABLED?: string;
+  REVIEW_TOKEN?: string;
+  REVIEW_TENANT_ID?: string;
+  REVIEW_PROPERTY_ID?: string;
+  REVIEW_ACTOR?: string;
+  REVIEW_DATA_MODE?: string;
   INGESTION_ENABLED?: string;
   INGESTION_TOKEN?: string;
   INGESTION_TENANT_ID?: string;
@@ -68,6 +75,37 @@ export async function handleCustomer(
       env.SERVICE_TOKEN.length < 32
     )
       throw new CustomerError("Customer access is not configured.");
+    if (new URL(request.url).pathname === "/reviews") {
+      if (request.method !== "POST" || new URL(request.url).search)
+        throw new CustomerError("Not found.", 404);
+      if (
+        env.REVIEW_ENABLED !== "true" ||
+        !env.REVIEW_TOKEN ||
+        env.REVIEW_TOKEN.length < 32 ||
+        env.REVIEW_TOKEN === env.SERVICE_TOKEN ||
+        env.REVIEW_TOKEN === env.INGESTION_TOKEN ||
+        !env.REVIEW_TENANT_ID ||
+        !env.REVIEW_PROPERTY_ID ||
+        !env.REVIEW_ACTOR ||
+        !["reviewed", "synthetic"].includes(env.REVIEW_DATA_MODE ?? "")
+      )
+        throw new CustomerError("Reviewed imports are disabled.", 403);
+      if (
+        (await digest(request.headers.get("authorization") ?? "")) !==
+        (await digest(`Bearer ${env.REVIEW_TOKEN}`))
+      )
+        throw new CustomerError("Access denied.", 403);
+      const result = await new ReviewedImports(env.DB).execute(
+        {
+          tenantId: env.REVIEW_TENANT_ID,
+          propertyId: env.REVIEW_PROPERTY_ID,
+          actor: env.REVIEW_ACTOR,
+          dataMode: env.REVIEW_DATA_MODE as "reviewed" | "synthetic",
+        },
+        await readJson(request, 256000),
+      );
+      return Response.json(result, { headers: customerHeaders });
+    }
     if (new URL(request.url).pathname === "/ingestion") {
       if (request.method !== "POST" || new URL(request.url).search)
         throw new CustomerError("Not found.", 404);
@@ -86,6 +124,11 @@ export async function handleCustomer(
         (await digest(`Bearer ${env.INGESTION_TOKEN}`))
       )
         throw new CustomerError("Access denied.", 403);
+      if (env.INGESTION_DATA_MODE === "reviewed")
+        throw new CustomerError(
+          "Reviewed findings require staged approval through /reviews.",
+          403,
+        );
       const result = await new MarketIngestion(env.DB).ingest(
         {
           tenantId: env.INGESTION_TENANT_ID,
@@ -136,6 +179,11 @@ export async function handleCustomer(
               : await store.workspace(input.token);
     return Response.json(result, { headers: customerHeaders });
   } catch (error) {
+    if (String(error).includes("review_retention_limit"))
+      error = new CustomerError(
+        "Review retention limit reached. Archive review is required before more imports.",
+        413,
+      );
     return Response.json(
       {
         error:

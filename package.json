@@ -18,7 +18,8 @@
     "test:http": "node scripts/http-smoke.mjs",
     "format:check": "prettier --check src tests scripts cloudflare/customer next.config.ts",
     "customer:prepare-access": "tsx scripts/customer-prepare-access.ts",
-    "customer:fixtures": "tsx scripts/customer-market-fixtures.ts"
+    "customer:fixtures": "tsx scripts/customer-market-fixtures.ts",
+    "customer:review": "tsx scripts/reviewed-import.ts"
   },
   "dependencies": {
     "lucide-react": "1.61.0",

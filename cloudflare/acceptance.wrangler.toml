@@ -4,6 +4,11 @@ compatibility_date = "2026-10-21"
 account_id = "c3f560c91d3ab485b7ecfdd40e94da78"
 workers_dev = true
 [vars]
+REVIEW_ENABLED = "false"
+REVIEW_TENANT_ID = "fixture_tenant"
+REVIEW_PROPERTY_ID = "fixture_hotel"
+REVIEW_DATA_MODE = "synthetic"
+REVIEW_ACTOR = "fixture_acceptance_operator"
 INGESTION_ENABLED = "false"
 INGESTION_TENANT_ID = "fixture_tenant"
 INGESTION_PROPERTY_ID = "fixture_hotel"
@@ -13,4 +18,5 @@ ACCEPTANCE_EXPIRES_AT = "2026-10-22T23:00:00.000Z"
 binding = "DB"
 database_name = "scout-findings-acceptance"
 database_id = "ccef2c7a-8e1d-4b32-87ba-27ac15bd7a35"
+
 

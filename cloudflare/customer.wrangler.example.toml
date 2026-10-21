@@ -14,3 +14,11 @@ INGESTION_ENABLED = "false"
 # Configure SERVICE_TOKEN and SIL_SERVICE_TOKEN as secrets, never here.
 # Add an authorized D1 binding named DB and migrations_dir = "migrations".
 # No cron triggers, queues, AI bindings or notification configuration.
+
+# Reviewed imports are separate from direct synthetic ingestion and off by default.
+REVIEW_ENABLED = "false"
+# Set REVIEW_TOKEN via secret storage; it must differ from both SERVICE_TOKEN
+# and INGESTION_TOKEN. Set REVIEW_ACTOR to the accountable operator identity,
+# REVIEW_TENANT_ID/REVIEW_PROPERTY_ID to a verified scope, REVIEW_DATA_MODE=reviewed.
+# Apply 0004_reviewed_imports.sql before enabling. Use isolated fixture resources
+# and REVIEW_DATA_MODE=synthetic for acceptance; never production customer scopes.
