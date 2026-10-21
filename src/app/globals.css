@@ -2923,3 +2923,29 @@ details p {
     flex-direction: column;
   }
 }
+
+/* Compact hotel facts; research configuration stays outside customer onboarding. */
+.customer-form .profile-address-heading {
+  font-size: 1.3rem;
+  margin: 1.5rem 0 0.5rem;
+}
+.profile-address-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1.25rem;
+}
+.profile-existing-address {
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .profile-address-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.customer-form label {
+  margin-bottom: 0;
+}
+.profile-address-grid {
+  row-gap: 18px;
+}

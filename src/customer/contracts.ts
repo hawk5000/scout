@@ -12,9 +12,20 @@ export const coverageSchema = z
   })
   .strict();
 // Draft storage is separate from the complete research-brief contract.
+export const postalAddressSchema = z
+  .object({
+    line1: z.string().trim().max(150),
+    line2: z.string().trim().max(150),
+    city: z.string().trim().max(100),
+    region: z.string().trim().max(100),
+    postalCode: z.string().trim().max(30),
+    country: z.string().trim().max(100),
+  })
+  .strict();
 export const customerDraftProfile = profileSchema.extend({
   website: profileSchema.shape.website.or(z.literal("")).default(""),
-  address: profileSchema.shape.address.or(z.literal("")).default(""),
+  address: z.string().trim().max(1000).default(""),
+  postalAddress: postalAddressSchema.optional(),
   timezone: profileSchema.shape.timezone.or(z.literal("")).default(""),
   marketCenter: profileSchema.shape.marketCenter.or(z.literal("")).default(""),
   radiusMiles: profileSchema.shape.radiusMiles.nullable().default(null),
