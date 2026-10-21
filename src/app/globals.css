@@ -2762,3 +2762,134 @@ details p {
     overflow: visible;
   }
 }
+
+/* Findings-first customer reading order. */
+.finding-cards {
+  display: grid;
+  gap: 18px;
+}
+.finding-card {
+  padding: 24px;
+  border: 1px solid var(--line, #d9ddd4);
+  border-radius: 8px;
+  background: #fffefa;
+  min-width: 0;
+}
+.finding-card-heading,
+.finding-card-footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.finding-card h2 {
+  font-size: 25px;
+  margin: 6px 0;
+}
+.finding-card h3 {
+  font:
+    600 14px/1.5 Arial,
+    sans-serif;
+  margin: 0 0 6px;
+}
+.finding-card h3 small {
+  font-weight: 400;
+}
+.finding-card p {
+  margin: 6px 0;
+}
+.finding-card-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 18px 0;
+  line-height: 1.65;
+}
+.finding-select {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+.finding-select input {
+  width: 18px;
+  height: 18px;
+}
+.finding-change {
+  border-left: 3px solid #887438;
+  padding: 8px 12px;
+  background: #f5f3ea;
+}
+.finding-unknowns {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.finding-card-footer {
+  margin-top: 18px;
+  align-items: center;
+}
+.finding-card-footer > span:last-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.activity-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+}
+.activity-filter select {
+  width: auto;
+  max-width: 100%;
+}
+.coverage-disclosure {
+  margin: 28px 0;
+  padding: 18px;
+  border-top: 1px solid #d9ddd4;
+}
+.coverage-disclosure summary,
+.workspace-tools summary {
+  cursor: pointer;
+}
+.workspace-tools {
+  margin: 24px 12px;
+  font-size: 13px;
+}
+.workspace-tools a {
+  display: block;
+  padding: 12px 0;
+}
+.detail-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+.detail-grid > aside {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 700px) {
+  .finding-card {
+    padding: 16px;
+  }
+  .finding-card h2 {
+    font-size: 22px;
+  }
+  .finding-card-body,
+  .detail-grid > aside {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .activity-filter {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .finding-card-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .finding-card-footer .quality {
+    white-space: normal;
+  }
+}

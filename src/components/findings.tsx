@@ -132,97 +132,111 @@ export function FindingTable({
   hideScout?: boolean;
 }) {
   return (
-    <div className="table-scroll">
-      <table className="findings-table">
-        <thead>
-          <tr>
-            {onSelect && (
-              <th>
-                <span className="sr-only">Select</span>
-              </th>
-            )}
-            <th>Finding / location</th>
-            {!hideScout && <th>Scout</th>}
-            <th>Sample observation</th>
-            <th>Relevant dates</th>
-            <th>Review</th>
-          </tr>
-        </thead>
-        <tbody>
-          {findings.map((f) => (
-            <tr key={f.id} className={f.dismissed ? "dismissed-row" : ""}>
-              {onSelect && (
-                <td>
-                  <input
-                    type="checkbox"
-                    aria-label={`Select ${f.title}`}
-                    checked={selected.includes(f.id)}
-                    onChange={() => onSelect(f.id)}
-                  />
-                </td>
-              )}
-              <td>
-                <Link href={`/demo/findings/${f.id}`} className="finding-name">
-                  {f.title}
-                </Link>
-                <small>{f.location}</small>
-                <div className="record-flags">
-                  {f.saved && (
-                    <span>
-                      <Bookmark size={12} />
-                      Saved
-                    </span>
+    <div className="finding-cards">
+      {findings.map((f) => {
+        const change = [...f.versions]
+          .filter((v) => v.material && v.before !== null)
+          .sort((a, b) => b.at.localeCompare(a.at))[0];
+        return (
+          <article
+            key={f.id}
+            className={`finding-card ${f.dismissed ? "dismissed-row" : ""}`}
+          >
+            <div className="finding-card-heading">
+              <div>
+                {onSelect && (
+                  <label className="finding-select">
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${f.title}`}
+                      checked={selected.includes(f.id)}
+                      onChange={() => onSelect(f.id)}
+                    />{" "}
+                    Select
+                  </label>
+                )}
+                <h2>
+                  <Link href={`/demo/findings/${f.id}`}>{f.title}</Link>
+                </h2>
+                <p className="finding-place">
+                  {f.location}{" "}
+                  {!hideScout && (
+                    <>
+                      {" "}
+                      · <CategoryTag category={f.category} />
+                    </>
                   )}
-                  {f.dismissed && <span>Dismissed</span>}
-                </div>
-              </td>
-              {!hideScout && (
-                <td>
-                  <CategoryTag category={f.category} />
-                </td>
-              )}
-              <td>
-                <p className="finding-summary">{f.summary}</p>
-                <p className="finding-relevance">
-                  <strong>Potential hotel relevance · inference</strong>
-                  <span>
-                    {f.inference?.trim() || "Hotel relevance not assessed."}
-                  </span>
                 </p>
-                <span
-                  className={`quality ${f.quality === "Sample evidence" ? "" : "attention"}`}
-                >
-                  {f.quality}
-                </span>
-              </td>
-              <td>
-                <DateText value={f.start} />
-                <small>
-                  <span className="tag neutral">{f.status}</span>
-                </small>
-              </td>
-              <td>
-                <ArrowLink href={`/demo/findings/${f.id}`}>Details</ArrowLink>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </div>
+              <span className="tag neutral">{f.status}</span>
+            </div>
+            <p className="finding-dates">
+              <strong>Dates:</strong> <DateText value={f.start} />
+              {f.end && f.end !== f.start && (
+                <>
+                  {" "}
+                  – <DateText value={f.end} />
+                </>
+              )}
+              {f.start && !f.end && " · End unknown"}
+            </p>
+            <div className="finding-card-body">
+              <div>
+                <h3>What happened</h3>
+                <p>{f.summary}</p>
+              </div>
+              <div>
+                <h3>
+                  Potential hotel relevance <small>· inference</small>
+                </h3>
+                <p>{f.inference?.trim() || "Hotel relevance not assessed."}</p>
+              </div>
+            </div>
+            <p className="finding-unknowns">
+              <strong>Still unknown:</strong>{" "}
+              {f.unknowns.join("; ") || "No further assessment recorded."}
+            </p>
+            {change && (
+              <p className="finding-change">
+                <strong>
+                  Latest change · <DateText value={change.at} />:
+                </strong>{" "}
+                {change.summary}
+              </p>
+            )}
+            <div className="finding-card-footer">
+              <span className="quality">
+                {f.quality} · Checked <DateText value={f.lastCheckedAt} />
+              </span>
+              <span>
+                {f.saved && "Saved · "}
+                {f.dismissed && "Dismissed · "}
+                <ArrowLink href={`/demo/findings/${f.id}`}>
+                  Details &amp; actions
+                </ArrowLink>
+              </span>
+            </div>
+          </article>
+        );
+      })}
     </div>
   );
 }
+
 export function Blueprint({
   findings,
   notify,
   category,
   exportMode = false,
   runs = [],
+  initialView = "all",
 }: {
   findings: FindingView[];
   notify: Notify;
   category?: Category;
   exportMode?: boolean;
   runs?: ResearchRun[];
+  initialView?: "all" | "saved";
 }) {
   const [filters, setFilters] = useState<Filters>({
       q: "",
@@ -231,7 +245,8 @@ export function Blueprint({
       quality: "all",
     }),
     [selected, setSelected] = useState<string[]>([]);
-  const [view, setView] = useState("all");
+  const [view, setView] = useState<string>(initialView);
+  const [activity, setActivity] = useState("current");
   const [sort, setSort] = useState<"changed" | "date">("changed");
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
@@ -252,23 +267,38 @@ export function Blueprint({
         ? "updated"
         : query.get("view") === "saved"
           ? "saved"
-          : "all",
+          : initialView,
     );
-  }, [category]);
+    if (
+      query.get("state") === "all" ||
+      query.get("view") === "updated" ||
+      initialView === "saved"
+    )
+      setActivity("all");
+  }, [category, initialView]);
   const changed = latestMaterialUpdate(runs, findings);
   const list = useMemo(
     () =>
       sortFindings(
-        filterFindings(findings, filters).filter((f) =>
-          view === "saved"
-            ? f.saved
-            : view === "updated"
-              ? changed.ids.has(f.id)
-              : true,
-        ),
+        filterFindings(findings, filters)
+          .filter(
+            (f) =>
+              view !== "all" ||
+              activity === "all" ||
+              (activity === "history"
+                ? ["Canceled", "Completed"].includes(f.status)
+                : !["Canceled", "Completed"].includes(f.status)),
+          )
+          .filter((f) =>
+            view === "saved"
+              ? f.saved
+              : view === "updated"
+                ? changed.ids.has(f.id)
+                : true,
+          ),
         sort,
       ),
-    [findings, filters, view, sort, runs],
+    [findings, filters, view, sort, runs, activity],
   );
   const visibleSelected = selected.filter((id) =>
     list.some((f) => f.id === id),
@@ -311,7 +341,11 @@ export function Blueprint({
               document.getElementById(`finding-tab-${name}`)?.focus();
             }}
           >
-            {name[0].toUpperCase() + name.slice(1)}
+            {name === "all"
+              ? "Findings"
+              : name === "updated"
+                ? "Recently changed"
+                : "Saved"}
           </button>
         ))}
       </div>
@@ -349,17 +383,21 @@ export function Blueprint({
           </label>
           {!category && (
             <label>
-              Scout
+              Category
               <select
                 value={filters.category}
                 onChange={(e) =>
                   update("category", e.target.value as Filters["category"])
                 }
               >
-                <option value="all">All scouts</option>
+                <option value="all">All categories</option>
                 {categories.map((c) => (
                   <option key={c} value={c}>
-                    {c[0].toUpperCase() + c.slice(1)}
+                    {c === "corporate"
+                      ? "Companies"
+                      : c === "project"
+                        ? "Projects"
+                        : "Events"}
                   </option>
                 ))}
               </select>
@@ -414,6 +452,24 @@ export function Blueprint({
             </select>
           </label>
         </div>
+        {view === "all" && (
+          <label className="activity-filter">
+            Activity
+            <select
+              value={activity}
+              onChange={(e) => {
+                setActivity(e.target.value);
+                setSelected([]);
+              }}
+            >
+              <option value="current">
+                Current / upcoming · includes unknown dates
+              </option>
+              <option value="history">Completed / canceled</option>
+              <option value="all">All activity</option>
+            </select>
+          </label>
+        )}
         <p className="sort-note">
           {sort === "changed"
             ? "Recorded material changes, newest first. Findings without a recorded change appear last."
@@ -474,8 +530,8 @@ export function Blueprint({
           />
         ) : (
           <Empty title="No findings match these filters">
-            Try a different search, scout or evidence status. Dismissed findings
-            remain available in the Dismissed view.
+            Try a different search, category, activity or evidence status.
+            Dismissed findings remain available in the Dismissed view.
           </Empty>
         )}
       </div>
@@ -503,9 +559,9 @@ export function FindingDetail({
 }) {
   return (
     <>
-      <Link href="/demo/blueprint" className="text-link">
+      <Link href="/demo" className="text-link">
         <ArrowLeft size={16} />
-        Back to blueprint
+        Back to findings
       </Link>
       <PageHeading
         title={f.title}
@@ -556,24 +612,6 @@ export function FindingDetail({
               </div>
             </dl>
           </section>
-          <section className="panel detail-section relevance">
-            <span className="eyebrow">Assessment · inference, not demand</span>
-            <h2>Potential hotel relevance</h2>
-            <p className="lead-copy">
-              {f.inference?.trim() || "Hotel relevance not assessed."}
-            </p>
-            {f.rationale && f.rationale !== f.summary && (
-              <p>
-                <strong>Supporting rationale:</strong> {f.rationale}
-              </p>
-            )}
-            <h3>What we don’t know</h3>
-            <ul className="unknowns">
-              {f.unknowns.map((u) => (
-                <li key={u}>{u}</li>
-              ))}
-            </ul>
-          </section>
           <section className="panel detail-section">
             <h2>Relevant dates</h2>
             <dl className="fact-grid">
@@ -591,6 +629,24 @@ export function FindingDetail({
                 </dd>
               </div>
             </dl>
+          </section>
+          <section className="panel detail-section relevance">
+            <span className="eyebrow">Assessment · inference, not demand</span>
+            <h2>Potential hotel relevance</h2>
+            <p className="lead-copy">
+              {f.inference?.trim() || "Hotel relevance not assessed."}
+            </p>
+            {f.rationale && f.rationale !== f.summary && (
+              <p>
+                <strong>Supporting rationale:</strong> {f.rationale}
+              </p>
+            )}
+            <h3>What we don’t know</h3>
+            <ul className="unknowns">
+              {f.unknowns.map((u) => (
+                <li key={u}>{u}</li>
+              ))}
+            </ul>
           </section>
           <section className="panel detail-section">
             <h2>Sources</h2>

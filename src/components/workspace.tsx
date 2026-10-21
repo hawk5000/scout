@@ -35,13 +35,10 @@ import { SubscriptionControls } from "./subscription";
 import { ResearchReplay } from "./research-replay";
 import type { Scenario } from "@/research/contracts";
 const nav = [
-  { href: "/demo", label: "Overview", icon: LayoutDashboard },
-  { href: "/demo/blueprint", label: "Market Blueprint", icon: FileSearch },
-  { href: "/demo/agents", label: "Research Agents", icon: Compass },
-  { href: "/demo/updates", label: "Updates", icon: Bell },
-  { href: "/demo/exports", label: "Exports", icon: Download },
+  { href: "/demo", label: "Findings", icon: FileSearch },
+  { href: "/demo/saved", label: "Saved", icon: Download },
+  { href: "/demo/updates", label: "What’s changed", icon: Bell },
   { href: "/demo/profile", label: "Hotel Profile", icon: Hotel },
-  { href: "/demo/admin", label: "Administrator setup", icon: Settings2 },
 ];
 export function WorkspaceApp() {
   const path = usePathname();
@@ -182,15 +179,37 @@ export function WorkspaceApp() {
   const segment = path.replace(/^\/demo\/?/, "");
   let content: React.ReactNode;
   const shared = { data, mutate, notify, busy };
-  if (!segment) content = <Overview data={data} />;
-  else if (segment === "blueprint")
+  if (!segment || segment === "blueprint" || segment === "saved")
     content = (
       <>
         <PageHeading
-          title="Your market blueprint."
-          description="The accumulated picture of your market. Search, review and take useful intelligence into your own workflow."
+          title={
+            segment === "saved"
+              ? "Your saved findings."
+              : "Your market findings."
+          }
+          description="What’s happening nearby, when it matters, and what is still unknown."
         />
-        <Blueprint runs={data.runs} findings={data.findings} notify={notify} />
+        <Blueprint
+          key={segment}
+          initialView={segment === "saved" ? "saved" : "all"}
+          runs={data.runs}
+          findings={data.findings}
+          notify={notify}
+        />
+        <details className="coverage-disclosure">
+          <summary>Market coverage and last check</summary>
+          <p>
+            {data.profile.marketCenter} · {data.profile.radiusMiles}-mile
+            radius. Companies, projects and events share this market.
+          </p>
+          <p>
+            Last recorded sample check:{" "}
+            <DateText value={data.runs[0]?.at ?? null} />. No live research is
+            scheduled.
+          </p>
+          <Link href="/demo/agents">Review coverage</Link>
+        </details>
       </>
     );
   else if (segment === "exports")
@@ -224,8 +243,8 @@ export function WorkspaceApp() {
     content = (
       <>
         <PageHeading
-          title="A market that keeps its history."
-          description="Sample cycles show new findings, meaningful changes, quiet results and coverage limitations."
+          title="What’s changed."
+          description="New findings and changes to dates, contractors and activity. All examples are fictional."
         />
         <Notice>
           Fictional run history. No live scheduled cycle or research call has
@@ -299,7 +318,8 @@ export function WorkspaceApp() {
               className={
                 path === href ||
                 (href === "/demo/agents" && path.startsWith(href + "/")) ||
-                (href === "/demo/blueprint" && path.includes("/findings/"))
+                (href === "/demo" &&
+                  (path.includes("/findings/") || path === "/demo/blueprint"))
                   ? "active"
                   : ""
               }
@@ -310,6 +330,11 @@ export function WorkspaceApp() {
             </Link>
           ))}
         </nav>
+        <details className="workspace-tools">
+          <summary>Research &amp; setup</summary>
+          <Link href="/demo/agents">Coverage</Link>
+          <Link href="/demo/admin">Administrator setup</Link>
+        </details>
         <div className="sidebar-bottom">
           <p>
             Your hotel’s market
@@ -375,126 +400,5 @@ export function WorkspaceApp() {
         </footer>
       </div>
     </div>
-  );
-}
-function Overview({ data }: { data: Workspace }) {
-  const changed = latestMaterialUpdate(data.runs, data.findings);
-  const latest = [...data.runs].sort((a, b) => b.at.localeCompare(a.at))[0];
-  const verification = data.findings.filter(
-    (f) => f.quality === "Needs verification",
-  ).length;
-  return (
-    <>
-      <PageHeading
-        title="Your market, in focus."
-        description="One blueprint. Three perspectives on your fictional market."
-        action={
-          <Link href="/demo/blueprint" className="button gold">
-            View blueprint <ArrowRight size={17} />
-          </Link>
-        }
-      />
-      <div className="coverage-strip" aria-label="Research coverage">
-        {categories.map((c) => (
-          <Link key={c} href={`/demo/agents/${c}`}>
-            <strong>{categoryNames[c]}</strong>
-            <span>{data.coverage[c].paused ? "Paused" : "Demo only"}</span>
-          </Link>
-        ))}
-        <span>No research scheduled</span>
-      </div>
-      <div className="stat-row overview-stats">
-        <Link className="stat" href="/demo/blueprint?state=all">
-          <strong>{data.findings.length}</strong>
-          <span>
-            Market findings
-            <small>All recorded findings, including dismissed</small>
-          </span>
-        </Link>
-        <Link className="stat" href="/demo/blueprint?view=updated&state=all">
-          <strong>{changed.ids.size}</strong>
-          <span>
-            Materially changed
-            <small>
-              {changed.run ? (
-                <>
-                  In the <DateText value={changed.run.at} /> update
-                </>
-              ) : (
-                "No recorded material updates"
-              )}
-            </small>
-          </span>
-        </Link>
-        <Link
-          className="stat"
-          href="/demo/blueprint?state=all&quality=Needs%20verification"
-        >
-          <strong>{verification}</strong>
-          <span>
-            Need verification
-            <small>Current evidence status · all records</small>
-          </span>
-        </Link>
-      </div>
-      {latest && (
-        <div className="latest-cycle">
-          <span>
-            <strong>
-              Latest sample cycle · <DateText value={latest.at} />
-            </strong>
-            <br />
-            {latest.status !== "Completed"
-              ? "Incomplete coverage — this is not a successful quiet check."
-              : latest.newIds.length || latest.changedIds.length
-                ? "Completed sample check."
-                : "Completed quiet check — no new findings or material changes."}{" "}
-            <Link href={`/demo/updates#${latest.id}`}>
-              {latest.newIds.length} new · {latest.changedIds.length} materially
-              changed in this cycle
-            </Link>
-          </span>
-          <ArrowLink href={`/demo/updates#${latest.id}`}>
-            Review cycle
-          </ArrowLink>
-        </div>
-      )}
-      <section className="panel recent-panel">
-        <div className="section-heading">
-          <div>
-            <h2>Recent intelligence</h2>
-            <p>Most recent material changes first. Not dismissed.</p>
-          </div>
-          <ArrowLink href="/demo/blueprint">View all</ArrowLink>
-        </div>
-        <FindingTable
-          findings={sortFindings(
-            data.findings.filter((f) => !f.dismissed),
-            "changed",
-          ).slice(0, 4)}
-        />
-      </section>
-      <div className="overview-bottom">
-        <section>
-          <h3>Keep useful context close.</h3>
-          <p>
-            Save findings for your next review, then export to the sales tools
-            you already use.
-          </p>
-          <ArrowLink href="/demo/blueprint?view=saved">
-            Review saved findings
-          </ArrowLink>
-        </section>
-        <section>
-          <h3>Your research area</h3>
-          <p>
-            {data.profile.marketCenter} · {data.profile.radiusMiles}-mile radius
-            <br />
-            {data.profile.includedPlaces.join(", ")}
-          </p>
-          <ArrowLink href="/demo/profile">Review hotel profile</ArrowLink>
-        </section>
-      </div>
-    </>
   );
 }
