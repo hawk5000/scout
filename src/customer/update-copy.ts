@@ -9,7 +9,8 @@ const labels: Record<keyof Facts, string> = {
   organizations: "Organizations involved",
 };
 export function updateDescription(
-  version: { before: Facts | null; after: Facts } | undefined,
+  version:
+    { before: Facts | null; after: Facts; context?: unknown } | undefined,
 ): string {
   if (!version) return "Finding updated.";
   if (!version.before) return "New finding added to your market blueprint.";
@@ -20,6 +21,9 @@ export function updateDescription(
         JSON.stringify(version.after[key]),
     )
     .map((key) => labels[key]);
-  if (!changed.length) return "No significant changes.";
+  if (!changed.length)
+    return version.context
+      ? "Property identity or sentiment context updated."
+      : "No significant changes.";
   return changed.map((label) => `${label} updated.`).join(" ");
 }

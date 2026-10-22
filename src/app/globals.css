@@ -3215,3 +3215,142 @@ input[type="checkbox"] {
     padding: 24px 18px;
   }
 }
+
+/* Expansion follows the existing forest, gold and high-contrast findings system. */
+.expansion-workspace {
+  min-width: 0;
+}
+.expansion-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin: 1.2rem 0;
+}
+.expansion-panel,
+.brief-snapshot {
+  background: #fff;
+  border: 1px solid #8b9c91;
+  border-radius: 12px;
+  padding: clamp(1rem, 3vw, 1.7rem);
+  margin: 1.4rem 0;
+  min-width: 0;
+}
+.expansion-panel summary {
+  font-weight: 700;
+  cursor: pointer;
+  color: #143e32;
+}
+.expansion-notice {
+  background: #f5ebce;
+  border-left: 5px solid #86621c;
+  color: #302609;
+  padding: 1rem 1.2rem;
+  margin: 1rem 0;
+}
+.expansion-notice p:last-child {
+  margin-bottom: 0;
+}
+.coverage-grid,
+.identity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 1rem;
+}
+.coverage-grid article {
+  background: #edf3ef;
+  border: 1px solid #9db4a6;
+  border-top: 4px solid #235541;
+  padding: 1rem;
+  border-radius: 6px;
+}
+.coverage-grid h3 {
+  font-size: 1rem;
+}
+.expansion-workspace label {
+  display: block;
+  font-weight: 600;
+  margin: 0.8rem 0;
+}
+.expansion-workspace input:not([type="checkbox"]),
+.expansion-workspace select,
+.expansion-workspace textarea {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0.7rem;
+  background: white;
+  color: #172b22;
+  border: 1px solid #71877a;
+  border-radius: 5px;
+  margin-top: 0.35rem;
+}
+.expansion-workspace select {
+  text-overflow: ellipsis;
+}
+.expansion-workspace fieldset {
+  min-width: 0;
+  border: 1px solid #9cae9f;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+.expansion-workspace legend {
+  font-weight: 700;
+  padding: 0 0.35rem;
+}
+.expansion-workspace a,
+.brief-finding {
+  overflow-wrap: anywhere;
+}
+.competitor-editor {
+  border-bottom: 2px solid #d4dfd7;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+.briefing-action {
+  background: #e3eee7;
+  border-top: 5px solid #235541;
+}
+.brief-finding {
+  padding: 1.2rem;
+  border: 1px solid #a9b8ad;
+  border-left: 5px solid #31594a;
+  border-radius: 8px;
+  margin: 1rem 0;
+  background: #f8faf7;
+}
+.brief-finding h4 {
+  font-size: 1.15rem;
+  margin: 0.5rem 0;
+}
+.finding-accent-competitor {
+  border-left: 5px solid #805721;
+}
+.finding-accent-property {
+  border-left: 5px solid #365d8b;
+}
+.brief-history {
+  max-width: 100%;
+}
+.expansion-config .checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+@media (max-width: 430px) {
+  .expansion-tabs .button {
+    flex: 1 1 100%;
+    text-align: center;
+    white-space: normal;
+  }
+  .brief-snapshot {
+    padding: 1rem;
+  }
+  .brief-finding {
+    padding: 0.85rem;
+  }
+  .expansion-config fieldset {
+    padding: 0.7rem;
+  }
+}

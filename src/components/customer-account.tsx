@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { CustomerExpansion } from "./customer-expansion";
 import { CustomerMarket } from "./customer-market";
 import { Brand } from "./ui";
 import type { CustomerWorkspace } from "@/customer/contracts";
@@ -145,6 +146,8 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
         {[
           ["findings", "Findings"],
           ["updates", "Updates"],
+          ["briefing", "Briefing"],
+          ["research", "Research views"],
           ["profile", "Hotel profile"],
         ].map(([value, label]) => (
           <button
@@ -271,6 +274,13 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
             <p>Your account has read-only access.</p>
           )}
         </section>
+      ) : tab === "briefing" || tab === "research" ? (
+        <CustomerExpansion
+          key={tab}
+          destination={tab}
+          workspace={workspace}
+          onWorkspace={setWorkspace}
+        />
       ) : (
         <section>
           <p className="eyebrow">
@@ -286,7 +296,7 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
           <p>
             {tab === "updates"
               ? "See what's new, what changed and which findings are worth another look."
-              : "Local companies, projects and events that may bring business to your hotel. Save useful findings or export them to your sales tools."}
+              : "Companies, projects, events, selected competitors and public mentions of your hotel. Save useful findings or export them to your sales tools."}
           </p>
           <CustomerMarket
             key={tab}

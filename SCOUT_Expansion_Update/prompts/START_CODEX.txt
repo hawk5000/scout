@@ -1,0 +1,13 @@
+Build the agreed SCOUT expansion in this existing repository using SCOUT_Expansion_Update as the specification.
+
+Read root AGENTS.md, the actual current PROJECT_STATUS.md, the existing SCOUT skill, and SCOUT_Expansion_Update/READ_ME_FIRST.md. Read all referenced expansion specifications before editing. This new user scope adds Competitor SCOUT, Property SCOUT and SCOUT Briefing to the original three scouts; all unrelated scope restrictions remain.
+
+Inspect the current code and recent work first. The real-findings persistence/ingestion foundation may already have progressed; reuse it instead of building a parallel system. Preserve ABC Hotel, existing SIL/account/D1 connections, approved branding and unrelated changes.
+
+Complete BUILD_PLAN.md Pass A as one cohesive implementation: comp-set and property identity configuration, evidence-backed competitor/property findings using isolated fixtures, persistent versioned data, bounded refresh/briefing orchestration, customer UI and exports. Implement the real application path with test adapters, not a disconnected mock screen. Use existing authorization and storage contracts. Keep live research, paid provider calls, scheduled research and notifications disabled.
+
+Do all unblocked work without stopping for routine choices. Do not invent credentials, provider access, pricing or SIL contracts. Record exact unavailable dependencies and continue independent work. Do not provision or deploy new external resources solely on this prompt; use explicit existing session authorization where applicable and otherwise prepare a concrete deployment handoff after local implementation/checks.
+
+Use meaningful focused tests for isolation, deduplication, evidence references, budget enforcement, concurrency and persistence. Run broader checks at the completed milestone, then targeted retests for failures. Browser acceptance is on authorized Vercel, not a local browser.
+
+Update both existing PROJECT_STATUS.md and SCOUT_Expansion_Update/IMPLEMENTATION_STATUS.md. Report what actually works, what was tested, and what remains. Stop at Pass A completion; do not silently activate Pass B or C or claim live readiness from fixture tests.

@@ -125,6 +125,17 @@ export class CustomerStore {
     }
     return row;
   }
+  async expansionScope(token: string) {
+    const row = await this.session(token);
+    const workspace = await this.read(row);
+    return {
+      tenantId: row.tenant_id,
+      propertyId: row.property_id,
+      actor: row.user_id,
+      sessionHash: row.token_hash,
+      role: workspace.role,
+    };
+  }
   async logout(token: string) {
     await this.db
       .prepare("DELETE FROM customer_sessions WHERE token_hash=?")

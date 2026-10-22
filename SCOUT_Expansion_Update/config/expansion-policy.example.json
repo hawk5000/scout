@@ -1,0 +1,23 @@
+{
+  "example_only": true,
+  "live_research_enabled": false,
+  "scheduled_research_enabled": false,
+  "notifications_enabled": false,
+  "provider": null,
+  "model": null,
+  "max_job_cost_usd": 0,
+  "max_property_monthly_cost_usd": 0,
+  "max_on_demand_briefs_per_month": 0,
+  "freshness_window_minutes": null,
+  "max_competitors": null,
+  "categories": [
+    "corporate",
+    "project",
+    "event",
+    "competitor",
+    "property"
+  ],
+  "require_explicit_comp_set": true,
+  "allow_silent_stored_brief_fallback": false,
+  "fixture_tenant_required": true
+}

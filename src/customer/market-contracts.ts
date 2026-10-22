@@ -4,7 +4,43 @@ import {
   factsSchema,
   factFields,
 } from "../research/contracts";
-import { categories } from "../lib/contracts";
+export const marketCategories = [
+  "corporate",
+  "project",
+  "event",
+  "competitor",
+  "property",
+] as const;
+export type MarketCategory = (typeof marketCategories)[number];
+const categories = marketCategories;
+export const observationContext = z
+  .object({
+    subjectId: z.string().min(1).max(100),
+    sourceClass: z.enum(["official", "news", "review", "social", "event"]),
+    originId: z.string().min(1).max(500),
+    match: z.enum(["confirmed", "ambiguous", "unmatched"]),
+    matchReason: z.string().min(1).max(1000),
+    sentiment: z.enum(["positive", "negative", "neutral", "mixed", "unclear"]),
+    sentimentReason: z.string().min(1).max(1000),
+    relatedIdentity: z.string().max(500).nullable(),
+    excerpt: z.string().min(1).max(500),
+  })
+  .strict();
+const marketCandidate = z
+  .object({
+    ...candidateSchema.shape,
+    kind: z.enum(categories),
+    categories: z.array(z.enum(categories)).min(1).max(5),
+  })
+  .strict()
+  .refine(
+    (v) => v.categories.includes(v.kind),
+    "Primary category must be included.",
+  )
+  .refine(
+    (v) => v.kind !== "event" || v.edition !== null,
+    "Events require an edition identifier.",
+  );
 const text = z.string().trim().min(1).max(2000);
 export const marketMode = z.enum(["synthetic", "reviewed"]);
 export const assessmentSchema = z
@@ -20,13 +56,14 @@ export const ingestionSchema = z
     expectedRevision: z.number().int().nonnegative(),
     observedAt: z.iso.datetime(),
     status: z.enum(["Completed", "Partial", "Needs attention"]),
-    categories: z.array(z.enum(categories)).min(1).max(3),
+    categories: z.array(z.enum(categories)).min(1).max(5),
     warnings: z.array(text).max(30),
     items: z
       .array(
         z
           .object({
-            candidate: candidateSchema,
+            candidate: marketCandidate,
+            context: observationContext.optional(),
             summary: text,
             assessment: assessmentSchema,
             receipts: z
@@ -54,6 +91,16 @@ export const ingestionSchema = z
         message: "Incomplete coverage requires an explanation.",
       });
     for (const item of batch.items) {
+      if (
+        item.candidate.categories.some(
+          (c) => c === "competitor" || c === "property",
+        ) &&
+        !item.context
+      )
+        ctx.addIssue({
+          code: "custom",
+          message: "Property observations require identity and source context.",
+        });
       if (!item.candidate.categories.every((c) => batch.categories.includes(c)))
         ctx.addIssue({
           code: "custom",
@@ -94,6 +141,7 @@ export const marketRecord = z
     location: z.string(),
     categories: z.array(z.enum(categories)),
     facts: factsSchema,
+    context: observationContext.optional(),
     firstSeenAt: z.iso.datetime(),
     lastCheckedAt: z.iso.datetime(),
     factPublishedAt: z.iso.date().nullable(),
@@ -105,6 +153,11 @@ export const marketRecord = z
         publishedAt: z.iso.date().nullable(),
         retrievedAt: z.iso.datetime(),
         contentHash: z.string(),
+        excerpt: z.string().max(500).optional(),
+        sourceClass: z.string().optional(),
+        originId: z.string().optional(),
+        retrievalStatus: z.literal("retrieved").optional(),
+        provenance: z.enum(["synthetic", "reviewed"]).optional(),
         claims: z.array(
           z.object({ field: z.enum(factFields), quote: z.string() }),
         ),
@@ -117,6 +170,7 @@ export const marketRecord = z
         before: factsSchema.nullable(),
         after: factsSchema,
         evidenceIds: z.array(z.string()),
+        context: observationContext.optional(),
       }),
     ),
     quality: z.enum(["Imported", "Conflicting evidence"]),

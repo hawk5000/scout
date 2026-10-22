@@ -1,0 +1,7 @@
+Continue the SCOUT expansion from the verified state in PROJECT_STATUS.md and SCOUT_Expansion_Update/IMPLEMENTATION_STATUS.md. Inspect the working tree and completed implementation; do not redo completed passes.
+
+Complete the next uncompleted non-live pass in BUILD_PLAN.md using the package scope and acceptance checks. If Pass A is complete, perform Pass B provider integration preparation with fixture/recorded responses and current official documentation. Keep live research, paid calls, schedules and notifications disabled. Preserve existing customers and isolated demo/test data.
+
+Do not manufacture source coverage or credentials. Finish all unblocked work and report only exact remaining dependencies. If only Pass C remains, prepare the concrete hotel/source/budget/deployment proposal for approval; do not execute live research without authorization.
+
+Verify at a meaningful milestone, update both status documents and summarize results honestly. Reuse any deployment authorization already present in the active session; otherwise provide a concrete deployment handoff.

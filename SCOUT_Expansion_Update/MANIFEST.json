@@ -1,0 +1,18 @@
+{
+  "package": "SCOUT Expansion Update",
+  "specification_only": true,
+  "sha256": {
+    "ACCEPTANCE.md": "b9e77044c102e54dd046b631ca55b042f0a33e87c740135d4df5fc0dad0263f4",
+    "BUILD_PLAN.md": "00f748a9d7fafd987e885d5b225972ea59adcb52a18bbcdae9dc57e058d4a680",
+    "COST_AND_RELEASE.md": "05b1e37d7ef36051bcfd053b8cf7230efcd07e3d6b69d92e8cbb73f363fc9c3b",
+    "DATA_AND_INTEGRATION.md": "361c049fdd0a9d24970480a16f162c3ad9304586065bdfab0570187e8ee21937",
+    "IMPLEMENTATION_STATUS.md": "63c39bc0a75adcd09f5df4420613a21ca9bd395ce6e015f3bfae59c177bb0c2d",
+    "READ_ME_FIRST.md": "2b311f283ce97aa8c0075e6e3e518cfd40b78c4040b992bf7d155bf3b082675b",
+    "RESEARCH_AND_BRIEFING.md": "b3e04240c4eb1b43eaf5a99b2693ee4ab4550c2b3e392a8f6c461725233d5b7c",
+    "SCOPE.md": "cceae216f08c3525d3117b07493b8fc0edeb884aa1d33714b318bb4e638c2bfe",
+    "UI_REQUIREMENTS.md": "b9a4e2af882825e1849f371ba547152eac8f0c75bc44e9400fb69ed037e95e35",
+    "config/expansion-policy.example.json": "d6ce83da972d47eb8e6965df299b161b85ff9a83546342d6c8a8799137fed1ec",
+    "prompts/CONTINUE_CODEX.txt": "2059829e555283c9d480461c9752378e6fb0ec60bdb8bec9bf1777ac92d56374",
+    "prompts/START_CODEX.txt": "036a74bad45be5dcf1863840357ab808a9c92ac1a52c421c76afeeee5ddcfaba"
+  }
+}

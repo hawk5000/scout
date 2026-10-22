@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import type { CustomerWorkspace } from "@/customer/contracts";
-import type { Category } from "@/lib/contracts";
+import type { MarketCategory as Category } from "@/customer/market-contracts";
 import {
   customerBrief,
   selectCustomerFindings,
@@ -12,18 +12,22 @@ export function CustomerMarket({
   workspace,
   onChange,
   updatesOnly = false,
+  initialCategory = "all",
 }: {
   workspace: CustomerWorkspace;
   onChange: (w: CustomerWorkspace) => void;
   updatesOnly?: boolean;
+  initialCategory?: string;
 }) {
   const hotelName = workspace.profile?.name || workspace.propertyName;
   const categoryLabels: Record<Category, string> = {
     corporate: "Companies",
     project: "Projects",
     event: "Events",
+    competitor: "Competitors",
+    property: "Hotel mentions",
   };
-  const [category, setCategory] = useState("all");
+  const [category, setCategory] = useState(initialCategory);
   const [query, setQuery] = useState("");
   const [view, setView] = useState("visible");
   const [order, setOrder] = useState("changed");
@@ -310,6 +314,18 @@ export function CustomerMarket({
                 {f.location} · {f.facts.status}
               </p>
               <p className="finding-summary">{f.summary}</p>
+              {f.context && (
+                <p>
+                  <strong>
+                    {f.context.match === "confirmed"
+                      ? "Property match confirmed"
+                      : "Identity needs review"}
+                  </strong>{" "}
+                  - {f.context.sentiment} sentiment.{" "}
+                  {f.context.match !== "confirmed" &&
+                    "Excluded from confident briefing claims."}
+                </p>
+              )}
               <p className="customer-finding-relevance">
                 <strong>Why it may matter to {hotelName}:</strong>{" "}
                 {f.assessment.inference ||
@@ -387,6 +403,24 @@ export function CustomerMarket({
           </div>
           <h3>What happened</h3>
           <p>{current.summary}</p>
+          {current.context && (
+            <section>
+              <h3>Property match and context</h3>
+              <p>
+                <strong>{current.context.match}</strong>:{" "}
+                {current.context.matchReason}
+              </p>
+              <p>
+                <strong>Sentiment: {current.context.sentiment}</strong>.{" "}
+                {current.context.sentimentReason}
+              </p>
+              <p>Source excerpt: {current.context.excerpt}</p>
+              <p>
+                First discovered <DateText value={current.firstSeenAt} />.
+                Publication dates below may be earlier.
+              </p>
+            </section>
+          )}
           <h3>Why it may matter to {hotelName}</h3>
           <p className="fine-print">
             An assessment of possible hotel business, not confirmed demand.
@@ -417,6 +451,7 @@ export function CustomerMarket({
                 Published <DateText value={e.publishedAt} /> · Collected{" "}
                 <DateText value={e.retrievedAt} />
               </p>
+              {e.excerpt && <p>{e.excerpt}</p>}
               <ul>
                 {e.claims.map((c, i) => (
                   <li key={i}>

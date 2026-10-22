@@ -4,6 +4,7 @@ compatibility_date = "2026-10-21"
 account_id = "c3f560c91d3ab485b7ecfdd40e94da78"
 workers_dev = true
 [vars]
+EXPANSION_FIXTURES = "true"
 REVIEW_ENABLED = "false"
 REVIEW_TENANT_ID = "fixture_tenant"
 REVIEW_PROPERTY_ID = "fixture_hotel"

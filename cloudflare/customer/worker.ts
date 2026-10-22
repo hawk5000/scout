@@ -11,7 +11,10 @@ import { CustomerStore, digest, type Database } from "../../src/customer/store";
 import { findingStateMutation } from "../../src/customer/market-contracts";
 import { MarketIngestion } from "../../src/customer/ingestion";
 import { ReviewedImports } from "../../src/customer/reviewed-imports";
+import { Expansion } from "../../src/customer/expansion";
+import { expansionCommand } from "../../src/customer/expansion-contracts";
 export interface Env {
+  EXPANSION_FIXTURES?: string;
   REVIEW_ENABLED?: string;
   REVIEW_TOKEN?: string;
   REVIEW_TENANT_ID?: string;
@@ -31,6 +34,13 @@ export interface Env {
   SIL_APP_KEY?: string;
 }
 const command = z.discriminatedUnion("operation", [
+  z
+    .object({
+      operation: z.literal("expansion"),
+      token: z.string().max(128),
+      input: expansionCommand,
+    })
+    .strict(),
   z
     .object({
       operation: z.literal("finding-state"),
@@ -163,6 +173,15 @@ export async function handleCustomer(
         transport,
       ),
     );
+    if (input.operation === "expansion") {
+      const scope = await store.expansionScope(input.token);
+      const result = await new Expansion(
+        env.DB,
+        scope,
+        env.EXPANSION_FIXTURES === "true",
+      ).execute(input.input);
+      return Response.json(result, { headers: customerHeaders });
+    }
     const result =
       input.operation === "login"
         ? await store.login(

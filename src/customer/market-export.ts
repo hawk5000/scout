@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { categories } from "../lib/contracts";
+import { marketCategories as categories } from "./market-contracts";
 import { csvCell } from "../lib/export";
 import { CustomerError } from "./contracts";
 import type { CustomerFinding } from "./market-contracts";
@@ -42,7 +42,7 @@ export function customerCsv(findings: CustomerFinding[]) {
   return (
     "\ufeff" +
     [
-      "finding_id,name,categories,observed_facts,location,start,end,status,lodging_inference,unknowns,sources,last_checked,verification,data_mode",
+      "finding_id,name,categories,observed_facts,location,start,end,status,lodging_inference,unknowns,sources,last_checked,verification,data_mode,subject,identity_match,sentiment,sentiment_context,published,discovered",
       ...findings.map((f) =>
         [
           f.id,
@@ -61,6 +61,12 @@ export function customerCsv(findings: CustomerFinding[]) {
           f.dataMode === "synthetic"
             ? "FICTIONAL SYNTHETIC FIXTURE"
             : "REVIEWED IMPORT",
+          f.context?.subjectId,
+          f.context?.match,
+          f.context?.sentiment,
+          f.context?.sentimentReason,
+          f.factPublishedAt,
+          f.firstSeenAt,
         ]
           .map(csvCell)
           .join(","),
@@ -69,5 +75,5 @@ export function customerCsv(findings: CustomerFinding[]) {
   );
 }
 export function customerBrief(f: CustomerFinding) {
-  return `${f.dataMode === "synthetic" ? "FICTIONAL SYNTHETIC FIXTURE" : "REVIEWED IMPORT"}\n${f.title}\n\nObserved facts: ${f.summary}\n${f.location}\nDates: ${f.facts.start ?? "Unknown"} to ${f.facts.end ?? "Unknown"}\nStatus: ${f.facts.status}\n\nPotential hotel relevance (inference): ${f.assessment.inference || "Hotel relevance not assessed."}\nUnknowns: ${f.assessment.unknowns.join("; ")}\nSources: ${f.evidence.map((e) => e.url).join("; ")}\nLast checked: ${f.lastCheckedAt}\nImported evidence; not independently verified by SCOUT.`;
+  return `${f.dataMode === "synthetic" ? "FICTIONAL SYNTHETIC FIXTURE" : "REVIEWED IMPORT"}\n${f.title}\n\nObserved facts: ${f.summary}\n${f.location}\nDates: ${f.facts.start ?? "Unknown"} to ${f.facts.end ?? "Unknown"}\nStatus: ${f.facts.status}${f.context ? `\nIdentity: ${f.context.match}. ${f.context.matchReason}\nSentiment: ${f.context.sentiment}. ${f.context.sentimentReason}\nExcerpt: ${f.context.excerpt}` : ""}\n\nPotential hotel relevance (inference): ${f.assessment.inference || "Hotel relevance not assessed."}\nUnknowns: ${f.assessment.unknowns.join("; ")}\nSources: ${f.evidence.map((e) => e.url).join("; ")}\nLast checked: ${f.lastCheckedAt}\nImported evidence; not independently verified by SCOUT.`;
 }

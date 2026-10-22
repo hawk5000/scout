@@ -6,11 +6,12 @@ import {
   type Ingestion,
   type StoredMarket,
 } from "./market-contracts";
-import type { Candidate, Facts } from "../research/contracts";
+import type { Facts } from "../research/contracts";
 export type IngestionScope = {
   tenantId: string;
   propertyId: string;
   actor: string;
+  jobGuard?: { id: string; lease: string };
   dataMode: "synthetic" | "reviewed";
 };
 const normalized = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
@@ -22,7 +23,17 @@ function canonicalFacts(f: Facts) {
     organizations: [...new Set(f.organizations.map(normalized))].sort(),
   });
 }
-function key(c: Candidate) {
+function key(
+  c: Ingestion["items"][number]["candidate"],
+  context?: Ingestion["items"][number]["context"],
+) {
+  if (context)
+    return JSON.stringify([
+      c.kind,
+      context.subjectId,
+      normalized(context.originId),
+      c.edition,
+    ]);
   return JSON.stringify([
     c.facts.activity === "event" ? "event" : "activity",
     normalized(c.identity),
@@ -50,6 +61,9 @@ function safeSource(value: string, mode: IngestionScope["dataMode"]) {
       400,
     );
   u.hash = "";
+  for (const name of [...u.searchParams.keys()])
+    if (/^(utm_|fbclid$|gclid$)/i.test(name)) u.searchParams.delete(name);
+  u.searchParams.sort();
   return u.toString();
 }
 export class MarketIngestion {
@@ -119,9 +133,11 @@ export class MarketIngestion {
         payloadHash: hash,
       };
     try {
-      await this.db
+      const committed = await this.db
         .prepare(
-          "INSERT INTO customer_ingestion_batches(tenant_id,property_id,batch_key,payload_hash,expected_revision,actor,at,document_json) VALUES(?,?,?,?,?,?,?,?)",
+          scope.jobGuard
+            ? "INSERT INTO customer_ingestion_batches(tenant_id,property_id,batch_key,payload_hash,expected_revision,actor,at,document_json) SELECT ?,?,?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM customer_refresh_jobs j JOIN customer_sessions s ON s.token_hash=j.session_hash JOIN customer_memberships m ON m.tenant_id=s.tenant_id AND m.property_id=s.property_id AND m.user_id=s.user_id WHERE j.tenant_id=? AND j.property_id=? AND j.id=? AND j.lease=? AND j.state='running' AND j.lease_until>? AND s.expires_at>? AND m.active=1 AND m.role IN('editor','admin')) RETURNING batch_key"
+            : "INSERT INTO customer_ingestion_batches(tenant_id,property_id,batch_key,payload_hash,expected_revision,actor,at,document_json) VALUES(?,?,?,?,?,?,?,?) RETURNING batch_key",
         )
         .bind(
           scope.tenantId,
@@ -132,8 +148,23 @@ export class MarketIngestion {
           scope.actor,
           new Date(this.now()).toISOString(),
           encoded,
+          ...(scope.jobGuard
+            ? [
+                scope.tenantId,
+                scope.propertyId,
+                scope.jobGuard.id,
+                scope.jobGuard.lease,
+                this.now(),
+                this.now(),
+              ]
+            : []),
         )
-        .run();
+        .first();
+      if (!committed)
+        throw new CustomerError(
+          "Refresh ownership changed; resume the current job.",
+          409,
+        );
     } catch (error) {
       const raced = await prior();
       if (raced?.payload_hash === hash)
@@ -160,7 +191,7 @@ async function merge(
 ) {
   const groups = new Map<string, Ingestion["items"]>();
   for (const item of input.items) {
-    const k = key(item.candidate);
+    const k = key(item.candidate, item.context);
     groups.set(k, [...(groups.get(k) ?? []), item]);
   }
   const newIds: string[] = [],
@@ -216,6 +247,7 @@ async function merge(
             source.publishedAt,
             receipt.contentHash,
             source.claims,
+            ...(item.context ? [item.context.excerpt] : []),
           ]),
         );
         incomingIds.push(eid);
@@ -228,23 +260,38 @@ async function merge(
             retrievedAt: receipt.retrievedAt,
             contentHash: receipt.contentHash,
             claims: source.claims,
+            ...(item.context
+              ? {
+                  excerpt: item.context.excerpt,
+                  sourceClass: item.context.sourceClass,
+                  originId: item.context.originId,
+                  retrievalStatus: "retrieved" as const,
+                  provenance: mode,
+                }
+              : {}),
           });
       }
+    const context = retain && prior ? prior.context : last.item.context;
     const material =
-      !prior || canonicalFacts(facts) !== canonicalFacts(prior.facts);
+      !prior ||
+      canonicalFacts(facts) !== canonicalFacts(prior.facts) ||
+      JSON.stringify(context) !== JSON.stringify(prior.context);
     const versions = [...(prior?.versions ?? [])];
     if (material)
       versions.push({
         at: input.observedAt,
         summary: prior
-          ? `Changed: ${Object.keys(facts)
-              .filter(
-                (f) =>
-                  JSON.stringify(facts[f as keyof Facts]) !==
-                  JSON.stringify(prior.facts[f as keyof Facts]),
-              )
-              .join(", ")}.`
+          ? `Changed: ${
+              Object.keys(facts)
+                .filter(
+                  (f) =>
+                    JSON.stringify(facts[f as keyof Facts]) !==
+                    JSON.stringify(prior.facts[f as keyof Facts]),
+                )
+                .join(", ") || "property context"
+            }.`
           : "Initial imported finding.",
+        context,
         before: prior?.facts ?? null,
         after: facts,
         evidenceIds: [...new Set(incomingIds)],
@@ -273,6 +320,7 @@ async function merge(
         ]),
       ],
       facts,
+      context,
       firstSeenAt: prior?.firstSeenAt ?? input.observedAt,
       lastCheckedAt: input.observedAt,
       factPublishedAt: retain && prior ? prior.factPublishedAt : pub,
