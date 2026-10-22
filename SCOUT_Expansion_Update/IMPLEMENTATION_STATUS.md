@@ -79,3 +79,23 @@ Next pass: after these approvals, bind the provider to a durable live job with s
 ## Pass B hosted acceptance preparation — 2026-10-21 PDT
 
 The existing expiring acceptance Worker now injects a synthetic recorded-response provider into the real expansion orchestrator. Its provider ledger is keyed to the durable job ID. Production imports no replay provider; existing customer gates remain unchanged. The additive 0006 ledger migration is intended only for the existing acceptance D1 during this pass. A new entrypoint test completes all five categories with network access forbidden, checks 16 recorded calls, and confirms duplicate advances spend nothing extra. Local milestone: 109 tests passed, TypeScript and production build passed. Hosted verification remains pending until recorded below. Branch: codex/expansion-pass-b-acceptance; no production promotion is intended.
+
+
+## Pass B isolated hosted acceptance completed — 2026-10-21 PDT
+
+Pass B code is pushed on `codex/expansion-pass-b-acceptance` at `75eb113c4b94c9c726084ac899e770d2602d66b1`. Preview: https://scout-7pnbd7vfk-parrieb-9172s-projects.vercel.app/app, deployment `dpl_E9vrESJHeehJGJ1Nh1UtU2qQXAhw`, verified Ready at that exact revision. The existing acceptance Worker version is `9a1c6944-7517-450d-9855-9f2cacb1f103`. Migration 0006 was applied only to the existing acceptance D1. Acceptance expires 2026-10-22 23:00 UTC (4pm PDT).
+
+### Verification
+- Local milestone: 109 tests passed; TypeScript, production build and scoped formatting passed. The unchanged broker.ts repository-formatting issue remains unrelated.
+- Hosted workflow: 59 checks passed, covering five-category prepared-provider replay, complete/no-change/partial/failed outcomes, duplicate concurrent requests, exact snapshot evidence references, tenant/property/role denial and fresh fixture-login persistence. Nine existing fixture finding histories, evidence IDs, first-seen dates and private states were preserved; profile and coverage revisions remained unchanged.
+- Hosted monetary ledger: concurrent reservations respect the shared cap; duplicate calls are denied; unknown usage retains its full hold; known usage releases unused reservations. A unique synthetic ledger scope exercised a 10,000-micro-USD cap. Provider replay calls are associated with durable job IDs. These are accounting simulations; actual research/provider spend was $0.
+- Vercel browser: desktop 1440px, mobile 390px and 320px. Verified Competitor/Property views, five-category refresh to a persisted no-change Briefing 12, source-linked details, search/no-results and detail closure, save, dismiss, restore, copy, and fresh-login persistence. Private fixture state was restored after testing. No horizontal overflow at either mobile width and no captured browser console errors.
+- Browser briefing CSV contains nine findings with versions and source links. Authenticated Vercel text export returned 200 with attachment/source/coverage labels; cross-origin mutation returned 403; unavailable scoped snapshot returned 404; fixture login/logout succeeded.
+- The old hosted test's whole-record equality assertion was replaced with immutable-history/evidence/private-state preservation assertions: fixture refresh legitimately updates receipt/check metadata. No customer-data preservation check was weakened.
+
+### Production preservation and limits
+Production was not promoted: it remains `9b788ef80786da1a6e7882da4cce0c9ff845708d` at https://scout-olive-ten.vercel.app/app. Read-only pre/post comparisons confirmed all three properties, three memberships, one market, finding states and import reviews unchanged (digest `03f67b9919ce1242ac25f81198f3dd6966c1fb98f1270b89129b888763a4ff17`). Production has zero Pass B provider tables and zero synthetic markets. ABC Hotel received no writes. No new services or credentials were provisioned. Live research, paid calls, schedules and notifications remain disabled.
+
+No blocker remains for isolated Pass B acceptance. Synthetic tests do not verify live source access, quality, permissions, model interpretation or real charges. Next: review the existing release proposal and obtain explicit approval for hotel identity/comp set, source and storage rights, provider access, finite budgets and a bounded Pass C live pilot before any dispatcher activation or production promotion. Schedules and notifications require independent authorization.
+
+Evidence: `docs/qa/expansion-pass-b/` screenshots; reusable checks in `scripts/hosted-pass-b-acceptance.ts` and `scripts/hosted-provider-ledger.ts`. Local sanitized machine results remain in ignored `.vercel/pass-b-hosted-results.json` and `.vercel/pass-b-ledger-results.json`. Screenshots show fictional fixtures only.
