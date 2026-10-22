@@ -1,6 +1,6 @@
 # SCOUT release path
 
-The Vercel project `scout` is connected to `hawk5000/scout`; `main` is the production branch and the stable customer URL is <https://scout-olive-ten.vercel.app>. Git-connected feature branches produce Preview deployments. A Preview URL is for acceptance only and does not update the stable URL.
+The Vercel project `scout` is connected to `hawk5000/scout`; `main` is the production branch and the stable customer URL is <https://scout-olive-ten.vercel.app>. Git-connected feature branches produce Preview deployments. A Preview URL is for acceptance only and does not update the stable URL. GitHub now requires a pull request to `main` and automatically deletes merged source branches; run local checks because no status check is required by the repository.
 
 For each approved release:
 
