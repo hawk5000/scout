@@ -6,6 +6,7 @@ import {
   customerBrief,
   selectCustomerFindings,
 } from "@/customer/market-export";
+import { updateDescription } from "@/customer/update-copy";
 import { DateText } from "./ui";
 export function CustomerMarket({
   workspace,
@@ -185,10 +186,9 @@ export function CustomerMarket({
                       {f.title}
                     </button>
                     <p>
-                      {
-                        [...f.versions].reverse().find((v) => v.at <= r.at)
-                          ?.summary
-                      }
+                      {updateDescription(
+                        [...f.versions].reverse().find((v) => v.at <= r.at),
+                      )}
                     </p>
                   </div>
                 ) : null;
@@ -208,7 +208,10 @@ export function CustomerMarket({
                 value={query}
                 maxLength={200}
                 placeholder="Search a company, place or topic"
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setDetail(null);
+                }}
               />
             </label>
             <label>
@@ -217,6 +220,7 @@ export function CustomerMarket({
                 value={category}
                 onChange={(e) => {
                   setCategory(e.target.value);
+                  setDetail(null);
                   setSelected([]);
                 }}
               >
@@ -230,7 +234,13 @@ export function CustomerMarket({
             </label>
             <label>
               Show
-              <select value={view} onChange={(e) => setView(e.target.value)}>
+              <select
+                value={view}
+                onChange={(e) => {
+                  setView(e.target.value);
+                  setDetail(null);
+                }}
+              >
                 <option value="visible">Current findings</option>
                 <option value="all">Including dismissed</option>
                 <option value="saved">Saved</option>
@@ -240,7 +250,13 @@ export function CustomerMarket({
             </label>
             <label>
               Sort by
-              <select value={order} onChange={(e) => setOrder(e.target.value)}>
+              <select
+                value={order}
+                onChange={(e) => {
+                  setOrder(e.target.value);
+                  setDetail(null);
+                }}
+              >
                 <option value="changed">Most recent change</option>
                 <option value="date">Relevant date</option>
               </select>
@@ -248,7 +264,8 @@ export function CustomerMarket({
           </div>
           <div className="results-bar">
             <span>
-              {list.length} findings · {shownSelected.length} selected
+              {list.length} {list.length === 1 ? "finding" : "findings"} ·{" "}
+              {shownSelected.length} selected
             </span>
             {list.length > 0 && (
               <a
@@ -413,7 +430,7 @@ export function CustomerMarket({
             <summary>Changes over time</summary>
             {current.versions.map((v, i) => (
               <p key={i}>
-                <DateText value={v.at} /> · {v.summary}
+                <DateText value={v.at} /> · {updateDescription(v)}
               </p>
             ))}
           </details>
