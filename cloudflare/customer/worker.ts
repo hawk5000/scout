@@ -14,6 +14,7 @@ import { ReviewedImports } from "../../src/customer/reviewed-imports";
 import { Expansion, type ExpansionScope } from "../../src/customer/expansion";
 import type { ExpansionProvider } from "../../src/customer/expansion-provider";
 import { expansionCommand } from "../../src/customer/expansion-contracts";
+import { verifyOpenAiConnection } from "../../src/research/openai-web-search";
 export interface Env {
   EXPANSION_FIXTURES?: string;
   REVIEW_ENABLED?: string;
@@ -33,6 +34,8 @@ export interface Env {
   SIL_ORIGIN?: string;
   SIL_SERVICE_TOKEN?: string;
   SIL_APP_KEY?: string;
+  /** Cloudflare Worker secret; never set as a plaintext Wrangler/Vercel variable. */
+  OPENAI_API_KEY?: string;
 }
 const command = z.discriminatedUnion("operation", [
   z
@@ -69,12 +72,19 @@ const command = z.discriminatedUnion("operation", [
       input: customerMutation,
     })
     .strict(),
+  z
+    .object({
+      operation: z.literal("openai-connection"),
+      token: z.string().max(128),
+    })
+    .strict(),
 ]);
 export async function handleCustomer(
   request: Request,
   env: Env,
   transport: typeof fetch = (input, init) => fetch(input, init),
   acceptanceProvider?: (scope: ExpansionScope) => ExpansionProvider,
+  openAiFetch: typeof fetch = (input, init) => fetch(input, init),
 ): Promise<Response> {
   try {
     if (
@@ -185,6 +195,16 @@ export async function handleCustomer(
         acceptanceProvider?.(scope),
       ).execute(input.input);
       return Response.json(result, { headers: customerHeaders });
+    }
+    if (input.operation === "openai-connection") {
+      const scope = await store.expansionScope(input.token);
+      if (scope.role !== "admin")
+        throw new CustomerError("Administrator access is required.", 403);
+      const status = await verifyOpenAiConnection(
+        env.OPENAI_API_KEY,
+        openAiFetch,
+      );
+      return Response.json({ status }, { headers: customerHeaders });
     }
     const result =
       input.operation === "login"

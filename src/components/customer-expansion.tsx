@@ -36,6 +36,9 @@ export function CustomerExpansion({
   const [state, setState] = useState<ExpansionState | null>(null),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
+    [providerStatus, setProviderStatus] = useState<
+      "not_configured" | "valid" | "denied" | "unavailable" | null
+    >(null),
     [category, setCategory] = useState<MarketCategory>("competitor"),
     [scenario, setScenario] =
       useState<(typeof fixtureScenarios)[number]>("baseline");
@@ -92,6 +95,30 @@ export function CustomerExpansion({
       setBusy(false);
     }
   }
+  async function checkProvider() {
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/customer/openai-connection", {
+        cache: "no-store",
+      });
+      const data = await response.json();
+      if (!response.ok) throw Error(data.error || "Connection check failed.");
+      if (
+        !["not_configured", "valid", "denied", "unavailable"].includes(
+          data.status,
+        )
+      )
+        throw Error("Connection check returned an unknown status.");
+      setProviderStatus(data.status);
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Connection check failed.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
   const job = state?.jobs[0],
     active = state?.jobs.find(
       (j) => j.state === "queued" || j.state === "running",
@@ -143,6 +170,39 @@ export function CustomerExpansion({
         <p>Loading hotel research information...</p>
       ) : (
         <>
+          {workspace.role === "admin" && (
+            <aside
+              className="expansion-panel"
+              aria-label="Research provider status"
+            >
+              <p className="eyebrow">ADMINISTRATOR · CONNECTION CHECK</p>
+              <h2>OpenAI provider</h2>
+              <p>
+                Check whether the existing Worker secret can access the selected
+                model. This makes one free model-access check only; it does not
+                search the web, create findings, or change research settings.
+              </p>
+              <button
+                className="button secondary"
+                type="button"
+                onClick={() => void checkProvider()}
+                disabled={busy}
+              >
+                {busy ? "Checking…" : "Check OpenAI connection"}
+              </button>
+              {providerStatus && (
+                <p role="status">
+                  Connection status: {providerStatus.replaceAll("_", " ")}.
+                </p>
+              )}
+              <p className="fine-print">
+                Live research and paid calls remain disabled. The approved
+                ceiling is $1.25 for one manual five-category cycle; source
+                permissions and review staging are still required before it can
+                run.
+              </p>
+            </aside>
+          )}
           {state.fixturesEnabled && (
             <aside className="expansion-notice">
               <strong>Isolated synthetic workspace</strong>

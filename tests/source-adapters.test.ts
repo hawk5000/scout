@@ -22,6 +22,15 @@ import {
   rateCard,
   type SourceTransport,
 } from "../src/research/source-adapters";
+import {
+  OpenAIWebSearchTransport,
+  openAiActualCostMicros,
+  openAiConnectionRequest,
+  openAiSearchMaximumMicros,
+  openAiWebSearchRequest,
+  searchWithOpenAI,
+  verifyOpenAiConnection,
+} from "../src/research/openai-web-search";
 const at = new Date().toISOString();
 const config: ExpansionConfiguration = {
   own: {
@@ -618,4 +627,208 @@ test("providers: expired pricing blocks dispatch without reserving", async () =>
   );
   assert.equal(calls, 0);
   db.close();
+});
+
+test("OpenAI: Responses request is fixed-host, domain-filtered, one-search and non-storing", () => {
+  const request = openAiWebSearchRequest({
+    model: rateCard.model,
+    prompt: "Find official public hotel-market updates in Fictional Bay.",
+    allowedDomains: ["hotel.example", "city.example"],
+  });
+  const body = JSON.parse(request.body!);
+  assert.equal(request.url, "https://api.openai.com/v1/responses");
+  assert.equal(body.store, false);
+  assert.equal(body.max_tool_calls, 1);
+  assert.equal(body.tool_choice, "required");
+  assert.deepEqual(body.tools[0].filters.allowed_domains, [
+    "hotel.example",
+    "city.example",
+  ]);
+  assert.deepEqual(body.include, ["web_search_call.action.sources"]);
+  assert.throws(
+    () =>
+      openAiWebSearchRequest({
+        model: rateCard.model,
+        prompt: "query",
+        allowedDomains: ["https://attacker.example"],
+      }),
+    /SOURCE_SETUP_REQUIRED/,
+  );
+});
+
+test("OpenAI: API key is sent only to the fixed API host and errors never expose it", async () => {
+  const secret = "sk-test-never-print";
+  let outbound: Request | undefined;
+  const transport = new OpenAIWebSearchTransport(secret, async (input) => {
+    outbound = input as Request;
+    return new Response("upstream private response", {
+      status: 403,
+      headers: { "content-type": "application/json" },
+    });
+  });
+  const denied = await transport.exchange({
+    url: "https://api.openai.com/v1/responses",
+    method: "POST",
+    credential: "openai",
+    body: "{}",
+  });
+  assert.equal(denied.status, 403);
+  assert.equal(denied.body, "");
+  assert.equal(new URL(outbound!.url).origin, "https://api.openai.com");
+  assert.equal(outbound!.headers.get("authorization"), `Bearer ${secret}`);
+  assert.equal(outbound!.redirect, "manual");
+  assert.throws(
+    () => new OpenAIWebSearchTransport(""),
+    /OPENAI_NOT_CONFIGURED/,
+  );
+});
+
+test("OpenAI: citations must match the API search receipt and source grants", async () => {
+  const { db, ledger } = setup("openai-fixture", 500_000, 500_000);
+  const sourceUrl = "https://hotel.example/news/hiring";
+  const payload = {
+    status: "completed",
+    usage: { input_tokens: 1200, output_tokens: 180 },
+    output: [
+      {
+        type: "web_search_call",
+        action: {
+          type: "search",
+          sources: [{ type: "webpage", title: "Hotel news", url: sourceUrl }],
+        },
+      },
+      {
+        type: "message",
+        content: [
+          {
+            type: "output_text",
+            text: "An illustrative source-backed summary.",
+            annotations: [
+              {
+                type: "url_citation",
+                url: sourceUrl,
+                title: "Hotel news",
+                start_index: 0,
+                end_index: 36,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  const fixture: SourceTransport = {
+    mode: "live",
+    async exchange() {
+      return {
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(payload),
+      };
+    },
+  };
+  const sources = new BoundedSources(fixture, ledger, Date.now, true);
+  const result = await searchWithOpenAI({
+    sources,
+    callKey: "category-search",
+    prompt: "Find public local hotel-market activity.",
+    allowedDomains: ["hotel.example"],
+  });
+  assert.equal(result.status, "review-required");
+  assert.equal(result.citations[0].url, sourceUrl);
+  assert.equal(result.usage.input_tokens, 1200);
+  assert.equal(
+    (
+      db
+        .prepare(
+          "SELECT accounted_micros FROM customer_provider_calls WHERE call_key='category-search'",
+        )
+        .get() as { accounted_micros: number }
+    ).accounted_micros,
+    openAiActualCostMicros(JSON.stringify(payload)),
+  );
+  const invalidCitationTransport: SourceTransport = {
+    mode: "live",
+    async exchange() {
+      return {
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ...payload,
+          output: [
+            payload.output[0],
+            {
+              ...payload.output[1],
+              content: [
+                {
+                  ...(
+                    payload.output[1] as {
+                      content: Array<Record<string, unknown>>;
+                    }
+                  ).content[0],
+                  annotations: [
+                    {
+                      type: "url_citation",
+                      url: "https://other.example/claim",
+                      title: "Unknown",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
+      };
+    },
+  };
+  await assert.rejects(
+    () =>
+      searchWithOpenAI({
+        sources: new BoundedSources(
+          invalidCitationTransport,
+          ledger,
+          Date.now,
+          true,
+        ),
+        callKey: "bad-citation",
+        prompt: "Find public local hotel-market activity.",
+        allowedDomains: ["hotel.example"],
+      }),
+    /SOURCE_NOT_APPROVED/,
+  );
+  assert.equal(openAiSearchMaximumMicros, 221_500);
+  db.close();
+});
+
+test("OpenAI: verifies configured, invalid and unavailable connections without reading provider bodies", async () => {
+  assert.equal(
+    await verifyOpenAiConnection(undefined, async () => {
+      throw Error("not called");
+    }),
+    "not_configured",
+  );
+  assert.equal(
+    await verifyOpenAiConnection("fixture-key", async (input) => {
+      const request = input as Request;
+      assert.equal(request.url, "https://api.openai.com/v1/models/gpt-6-luna");
+      assert.equal(request.redirect, "manual");
+      return new Response("", { status: 200 });
+    }),
+    "valid",
+  );
+  assert.equal(
+    await verifyOpenAiConnection(
+      "fixture-key",
+      async () => new Response("", { status: 401 }),
+    ),
+    "denied",
+  );
+  assert.equal(
+    await verifyOpenAiConnection("fixture-key", async () => {
+      throw Error("secret response");
+    }),
+    "unavailable",
+  );
+  const { request } = openAiConnectionRequest("fixture-key");
+  assert.equal(new URL(request.url).origin, "https://api.openai.com");
 });

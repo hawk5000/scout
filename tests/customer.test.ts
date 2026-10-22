@@ -492,6 +492,78 @@ test("Worker account flow persists edits with only SIL auth transport; rejects r
   }
 });
 
+test("OpenAI connection check is admin-only, keyless by default, and returns no credential detail", async () => {
+  const { handleCustomer } = await import("../cloudflare/customer/worker");
+  const db = setup();
+  let checks = 0;
+  try {
+    db.prepare("UPDATE customer_memberships SET role='admin'").run();
+    const env = {
+      DB: adapter(db),
+      CUSTOMER_ENABLED: "true",
+      SERVICE_TOKEN: "x".repeat(40),
+      SIL_ORIGIN: "https://sil.example",
+      SIL_SERVICE_TOKEN: "test",
+      SIL_APP_KEY: "scout",
+    };
+    const silFetch = (async (url) =>
+      Response.json(
+        String(url).endsWith("/login")
+          ? {
+              ...who(),
+              loginAllowed: true,
+              accessAllowed: true,
+              mustChangePassword: false,
+            }
+          : { ...who(), sessionValid: true, mustChangePassword: false },
+      )) as typeof fetch;
+    const send = (input: unknown) =>
+      handleCustomer(
+        new Request("https://worker.example/customer", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${env.SERVICE_TOKEN}` },
+          body: JSON.stringify(input),
+        }),
+        env,
+        silFetch,
+        undefined,
+        async (input) => {
+          checks++;
+          const request = input as Request;
+          assert.equal(
+            request.url,
+            "https://api.openai.com/v1/models/gpt-6-luna",
+          );
+          assert.equal(
+            request.headers.get("authorization"),
+            "Bearer fixture-openai-key",
+          );
+          return new Response("", { status: 200 });
+        },
+      );
+    const login = await send({
+      operation: "login",
+      input: { email: "owner@example.com", password: "test-only" },
+      networkKey: "connection-check-test",
+    });
+    assert.equal(login.status, 200);
+    const { token } = (await login.json()) as { token: string };
+    const missing = await send({ operation: "openai-connection", token });
+    assert.equal(missing.status, 200, await missing.clone().text());
+    assert.deepEqual(await missing.json(), { status: "not_configured" });
+    assert.equal(checks, 0);
+    Object.assign(env, { OPENAI_API_KEY: "fixture-openai-key" });
+    const configured = await send({ operation: "openai-connection", token });
+    const result = await configured.text();
+    assert.equal(configured.status, 200);
+    assert.deepEqual(JSON.parse(result), { status: "valid" });
+    assert.ok(!result.includes("fixture-openai-key"));
+    assert.equal(checks, 1);
+  } finally {
+    db.close();
+  }
+});
+
 test("offline access preparation scopes assignment, revocation and erasure; never revives a conflicting grant", async () => {
   const { prepareAccess } = await import("../src/customer/provision");
   const db = setup();

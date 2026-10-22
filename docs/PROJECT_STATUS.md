@@ -704,3 +704,59 @@ This is code consolidation, not live activation. No production Worker deployment
 To prevent another split, `main` remains the Vercel production branch; GitHub now requires a pull request into `main`, disallows force-push and deletion, enforces the rule for administrators, and automatically deletes source branches after merge. No required reviews or CI checks were configured, so release checks remain part of the documented procedure in `AGENTS.md` and `docs/RELEASE_PROCESS.md`.
 
 The former `codex/expansion-pass-b-acceptance` and `codex/demo-aligned-fictional-market` remote branches were deleted only after verifying each had zero commits absent from `main`. Historical Vercel Preview deployments may remain visible until Vercel retention expires, but they no longer track active source branches and do not affect the stable production alias.
+
+## OpenAI provider integration preparation — 2026-10-22 PDT
+
+### Implemented locally
+
+- Added a Worker-side OpenAI Responses transport that sends credentials only to the fixed `api.openai.com` endpoint, bounds time and response bytes, disables redirects, and suppresses upstream error bodies. `BoundedSources` remains disabled for live transports unless a server caller explicitly opts in; no browser control selects that opt-in.
+- Added a request builder for GPT-6 Luna Responses web search with `store:false`, one maximum tool call, low search context, server-provided allowed domains, and the OpenAI `web_search_call.action.sources` receipt. Parsed URLs/citations are canonicalized against the same approved domain list; an uncited answer and an empty-source response are distinct from a reviewable cited summary.
+- Added per-call conservative reservation and actual-usage reconciliation logic using current standard model/search prices, including the documented long-context uplift. Unknown usage holds the full reservation. No key or provider response is logged.
+- Added a signed-in workspace administrator-only `/api/customer/openai-connection` check. It verifies only access to the selected model endpoint and returns a small status enum; it does not make a research call. The key is read only from the Cloudflare Worker `Env.OPENAI_API_KEY` binding.
+- Added `docs/OPENAI_PROVIDER_SETUP.md` with the exact secret destination, official API references, cost calculation and activation gates. The recommended destination is Cloudflare Dashboard → Workers & Pages → `scout-customer-foundation` → Settings → Variables and Secrets → Add secret → `OPENAI_API_KEY`.
+
+### Verification
+
+- `npm test`: **131/131 passed**, including mocked OpenAI request serialization, key host confinement, citation/domain receipt validation, cost settlement, safe connection-status behavior, and admin-only/keyless Worker behavior.
+- `npm run typecheck`: passed.
+- `npm run build`: passed; `/api/customer/openai-connection` compiled as a dynamic route.
+- `npx prettier --check src/research/openai-web-search.ts` and `git diff --check`: passed. `npm run format:check` was run and remains non-green: it reports 121 files, including many untouched repository files and existing touched files. No unrelated bulk-formatting was applied.
+- All provider interactions in tests were injected fixtures. OpenAI API calls: **0**; measured API usage and spend: **$0**. No production browser, key, cloud secret, customer profile, market, or ABC Hotel data was accessed or changed in this pass.
+
+### Not yet end-to-end or production enabled
+
+- This repository change is local and has not been pushed or deployed. The connection route has not been tested against a configured Worker secret.
+- The live `PilotDispatcher` still rejects all real tenant/property scopes and supports only synthetic fixtures. The OpenAI search utility is not wired into that durable job path or the workspace review screen.
+- The existing reviewed-finding contract requires source-supported/verbatim claim excerpts. OpenAI web search returns cited summaries but does not guarantee verbatim page text. A separate explicitly labeled cited-summary draft and review/promotion flow is required before these responses can enter reviewed findings or create a customer Briefing.
+- No current execution supplied the existing OpenAI secret. The owner should add it directly in the Cloudflare Worker secret settings above; never paste it into chat, local files, Vercel frontend variables, logs or Git.
+- The earlier $0.20 pilot amount was a proposal, not an approved live cap, and the fixture-only 0007 migration enforces that cap while rejecting real tenant scopes. Proposed approval for one five-category manual cycle is **$1.25 total**. It reserves five worst-case GPT-6 Luna calls of $0.2215 each (1.05M input tokens at long-context rate, 2,000 output tokens and one $0.01 search call per category), leaving $0.1425 unused buffer. Search `low` is not treated as a token ceiling. No paid calls may occur until this cap is explicitly approved and an additive reviewed D1 policy migration enforces it.
+- No operator-approved source-domain grants are configured. The new request builder fails closed when server-owned allowed domains are missing. ABC Hotel has no official domain, so Property mentions cannot be identity-confirmed from name alone; the saved address can guide research but does not eliminate ambiguous matches.
+- The account/profile state referenced by the earlier pilot notes is historical and was not refreshed here. The fixture suite did not use or modify ABC Hotel data.
+
+### Next build pass
+
+After the owner adds the Worker secret and approves the proposed cap, implement the cited-summary draft schema and human review UI; connect the five-category provider to the durable pilot jobs with source grants, real-scope authorization, leases and budget reservations; add a scoped additive D1 migration that preserves current customer data; then push through the protected `main` pull-request path and verify the exact production revision. Run a no-research admin connection check first, then only the single authorized manual cycle. Keep recurring schedules and notifications disabled. Do not claim live findings or Briefing readiness until a real hosted run is reviewed.
+
+## OpenAI pilot authorization and current readiness — 2026-10-22 PDT
+
+The owner approved a **$1.25 hard ceiling for one manual five-category cycle**. This replaces the older $0.20/two-job proposal for this requested run only; no repeat, schedule or notification is authorized. The owner asked us to use the saved location and three competitors. A read-only query of existing production D1 confirmed the address anchor `9790 Northeast Tanasbourne Dr, Hillsboro, Oregon 97124, United States`, 10-mile radius, included places Hillsboro and Beaverton, and three active comp-set members: Residence Inn by Marriott Portland Hillsboro, Holiday Inn Portland West - Hillsboro by IHG, and Embassy Suites by Hilton Portland Hillsboro, Oregon. The own-property domain remains blank; do not claim same-name Property SCOUT mentions are a confirmed match.
+
+Added an administrator-only no-research OpenAI connection status control to the signed-in expansion view. It calls the existing customer backend endpoint and displays only a sanitized status enum. It makes no web-search call and has no effect on research activation. The key belongs only in the Cloudflare Worker secret named `OPENAI_API_KEY`; the production Worker secret-name check on October 22 did not find that name. No secret values were read.
+
+Read-only production checks found the expansion configuration and provider ledger tables, with zero D1 writes from this turn. The custom `d1_migrations` table records only 0001–0004, while the Cloudflare schema also contains the 0005/0006 tables and Wrangler reports 0005–0007 pending in its separate migration tracker. There is no `_cf_D1_migrations` table. Do not run a blind Wrangler migration apply: the migration history/ledger must be reconciled with the existing schema first. No pilot policy, source grants or customer provider-budget row is active for ABC Hotel.
+
+The external adapter still is not end-to-end: the existing durable `PilotDispatcher` is fixture-only, the OpenAI web-search utility is not connected to a real-scope job route, and there is no separate persistent cited-summary review draft/briefing path. The current import contract requires source-verbatim quotes, which OpenAI's cited summaries do not guarantee. No source-host grants or rights/retention register was found. OpenAI's `allowed_domains` enforces host filtering but not the path-level restrictions proposed in the earlier pilot plan; any live source grant must acknowledge that limit. The approved $1.25 cap is **not yet enforced by a live pilot policy**.
+
+Checks: production D1 reads changed zero rows; repeated Worker secret-name listing still contains only `REVIEW_TOKEN`, `SERVICE_TOKEN` and `SIL_SERVICE_TOKEN`. After the UI control edit, `npm test` passed **131/131**, `npm run typecheck` passed, `npm run build` passed, scoped Prettier passed, and `git diff --check` passed. No OpenAI request, search call, research spend, market write, schedule or notification occurred; measured provider spend remains **$0**. These mocked connector/credential/citation/cost checks are not hosted acceptance.
+
+Next: owner adds the existing OpenAI key to Cloudflare's `scout-customer-foundation` Worker secret settings; confirm it only by the no-research status control. Then complete and test the durable real-tenant manual pilot path, cited-summary persistence/approval surface, per-cycle cap, and safe additive D1 migration reconciliation. Before a paid call, install exact host grants and the enforced policy. Only then use the already authorized one-cycle cap and present real results as review-only. Live research, paid calls, schedules and notifications remain disabled until those gates pass.
+
+## OpenAI credential configured — October 22, 2026
+
+The owner confirmed the existing key was entered into Cloudflare. `wrangler secret list` now shows the `OPENAI_API_KEY` secret name on the existing `scout-customer-foundation` Worker; I did not read, print, transfer or store its value. A no-research model-access check is implemented in local Worker/Vercel code but has not run against the hosted system yet. No model request, web search, D1 write or cost occurred.
+
+Local connector and status-control milestone remains green: `npm test` 131/131, `npm run typecheck`, `npm run build`, scoped Prettier and `git diff --check` pass. The admin-only check returns only `not_configured`, `valid`, `denied` or `unavailable`. This verifies credential/model access only; it does not enable research.
+
+The live dispatcher and cited-summary review storage/UI are still not implemented or deployed. Production has no approved source grants or provider budget row; the legacy pilot migration is fixture-only and D1 migration bookkeeping does not match the installed schema. The approved $1.25 ceiling therefore is not enforced by a live job path. Exact source grants and permitted excerpt/retention rules remain necessary, including a decision that OpenAI's host-level search filter cannot enforce path-level grants. No live research, paid calls, schedules or notifications were started. ABC Hotel data is unchanged.
+
+Next: release only the no-cost admin connection check through the protected-main process and verify it with the existing signed-in ABC Hotel administrator session. Then finish the separately gated review-only live dispatcher and reconcile migration history without changing customer records. Do not run the paid cycle until source grants, retention policy, durable review staging and the $1.25 atomic cap are all active and tested.
