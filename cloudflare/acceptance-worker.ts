@@ -9,7 +9,7 @@ import { ReviewedImports } from "../src/customer/reviewed-imports";
 import { PilotDispatcher } from "../src/research/pilot-dispatcher";
 import { marketCategories } from "../src/customer/market-contracts";
 // Dedicated acceptance entrypoint. Never imported by the production Worker.
-const hostedAcceptancePilotId = "hosted_pass_c_acceptance_20261022";
+const hostedAcceptancePilotId = "hosted_pass_c_acceptance_20261022_b";
 export interface AcceptanceEnv extends Env {
   FIXTURE_PASSWORD?: string;
   ACCEPTANCE_EXPIRES_AT?: string;
