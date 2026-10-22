@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     ],
   },
   description:
-    "Your hotel’s market research assistant. Companies, projects and events, together in one market blueprint.",
+    "Your hotel’s market research assistant. Follow companies, projects, events, selected competitors and public mentions of your hotel, then bring the findings together in a source-linked briefing.",
 };
 export default function RootLayout({
   children,

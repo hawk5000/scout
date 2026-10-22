@@ -1,7 +1,15 @@
 import { handleCustomer, type Env } from "./customer/worker";
-import { digest } from "../src/customer/store";
-import { recordedAcceptanceProvider } from "./acceptance-provider";
+import {
+  recordedAcceptanceProvider,
+  recordedPilotConnector,
+} from "./acceptance-provider";
+import { CustomerStore, digest } from "../src/customer/store";
+import { SilAuth } from "../src/customer/sil";
+import { ReviewedImports } from "../src/customer/reviewed-imports";
+import { PilotDispatcher } from "../src/research/pilot-dispatcher";
+import { marketCategories } from "../src/customer/market-contracts";
 // Dedicated acceptance entrypoint. Never imported by the production Worker.
+const hostedAcceptancePilotId = "hosted_pass_c_acceptance_20261022_b";
 export interface AcceptanceEnv extends Env {
   FIXTURE_PASSWORD?: string;
   ACCEPTANCE_EXPIRES_AT?: string;
@@ -54,6 +62,8 @@ export default {
     } catch {
       return new Response("Acceptance database required", { status: 403 });
     }
+    if (new URL(request.url).pathname === "/pilot")
+      return handlePilot(request, env);
     const transport: typeof fetch = async (url, init) => {
       const path = new URL(String(url)).pathname;
       const input = JSON.parse(String(init?.body ?? "{}"));
@@ -99,3 +109,228 @@ export default {
     );
   },
 };
+
+async function handlePilot(
+  request: Request,
+  env: AcceptanceEnv,
+): Promise<Response> {
+  if (request.method !== "POST" || new URL(request.url).search)
+    return new Response("Not found", { status: 404 });
+  if (
+    (await digest(request.headers.get("authorization") ?? "")) !==
+    (await digest(`Bearer ${env.SERVICE_TOKEN ?? ""}`))
+  )
+    return new Response("Access denied", { status: 403 });
+  try {
+    const body = (await request.json()) as {
+      operation?: string;
+      token?: string;
+      requestKey?: string;
+      jobId?: string;
+      reviewId?: string;
+      approvalHash?: string;
+      decision?: "approved" | "rejected";
+    };
+    const fakeSil: typeof fetch = async (url, init) => {
+      const path = new URL(String(url)).pathname,
+        input = JSON.parse(String(init?.body ?? "{}"));
+      const identity = identities.find(
+        (i) =>
+          i.tenantId === input.tenantId &&
+          i.propertyId === input.propertyId &&
+          i.userId === input.userId,
+      );
+      return Response.json(
+        identity
+          ? {
+              ...identity,
+              appKey: "scout",
+              credentialVersion: 1,
+              sessionValid: true,
+              mustChangePassword: false,
+            }
+          : {},
+      );
+    };
+    const store = new CustomerStore(
+      env.DB,
+      new SilAuth(
+        {
+          origin: "https://synthetic-auth.example",
+          token: "fixture-only",
+          appKey: "scout",
+        },
+        fakeSil,
+      ),
+    );
+    if (!body.token)
+      return Response.json(
+        { error: "Fixture session required" },
+        { status: 401 },
+      );
+    const scope = await store.expansionScope(body.token);
+    if (
+      scope.tenantId !== "fixture_tenant" ||
+      scope.propertyId !== "fixture_hotel"
+    )
+      return Response.json(
+        { error: "Synthetic fixture scope required" },
+        { status: 403 },
+      );
+    const reviewer = new ReviewedImports(env.DB);
+    if (body.operation === "run") {
+      const expiry = Date.parse(env.ACCEPTANCE_EXPIRES_AT!);
+      if (expiry - Date.now() > 7 * 86400000)
+        return Response.json(
+          { error: "Fixture expiry exceeds pilot limit" },
+          { status: 403 },
+        );
+      const own = {
+        name: "Fictional Hosted Acceptance Hotel",
+        address: "1 Fictional Lane",
+        locality: "Fictional Bay",
+        domain: "hotel.example",
+        aliases: [],
+        formerNames: [],
+        brand: "",
+      };
+      const config = {
+        own,
+        competitors: [
+          {
+            ...own,
+            id: "fixture_competitor",
+            name: "Fictional Ridge Hotel",
+            address: "2 Fictional Lane",
+            domain: "ridge.example",
+            active: true,
+          },
+        ],
+      };
+      const plans = Object.fromEntries(
+        marketCategories.map((c) => [
+          c,
+          { query: c, hosts: ["sources.example"], requiredUrls: [] },
+        ]),
+      );
+      const policy = {
+        config,
+        plans,
+        grants: [{ host: "sources.example", paths: ["/"] }],
+      };
+      const expiryMs = expiry;
+      await env.DB.prepare(
+        "INSERT INTO customer_pilot_policy(tenant_id,property_id,id,expires_at,max_jobs,total_micros,document_json) VALUES(?,?,?, ?,2,200000,?) ON CONFLICT(tenant_id,property_id,id) DO NOTHING",
+      )
+        .bind(
+          scope.tenantId,
+          scope.propertyId,
+          hostedAcceptancePilotId,
+          expiryMs,
+          JSON.stringify(policy),
+        )
+        .run();
+      await env.DB.prepare(
+        "INSERT INTO customer_provider_limits VALUES(?,?,?,100000,200000,?) ON CONFLICT(tenant_id,property_id,month) DO NOTHING",
+      )
+        .bind(
+          scope.tenantId,
+          scope.propertyId,
+          new Date().toISOString().slice(0, 7),
+          "2026-10-21-standard-v1",
+        )
+        .run();
+      const dispatcher = new PilotDispatcher(
+        env.DB,
+        scope,
+        (category, approvedConfig, at) =>
+          recordedPilotConnector({
+            category,
+            config: approvedConfig,
+            propertyId: scope.propertyId,
+            at,
+          }),
+        async () => {
+          await store.expansionScope(body.token!);
+        },
+      );
+      const status = await dispatcher.run(
+        hostedAcceptancePilotId,
+        body.requestKey ?? "",
+      );
+      return Response.json(status);
+    }
+    const connector = (
+      category: (typeof marketCategories)[number],
+      config: import("../src/customer/expansion-contracts").ExpansionConfiguration,
+      at: string,
+    ) =>
+      recordedPilotConnector({
+        category,
+        config,
+        propertyId: scope.propertyId,
+        at,
+      });
+    const dispatcher = new PilotDispatcher(
+      env.DB,
+      scope,
+      connector,
+      async () => {
+        await store.expansionScope(body.token!);
+      },
+    );
+    if (body.operation === "status" && body.jobId)
+      return Response.json(await dispatcher.status(body.jobId));
+    if (body.operation === "snapshot" && body.jobId) {
+      const snapshot = await dispatcher.approvedSnapshot(body.jobId);
+      return Response.json({
+        reviewId: snapshot.reviewId,
+        approvalHash: snapshot.approvalHash,
+        records: snapshot.market.records.length,
+        versions: snapshot.market.records.map((r) => ({
+          id: r.id,
+          version: r.versions.length,
+          evidence: r.evidence.map((e) => e.id),
+        })),
+      });
+    }
+    if (body.operation === "review" && body.reviewId) {
+      const review = await reviewer.execute(
+        { ...scope, dataMode: "synthetic" },
+        { operation: "read", reviewId: body.reviewId },
+      );
+      if (!body.decision || !body.approvalHash)
+        return Response.json({
+          status: review.status,
+          reviewId: review.reviewId,
+          approvalHash: review.approvalHash,
+          findings: (review.batch as { items: unknown[] }).items.length,
+          warning: review.warning,
+        });
+      const result = await reviewer.execute(
+        { ...scope, dataMode: "synthetic" },
+        {
+          operation: "decide",
+          reviewId: body.reviewId,
+          approvalHash: body.approvalHash,
+          decision: body.decision,
+          note: "Synthetic hosted acceptance: evidence and lodging inference reviewed.",
+          evidenceReviewed: true,
+          lodgingInferenceReviewed: true,
+        },
+      );
+      return Response.json(result);
+    }
+    return Response.json(
+      { error: "Unsupported pilot operation" },
+      { status: 400 },
+    );
+  } catch (error) {
+    const code =
+      error instanceof Error &&
+      /PILOT_|LIVE_DISABLED|SOURCE_|RATE_|BUDGET/.test(error.message)
+        ? error.message
+        : "PILOT_REQUEST_FAILED";
+    return Response.json({ error: code }, { status: 403 });
+  }
+}

@@ -160,10 +160,12 @@ export function WorkspaceApp() {
         <Brand />
         <h1>Take a look around.</h1>
         <p>
-          Explore a fictional hotel market with nine sample findings and all
-          three SCOUT perspectives. Save, filter and export in your own isolated
-          demo workspace. Changes stay in this browser for seven days. Use
-          fictional information only.
+          Explore the fictional prospecting sample: companies, projects and
+          events. The expanded customer workspace also includes selected
+          competitor changes, public mentions of your hotel and a source-linked
+          SCOUT Briefing; those expanded findings are not part of this sample.
+          Save, filter and export here. Changes stay in this browser for seven
+          days. Use fictional information only.
         </p>
         <Notice>{loadError || "Start a demo session to continue."}</Notice>
         <DemoEntry label="Start my fictional demo" />
@@ -201,7 +203,9 @@ export function WorkspaceApp() {
           <summary>Market coverage and last check</summary>
           <p>
             {data.profile.marketCenter} · {data.profile.radiusMiles}-mile
-            radius. Companies, projects and events share this market.
+            radius. This sample covers companies, projects and events. The
+            expanded customer workspace also includes selected competitors and
+            public mentions of your hotel.
           </p>
           <p>
             Last recorded sample check:{" "}
@@ -365,7 +369,9 @@ export function WorkspaceApp() {
                 also removes them. This is separate from customer accounts. Live
                 research, paid API calls, scheduled research and sending are
                 disabled. Sample updates are fictional and run only when
-                requested in administrator setup.
+                requested in administrator setup. This sample covers companies,
+                projects and events; the expanded customer workspace also has
+                selected competitor tracking, hotel mentions and SCOUT Briefing.
               </p>
             </details>
           </div>

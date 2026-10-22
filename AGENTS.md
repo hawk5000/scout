@@ -4,7 +4,7 @@ Build SCOUT by SalesHospitality — “Your hotel’s market research assistant.
 Read docs/PRODUCT.md, docs/BUILD_PLAN.md and docs/PROJECT_STATUS.md first. Use `.agents/skills/hotel-market-intelligence-builder/SKILL.md` and the relevant referenced files. If skill auto-discovery is unavailable, read it directly. This folder is a local implementation project, not a request to migrate to a different hosting service.
 
 ## Product boundaries
-- Implement Corporate SCOUT, Project SCOUT and Event SCOUT sharing one market blueprint and engine.
+- Corporate SCOUT, Project SCOUT and Event SCOUT remain the prospecting foundation. The approved expansion also includes Competitor SCOUT, Property SCOUT and an evidence-linked SCOUT Briefing; see `SCOUT_Expansion_Update/RESEARCH_AND_BRIEFING.md`.
 - Establish a baseline, then two scheduled market update cycles weekly covering all three categories.
 - Deliver evidence-backed external intelligence for the hotel's existing sales workflow. No daily lead quota, CRM pipeline, outreach tasks, automated sending, voice, booking engine, or PMS integration.
 - Give access to current records and exports without paid rescans. Keep manual research admin-controlled and budgeted.
@@ -22,3 +22,10 @@ Read docs/PRODUCT.md, docs/BUILD_PLAN.md and docs/PROJECT_STATUS.md first. Use `
 - The local build prompt authorizes local implementation, not cloud provisioning, API spend, recurring live jobs, repository publishing or deployment. Prepare configuration and identify a specific blocker when those become necessary; do not invent IDs or endpoints.
 - Run appropriate unit/integration tests, type checks and production build. User preference: rendered browser acceptance on approved Vercel deployment, not local browser tests. Mark browser acceptance pending until that access is authorized.
 - Update docs/PROJECT_STATUS.md after each substantial pass. Report implemented, tested, unverified and blocked separately. No placeholder buttons labeled as completed functions.
+
+## Production release path
+
+- `main` is the sole production release branch for the SCOUT Vercel project. A feature-branch deployment is a preview and must never be described as the stable customer app.
+- For an approved release, complete and verify the scoped work, merge it to `main`, then verify Vercel labels the exact pushed revision as **Production / Ready** and confirm behavior through `https://scout-olive-ten.vercel.app`.
+- Do not run a production deployment from a feature branch or an uncommitted local checkout. Prefer the existing Git-connected Vercel deployment from `main` so its source and commit remain traceable.
+- Preserve the explicit production-off state for live research, paid calls, scheduled research and notifications unless separately authorized.

@@ -375,7 +375,7 @@ export function Blueprint({
             <Search size={18} />
             <span className="sr-only">Search findings</span>
             <input
-              placeholder="Search companies, projects, events…"
+              placeholder="Search market findings…"
               value={filters.q}
               maxLength={200}
               onChange={(e) => update("q", e.target.value)}

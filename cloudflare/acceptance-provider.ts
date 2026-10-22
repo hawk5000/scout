@@ -1,6 +1,12 @@
 import type { Database } from "../src/customer/store";
 import type { ExpansionScope } from "../src/customer/expansion";
 import type { ExpansionProvider } from "../src/customer/expansion-provider";
+import type { ExpansionConfiguration } from "../src/customer/expansion-contracts";
+import type {
+  MarketCategory,
+  Ingestion,
+} from "../src/customer/market-contracts";
+import type { PinnedFixtureConnector } from "../src/research/pilot-transport";
 import { fixtureItems } from "../src/customer/expansion-fixtures";
 import { PreparedExpansionProvider } from "../src/research/prepared-provider";
 import { ProviderLedger } from "../src/research/provider-ledger";
@@ -11,6 +17,110 @@ import {
   SourceError,
   type SourceTransport,
 } from "../src/research/source-adapters";
+
+export async function recordedPilotConnector(input: {
+  category: MarketCategory;
+  config: ExpansionConfiguration;
+  propertyId: string;
+  at: string;
+}): Promise<PinnedFixtureConnector> {
+  const items = await fixtureItems(
+    input.category,
+    input.config,
+    input.propertyId,
+    "baseline",
+    input.at,
+  );
+  const json = (value: unknown) => ({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify(value),
+  });
+  return {
+    mode: "synthetic",
+    async resolve() {
+      return ["93.184.216.34"];
+    },
+    async open(request) {
+      let value: unknown,
+        contentType = "application/json";
+      if (request.credential === "brave")
+        value = {
+          web: {
+            results: items.flatMap((i) =>
+              i.candidate.sources.map((s) => ({
+                title: i.candidate.name,
+                url: s.url,
+              })),
+            ),
+          },
+        };
+      else if (request.credential === "openai")
+        value = {
+          status: "completed",
+          usage: { input_tokens: 100, output_tokens: 100 },
+          output: [
+            {
+              type: "message",
+              content: [
+                {
+                  type: "output_text",
+                  text: JSON.stringify({
+                    items: items.map(({ receipts: _, context, ...i }) => ({
+                      ...i,
+                      context: context ?? null,
+                    })),
+                  }),
+                },
+              ],
+            },
+          ],
+        };
+      else {
+        contentType = "text/plain";
+        const item = items.find((i) =>
+          i.candidate.sources.some(
+            (s) => sourceUrl(s.url, ["sources.example"]) === request.url,
+          ),
+        );
+        if (!item)
+          return {
+            status: 404,
+            contentType,
+            chunks: (async function* () {
+              yield new TextEncoder().encode("Fictional source missing");
+            })(),
+          };
+        const subject =
+          input.category === "competitor"
+            ? input.config.competitors.find(
+                (c) => c.id === item.context?.subjectId,
+              )
+            : input.config.own;
+        value = [
+          "FICTIONAL SYNTHETIC PILOT SOURCE",
+          ...item.candidate.sources.flatMap((s) =>
+            s.claims.map((c) => c.quote),
+          ),
+          item.context?.excerpt ?? "",
+          subject?.name ?? "",
+          subject?.address ?? "",
+        ].join("\n");
+      }
+      const response =
+        contentType === "text/plain"
+          ? { status: 200, contentType, body: String(value) }
+          : json(value);
+      return {
+        status: response.status,
+        contentType: response.contentType,
+        chunks: (async function* () {
+          yield new TextEncoder().encode(response.body);
+        })(),
+      };
+    },
+  };
+}
 
 // Imported ONLY by the expiring, database-marked acceptance entrypoint. These
 // provider-shaped responses are generated locally; no fetch or credentials exist.

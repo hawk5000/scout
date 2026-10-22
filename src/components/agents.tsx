@@ -23,13 +23,14 @@ export function AgentList({ data }: { data: Workspace }) {
   return (
     <>
       <PageHeading
-        title="Your research team."
-        description="Three perspectives on one market. Review the fictional findings, coverage and run history."
+        title="Company, project and event findings."
+        description="The three prospecting categories in this fictional sample, with their findings, coverage and run history."
       />
       <Notice>
-        Live research is inactive. The administrator workbench can replay sample
-        updates through all three research categories. Nothing runs when you
-        view a page.
+        This demo replays fictional updates across companies, projects and
+        events. The expanded customer workspace also includes selected
+        competitors, public mentions of the hotel and SCOUT Briefing. Live
+        research is inactive; viewing this page never starts a refresh.
       </Notice>
       <div className="agent-grid">
         {categories.map((c) => {
@@ -81,9 +82,10 @@ export function AgentList({ data }: { data: Workspace }) {
       <section className="shared-cycle">
         <h2>A shared cycle, not three separate rescans.</h2>
         <p>
-          The intended service establishes one initial market blueprint, then
-          runs two update cycles each week across all three scouts. New evidence
-          should update existing findings; a quiet cycle is a valid result.
+          The planned service starts with one market blueprint, then shares two
+          weekly update cycles across all five research categories. New evidence
+          updates existing findings; a quiet cycle is a valid result. No
+          schedule is active in this demo.
         </p>
       </section>
     </>
@@ -126,7 +128,7 @@ export function RunHistory({
             </h3>
             <p>
               {r.newIds.length} new findings · {r.changedIds.length} meaningful
-              changes · all three scouts
+              changes · three prospecting categories
             </p>
             {r.status !== "Completed" && (
               <p>
