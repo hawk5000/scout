@@ -225,6 +225,7 @@ async function pilotSetup() {
     brand: "",
   };
   const config = {
+    memberships: { "comp-1": { version: 1, history: [] } },
     own: identity,
     competitors: [1, 2, 3].map((i) => ({
       ...identity,

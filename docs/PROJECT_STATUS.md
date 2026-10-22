@@ -799,3 +799,9 @@ Implemented the cross-app contract without elevating ABC Hotel: successful SIL l
 Applied additive 0009 authorization-fence migration; preserved existing memberships/profiles/results and the one-job $1.25 policy. SIL has an opt-in control in normal customer application setup with tenant/property/user scoping, revision checks and audited grant/revoke. No auto-grants and no other app permission changes.
 
 Verified 137 SCOUT tests, typecheck and production build; includes editor with explicit permission, revocation before spend, role-only denial, five-category persistence, concurrency and duplicate prevention. Schedules and notifications remain off. Hosted/live results to be recorded after release and owner grant.
+
+### Hosted permission release and configuration compatibility
+
+SCOUT main `7db4c1f` deployed to Vercel Production/Ready and Worker `f5ec432e-9a49-4180-af61-9bd7ebe2d61f`; SIL main `43d1db8` deployed Production/Ready. ABC Hotel signed in with existing credentials, retaining editor membership. Owner SIL administrator session needs sign-in before using the new explicit grant control. No grants, provider calls or jobs exist yet.
+
+Hosted readiness found stored expansion documents include internal `memberships` history. The pilot now validates only their public own/competitors/paused settings while keeping the entire stored configuration digest for drift detection. No customer record is rewritten. Six focused pilot tests pass using the actual stored shape; typecheck and build pass.
