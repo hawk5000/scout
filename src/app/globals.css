@@ -3686,7 +3686,8 @@ input[type="checkbox"] {
   .public-demo-topbar,
   .public-demo-heading,
   .public-demo-footer,
-  .public-demo-briefing-actions {
+  .public-demo-briefing-actions,
+  .public-demo-status {
     display: none !important;
   }
   .public-demo-main,
