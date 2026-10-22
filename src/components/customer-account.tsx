@@ -2,9 +2,9 @@
 import { useState } from "react";
 import { CustomerExpansion } from "./customer-expansion";
 import { CustomerMarket } from "./customer-market";
+import { CustomerHotelProfile } from "./customer-hotel-profile";
 import { Brand } from "./ui";
 import type { CustomerWorkspace } from "@/customer/contracts";
-import { profileFromBasics } from "@/customer/profile-basics";
 export function CustomerLogin() {
   const [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
@@ -89,30 +89,6 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
       setBusy(false);
     }
   }
-  async function save(form: HTMLFormElement) {
-    setBusy(true);
-    setMessage("");
-    try {
-      const profile = profileFromBasics(workspace.profile, new FormData(form));
-      const r = await fetch("/api/workspace", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          revision: workspace.revision,
-          profile,
-          coverage: workspace.coverage,
-        }),
-      });
-      const data = await r.json();
-      if (!r.ok) throw Error(data.error);
-      setWorkspace(data);
-      setMessage("Hotel profile saved.");
-    } catch (e) {
-      setMessage((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
   const profile = workspace.profile;
   const hotelName = profile?.name || workspace.propertyName;
   const hotelLocation = profile?.postalAddress
@@ -164,116 +140,7 @@ export function CustomerAccount({ initial }: { initial: CustomerWorkspace }) {
       </nav>
       <p role="status">{message}</p>
       {tab === "profile" ? (
-        <section>
-          <p className="eyebrow">Hotel profile</p>
-          <h1>{hotelName}</h1>
-          <p>
-            Keep {hotelName}’s details up to date so findings focus on the area
-            around your hotel. Only hotel name is required.
-          </p>
-          <form
-            key={workspace.revision}
-            className="customer-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void save(e.currentTarget);
-            }}
-          >
-            <fieldset disabled={busy || workspace.role === "viewer"}>
-              <legend>Hotel details</legend>
-              <label>
-                Hotel name
-                <input
-                  name="name"
-                  autoComplete="organization"
-                  required
-                  maxLength={300}
-                  defaultValue={profile?.name ?? workspace.propertyName}
-                />
-              </label>
-              <label>
-                Website (optional)
-                <input
-                  name="website"
-                  type="url"
-                  autoComplete="url"
-                  placeholder="https://yourhotel.com"
-                  maxLength={2048}
-                  defaultValue={profile?.website ?? ""}
-                />
-              </label>
-              <h2 className="profile-address-heading">Hotel address</h2>
-              {profile?.address && !profile.postalAddress && (
-                <p className="profile-existing-address">
-                  Previously saved address: <strong>{profile.address}</strong>.
-                  Add the full address below when ready.
-                </p>
-              )}
-              <label>
-                Street address
-                <input
-                  name="line1"
-                  autoComplete="address-line1"
-                  maxLength={150}
-                  defaultValue={profile?.postalAddress?.line1 ?? ""}
-                />
-              </label>
-              <label>
-                Address line 2 (optional)
-                <input
-                  name="line2"
-                  autoComplete="address-line2"
-                  maxLength={150}
-                  defaultValue={profile?.postalAddress?.line2 ?? ""}
-                />
-              </label>
-              <div className="profile-address-grid">
-                <label>
-                  City
-                  <input
-                    name="city"
-                    autoComplete="address-level2"
-                    maxLength={100}
-                    defaultValue={profile?.postalAddress?.city ?? ""}
-                  />
-                </label>
-                <label>
-                  State / province / region
-                  <input
-                    name="region"
-                    autoComplete="address-level1"
-                    maxLength={100}
-                    defaultValue={profile?.postalAddress?.region ?? ""}
-                  />
-                </label>
-                <label>
-                  ZIP / postal code
-                  <input
-                    name="postalCode"
-                    autoComplete="postal-code"
-                    maxLength={30}
-                    defaultValue={profile?.postalAddress?.postalCode ?? ""}
-                  />
-                </label>
-                <label>
-                  Country
-                  <input
-                    name="country"
-                    autoComplete="country-name"
-                    maxLength={100}
-                    defaultValue={profile?.postalAddress?.country ?? ""}
-                  />
-                </label>
-              </div>
-              <button className="button primary">
-                {busy ? "Saving…" : "Save hotel profile"}
-              </button>
-            </fieldset>
-          </form>
-          {workspace.role === "viewer" && (
-            <p>Your account has read-only access.</p>
-          )}
-        </section>
+        <CustomerHotelProfile initial={workspace} onWorkspace={setWorkspace} />
       ) : tab === "briefing" || tab === "research" ? (
         <CustomerExpansion
           key={tab}

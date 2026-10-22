@@ -30,7 +30,25 @@ export const expansionConfiguration = z
           active: z.boolean(),
         }),
       )
-      .max(25),
+      .max(25)
+      .refine(
+        (items) => items.filter((item) => item.active).length <= 5,
+        "Select up to five hotels in your STR comp set.",
+      )
+      .refine((items) => {
+        const active = items.filter((item) => item.active);
+        const names = active.map((item) =>
+          item.name.trim().toLocaleLowerCase(),
+        );
+        return new Set(names).size === names.length;
+      }, "Each hotel in the comp set must have a different name.")
+      .refine(
+        (items) =>
+          items.every(
+            (item) => !item.active || (item.name.trim() && item.address.trim()),
+          ),
+        "Add a hotel name and address for each selected comp-set hotel.",
+      ),
   })
   .strict()
   .refine(
