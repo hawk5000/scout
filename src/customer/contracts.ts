@@ -58,6 +58,7 @@ export type CustomerMutation = z.infer<typeof customerMutation>;
 export const customerWorkspace = z
   .object({
     mode: z.literal("customer"),
+    manualResearchAllowed: z.boolean().optional(),
     propertyName: z.string(),
     role: z.enum(["viewer", "editor", "admin"]),
     revision: z.number().int().nonnegative(),

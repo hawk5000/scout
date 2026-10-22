@@ -791,3 +791,11 @@ Next pass: obtain the administrator session and source/retention approvals, veri
 - Hosted browser opens the customer sign-in page; existing browser session has expired. Unauthenticated pilot and connection routes return 401 with private/no-store responses. Authenticated admin execution is unverified and deliberately blocked by the unchanged editor membership.
 - Remote readback: migrations 0001–0008 recorded; one policy expires 2026-10-28 22:10:16 UTC; job/month caps $1.25 each; zero pilot jobs and zero provider ledger calls. Source approval and cap are complete, but do not confer an application administrator role.
 - Exact next owner action: authorize a change in the SIL repository to add a SCOUT-specific manual-research grant and revalidate it through the server-to-server customer login/session contract, followed by SCOUT consumption. Preserve ABC Hotel's editor membership and all other app access. Do not change a shared SIL role as a workaround. No additional paid-cycle approval is needed within the existing cap.
+
+## SIL-managed manual research permission — 2026-10-22
+
+Implemented the cross-app contract without elevating ABC Hotel: successful SIL login/session-status supplies a SCOUT-only manualResearch grant, and SCOUT revalidates before provider verification, run creation, dispatch and result persistence. Local roles stay unchanged. A short-lived session-scoped D1 proof adds storage-level checks; missing/revoked grants fail closed, including local administrators without a SIL grant.
+
+Applied additive 0009 authorization-fence migration; preserved existing memberships/profiles/results and the one-job $1.25 policy. SIL has an opt-in control in normal customer application setup with tenant/property/user scoping, revision checks and audited grant/revoke. No auto-grants and no other app permission changes.
+
+Verified 137 SCOUT tests, typecheck and production build; includes editor with explicit permission, revocation before spend, role-only denial, five-category persistence, concurrency and duplicate prevention. Schedules and notifications remain off. Hosted/live results to be recorded after release and owner grant.

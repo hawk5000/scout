@@ -36,13 +36,15 @@ The owner approved one $1.25 manual cycle and the public-source policy below. D1
 
 Retain URLs/titles, observed and explicitly stated dates, concise AI paraphrases, citations, implications, unknowns and usage for private review. No whole articles, photos or guest personal data. No automatic publication. Brand-wide news is not a selected-hotel match. No review-platform/social coverage is promised. The saved area is the 10-mile Hillsboro/Beaverton market; the own-hotel website is absent, so address-based matches must remain explicitly qualified.
 
-### Exact authorization gap (not a credentials problem)
+### SIL permission setup
 
-ABC Hotel remains an active SCOUT **editor**, as the owner explicitly requested. No membership, SIL role, password or other application access was changed. SCOUT's `customer_memberships.role` controls pilot administration. SIL's existing customer login returns `role` from property access, but SCOUT does not map that field, and SIL's `validateCustomerAppSession` response does not return or revalidate a research permission. Signing into the SIL administrator console does not create a SCOUT administrator session. Earlier instructions to simply use an existing SIL administrator session were incorrect.
+SIL customer setup now exposes **SCOUT manual research** for the selected tenant/property/user under Applications > SCOUT. An authenticated SIL administrator grants or revokes it; existing customer roles and other app access are untouched. No customer is automatically granted research. The normal customer login and session-status contracts return `scoutPermissions.manualResearch` only for SCOUT after existing access checks pass.
 
-There is **no existing SIL-only setting that makes this SCOUT route authorized**. To keep ABC's role unchanged and manage authorization in SIL, the next required action is to authorize a scoped SIL integration change: add an explicitly granted SCOUT-only manual-research permission for tenant_abc/property_abc_abc_hotel/user_info_abchotel_com, expose and revalidate it through the existing server-to-server login/session contract, and have SCOUT check that permission on every dispatch. This is a proposed contract, not a fabricated existing endpoint. Do not change the user's global/property role to admin; that could affect other applications and still would not satisfy the current SCOUT check. No SIL code or settings were changed in this repository task.
+SCOUT checks this fresh permission before provider verification, job start/advance, every paid request and persistence. Migration 0009 adds a short-lived session-scoped D1 authorization fence. Neither a SCOUT admin label nor SIL-console sign-in alone permits research. Missing or revoked grants fail closed. The grant allows requesting research; SCOUT's separate source policy, spending cap and manual-only dispatcher still determine whether any request can run.
 
-The existing Worker secret name was confirmed without reading its value. The free model connection check and all paid calls remain blocked by authorization. No provider request or live result is claimed. Token-based cost calculations must be labelled calculated from measured usage, not reconciled OpenAI invoices.
+For ABC Hotel: keep `user_info_abchotel_com` an editor. In SIL select ABC Hotel and that customer login, then **Grant SCOUT manual research**. Sign into SCOUT normally with the existing customer password. Never paste the password or OpenAI key into chat. The owner-approved cap and source policy remain unchanged; no second cycle is authorized.
+
+The existing Worker secret name was confirmed without reading its value. Token-based cost calculations are calculated from measured usage, not reconciled OpenAI invoices. Actual connection and live results are recorded in PROJECT_STATUS.md after hosted verification.
 
 ## Official provider references
 

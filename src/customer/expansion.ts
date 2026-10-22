@@ -21,6 +21,7 @@ import {
   type ExpansionProvider,
 } from "./expansion-provider";
 export type ExpansionScope = {
+  manualResearchAllowed?: boolean;
   tenantId: string;
   propertyId: string;
   actor: string;

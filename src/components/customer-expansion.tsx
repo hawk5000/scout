@@ -83,8 +83,8 @@ function pilotBlockerLabel(code: string) {
     PROPERTY_RESEARCH_PAUSED: "Research is paused for this hotel.",
     PILOT_SCOPE_NOT_APPROVED:
       "This one-time pilot is limited to the approved ABC Hotel account.",
-    ADMINISTRATOR_ACCESS_REQUIRED:
-      "A SCOUT administrator for this hotel must perform the provider check and start the pilot. SIL sign-in alone does not grant this role.",
+    SCOUT_RESEARCH_PERMISSION_REQUIRED:
+      "A SIL administrator must grant SCOUT manual research for your hotel user in customer setup. Your hotel role does not need to change.",
     HOTEL_PROFILE_REQUIRED:
       "Complete the hotel name and address before starting research.",
     HOTEL_IDENTITY_OR_ADDRESS_REQUIRED:
@@ -314,7 +314,7 @@ export function CustomerExpansion({
         <p>Loading hotel research information...</p>
       ) : (
         <>
-          {workspace.role === "admin" && (
+          {workspace.manualResearchAllowed === true && (
             <aside
               className="expansion-panel"
               aria-label="Research provider status"
@@ -371,7 +371,7 @@ export function CustomerExpansion({
                   </ul>
                 </div>
               )}
-              {workspace.role === "admin" &&
+              {workspace.manualResearchAllowed === true &&
                 livePilot.ready &&
                 (!livePilot.job ||
                   ["queued", "running"].includes(livePilot.job.state)) && (
@@ -388,10 +388,10 @@ export function CustomerExpansion({
                         : "Run the one manual cycle"}
                   </button>
                 )}
-              {workspace.role !== "admin" && (
+              {workspace.manualResearchAllowed !== true && (
                 <p className="fine-print">
-                  A hotel administrator must start or continue this run. You can
-                  review results here after it runs.
+                  A hotel user with SCOUT research permission must start or
+                  continue this run. You can review results here after it runs.
                 </p>
               )}
               {livePilot.job && (

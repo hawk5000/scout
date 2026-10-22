@@ -492,10 +492,20 @@ test("Worker account flow persists edits with only SIL auth transport; rejects r
   }
 });
 
-test("OpenAI connection check is admin-only, keyless by default, and returns no credential detail", async () => {
+test("OpenAI connection check requires fresh SIL research permission, keyless by default, and returns no credential detail", async () => {
   const { handleCustomer } = await import("../cloudflare/customer/worker");
   const db = setup();
   let checks = 0;
+  let allowed = false;
+  for (const f of [
+    "0004_reviewed_imports.sql",
+    "0005_scout_expansion.sql",
+    "0006_provider_preparation.sql",
+    "0007_pilot_dispatch.sql",
+    "0008_openai_manual_pilot.sql",
+    "0009_sil_research_permission.sql",
+  ])
+    db.exec(readFileSync(`cloudflare/migrations/${f}`, "utf8"));
   try {
     db.prepare("UPDATE customer_memberships SET role='admin'").run();
     const env = {
@@ -515,7 +525,12 @@ test("OpenAI connection check is admin-only, keyless by default, and returns no 
               accessAllowed: true,
               mustChangePassword: false,
             }
-          : { ...who(), sessionValid: true, mustChangePassword: false },
+          : {
+              ...who(),
+              sessionValid: true,
+              mustChangePassword: false,
+              scoutPermissions: { manualResearch: allowed },
+            },
       )) as typeof fetch;
     const send = (input: unknown) =>
       handleCustomer(
@@ -548,6 +563,10 @@ test("OpenAI connection check is admin-only, keyless by default, and returns no 
     });
     assert.equal(login.status, 200);
     const { token } = (await login.json()) as { token: string };
+    const denied = await send({ operation: "openai-connection", token });
+    assert.equal(denied.status, 403);
+    assert.equal(checks, 0);
+    allowed = true;
     const missing = await send({ operation: "openai-connection", token });
     assert.equal(missing.status, 200, await missing.clone().text());
     assert.deepEqual(await missing.json(), { status: "not_configured" });

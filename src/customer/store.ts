@@ -26,6 +26,7 @@ export async function digest(value: string) {
     .join("");
 }
 interface SessionRow {
+  manualResearchAllowed?: boolean;
   token_hash: string;
   tenant_id: string;
   property_id: string;
@@ -119,7 +120,8 @@ export class CustomerStore {
       sessionIssuedAt: row.issued_at,
     };
     try {
-      await this.auth.validate(identity);
+      const permission = await this.auth.validate(identity);
+      row.manualResearchAllowed = permission?.manualResearch === true;
     } catch (e) {
       if (e instanceof CustomerError && e.status === 401)
         await this.logout(token);
@@ -130,12 +132,41 @@ export class CustomerStore {
   async expansionScope(token: string) {
     const row = await this.session(token);
     const workspace = await this.read(row);
+    // A short-lived DB fence supplements (never replaces) fresh SIL revalidation.
+    try {
+      if (row.manualResearchAllowed)
+        await this.db
+          .prepare(
+            "INSERT INTO customer_research_authorizations(session_hash,tenant_id,property_id,user_id,valid_until) VALUES(?,?,?,?,?) ON CONFLICT(session_hash) DO UPDATE SET valid_until=excluded.valid_until",
+          )
+          .bind(
+            row.token_hash,
+            row.tenant_id,
+            row.property_id,
+            row.user_id,
+            this.now() + 120000,
+          )
+          .run();
+      else
+        await this.db
+          .prepare(
+            "DELETE FROM customer_research_authorizations WHERE session_hash=?",
+          )
+          .bind(row.token_hash)
+          .run();
+    } catch {
+      if (row.manualResearchAllowed)
+        throw new CustomerError(
+          "Research authorization storage is unavailable.",
+        );
+    }
     return {
       tenantId: row.tenant_id,
       propertyId: row.property_id,
       actor: row.user_id,
       sessionHash: row.token_hash,
       role: workspace.role,
+      manualResearchAllowed: row.manualResearchAllowed === true,
     };
   }
   async logout(token: string) {
@@ -186,6 +217,7 @@ export class CustomerStore {
       mode: "customer",
       propertyName: found.property_name,
       role: found.role,
+      manualResearchAllowed: row.manualResearchAllowed === true,
       revision: found.revision,
       profile: found.profile_json ? JSON.parse(found.profile_json) : null,
       coverage: JSON.parse(found.coverage_json),
