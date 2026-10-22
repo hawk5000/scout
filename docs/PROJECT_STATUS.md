@@ -1,5 +1,11 @@
 # Project status
 
+## 2026-10-22 — Hotel Mentions and Briefing user-flow QA
+
+Reviewed the stable fictional demo from a hotel-user perspective. Hotel Mentions clearly showed the hotel's identity context, a single mixed-tone example, its illustrative date, practical relevance and unknowns; saving and copying worked. The source tile's arrow looked like an outbound link but did not open anything, and the findings CSV always used a generic Market Blueprint filename. The public Briefing sample linked findings to details, but offered no copy/export/print controls even though the customer Briefing supports exports.
+
+Fixed the source tile so it opens the finding's evidence details, added section-specific CSV filenames, delayed object-URL cleanup until after downloads start, and ensured Saved export excludes dismissed records. Added copy and row-per-source CSV export to the briefing sample, plus print/save-as-PDF controls. The print layout hides workspace navigation and includes dated source URLs and synthetic-data caveats. Added tests for briefing text/CSV evidence coverage. Local validation: `npm test` **123 passed**, typecheck and production build passed. Live research, paid calls, schedules and notifications remain disabled. Changes are on a release branch; hosted acceptance is pending.
+
 ## 2026-10-22 — Briefing export formatting
 
 Added a self-contained, print-ready HTML export for stored SCOUT Briefing snapshots. The report presents a clear title and version/status metadata, synthetic-data disclosure, coverage outcomes, finding statements, practical implications, unknowns, source links with published/retrieved dates, related developments and print styles for saving to PDF. Source text is HTML-escaped and only HTTP(S) evidence URLs become links. Existing CSV and plain-text exports remain available. The customer Briefing screen now offers “Download formatted report”; open the downloaded HTML in a browser to print or save as PDF.

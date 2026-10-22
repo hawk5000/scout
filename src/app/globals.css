@@ -3641,3 +3641,89 @@ input[type="checkbox"] {
     padding: 0.7rem;
   }
 }
+
+/* User-facing Hotel Mentions and briefing actions. */
+.public-demo-source {
+  color: inherit;
+  text-decoration: none;
+  border-radius: 5px;
+}
+.public-demo-source:hover {
+  background: #f1f4ed;
+}
+.public-demo-source:focus-visible {
+  outline: 3px solid #c9b66e;
+  outline-offset: 2px;
+}
+.public-demo-briefing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+.public-demo-print-evidence {
+  display: none;
+}
+@media (max-width: 760px) {
+  .public-demo-briefing-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  body {
+    background: #fff;
+  }
+  .public-demo-shell {
+    display: block;
+    min-height: 0;
+    background: #fff;
+  }
+  .public-demo-sidebar,
+  .public-demo-topbar,
+  .public-demo-heading,
+  .public-demo-footer,
+  .public-demo-briefing-actions {
+    display: none !important;
+  }
+  .public-demo-main,
+  .public-demo-content {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+  .public-demo-demo-banner {
+    margin-bottom: 10mm;
+  }
+  .public-demo-briefing {
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+  }
+  .public-demo-print-evidence {
+    display: block;
+    margin-top: 0.5rem;
+    color: #343c36;
+    font-size: 9pt;
+    overflow-wrap: anywhere;
+  }
+  .public-demo-print-evidence > strong {
+    color: #194333;
+    font-size: 8pt;
+    text-transform: uppercase;
+  }
+  .public-demo-print-evidence p {
+    margin: 0.35rem 0;
+  }
+  .public-demo-brief-section,
+  .public-demo-brief-foot {
+    break-inside: avoid;
+  }
+  .public-demo-cited-findings button svg {
+    display: none;
+  }
+}
