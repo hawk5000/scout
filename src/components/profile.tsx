@@ -194,8 +194,9 @@ export function ProfileEditor({
         <h2>Delivery preferences</h2>
         <Notice>
           Used by explicit fixture slot checks and delivery previews only. No
-          live research or notifications run in this build. Both weekly cycles
-          cover all three scouts together.
+          live research or notifications run in this build. The planned service
+          cadence covers all five research categories; this demo only simulates
+          companies, projects and events.
         </Notice>
         <div className="form-grid">
           {["day1", "day2"].map((name, i) => (
@@ -353,8 +354,9 @@ export function Setup({
             {step === 3 && (
               <>
                 <p>
-                  The shared blueprint has two intended update cycles each week,
-                  covering all three scouts together.
+                  The planned service cadence is two shared weekly updates
+                  across all five research categories. This demo only simulates
+                  companies, projects and events.
                 </p>
                 <div className="schedule-card">
                   <strong>{data.profile.scheduleDays.join(" & ")}</strong>
@@ -379,7 +381,9 @@ export function Setup({
                 </p>
                 <div className="review-summary">
                   <strong>{data.findings.length}</strong>
-                  <span>fictional findings across three scouts</span>
+                  <span>
+                    fictional findings across three prospecting categories
+                  </span>
                 </div>
                 <a href="/demo/blueprint" className="button secondary">
                   Review the blueprint

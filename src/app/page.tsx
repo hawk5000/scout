@@ -6,6 +6,9 @@ import {
   CalendarDays,
   Check,
   Compass,
+  Binoculars,
+  Newspaper,
+  FileText,
 } from "lucide-react";
 import { Brand } from "@/components/ui";
 import { DemoEntry } from "@/components/demo-entry";
@@ -17,7 +20,7 @@ export default function Home() {
         <Brand />
         <nav aria-label="Main navigation">
           <a href="#how-it-works">How it works</a>
-          <a href="#scouts">The three scouts</a>
+          <a href="#scouts">What SCOUT follows</a>
           <a href="#pricing">Pricing</a>
           <Link href="/demo">Full demo</Link>
           <Link href="/app">Customer sign-in</Link>
@@ -34,9 +37,10 @@ export default function Home() {
               Your hotel’s market research assistant.
             </p>
             <p className="hero-copy">
-              Companies growing. Projects taking shape. Events bringing people
-              together. SCOUT organizes the market activity that could matter to
-              your hotel, so your team can decide what comes next.
+              Companies growing. Projects taking shape. Events, selected
+              competitors and public mentions of your hotel. SCOUT brings the
+              evidence, dates, lodging context and open questions together, so
+              your team can decide what comes next.
             </p>
             <div className="hero-actions">
               <DemoEntry />
@@ -79,8 +83,27 @@ export default function Home() {
               <h3>Harbor Youth Invitational</h3>
               <p>Three-day tournament dates updated.</p>
             </div>
+            <div className="sample-item">
+              <span className="tag neutral">Selected competitor</span>
+              <h3>Harbor Point Hotel</h3>
+              <p>Fictional renovation announcement, dated and source-linked.</p>
+            </div>
+            <div className="sample-item">
+              <span className="tag neutral">Your hotel</span>
+              <h3>Willow House Hotel</h3>
+              <p>Fictional public mention, matched to the hotel identity.</p>
+            </div>
+            <div className="briefing-preview">
+              <FileText size={17} />
+              <span>
+                <strong>SCOUT Briefing</strong>
+                <small>
+                  Evidence, practical implications and what remains unknown.
+                </small>
+              </span>
+            </div>
             <div className="sheet-bottom">
-              Evidence. Context. Unknowns.<span>One shared view.</span>
+              Five research views.<span>One clear briefing.</span>
             </div>
           </div>
         </section>
@@ -88,14 +111,15 @@ export default function Home() {
           <div className="public-width">
             <div className="section-intro">
               <h2>
-                Three scouts.
+                Five research views.
                 <br />
-                One local perspective.
+                One hotel perspective.
               </h2>
               <p>
-                A shared blueprint connects the companies, projects and events
-                around your hotel. Each scout adds a different piece of the
-                picture.
+                Follow the activity around your hotel and keep observed facts,
+                lodging relevance and unknowns easy to tell apart. The first
+                three views build the prospecting foundation; two more focus on
+                your selected competitors and your own property.
               </p>
             </div>
             <div className="scout-columns">
@@ -118,17 +142,49 @@ export default function Home() {
                   text: "Tournaments, conferences and gatherings with potential overnight visitors.",
                   id: "event",
                 },
+                {
+                  icon: Binoculars,
+                  title: "Competitor SCOUT",
+                  text: "Noteworthy public changes at the specific hotels you choose to follow, with dates and evidence.",
+                  id: "competitor",
+                },
+                {
+                  icon: Newspaper,
+                  title: "Property SCOUT",
+                  text: "Public mentions of your hotel, checked against its name and aliases to avoid lookalike matches.",
+                  id: "property",
+                },
+                {
+                  icon: FileText,
+                  title: "SCOUT Briefing",
+                  text: "A source-linked view across all five categories, with practical implications and open questions.",
+                  id: "briefing",
+                },
               ].map((s) => (
                 <article key={s.id}>
                   <s.icon size={29} strokeWidth={1.3} />
                   <h3>{s.title}</h3>
                   <p>{s.text}</p>
-                  <Link href={`/sample#${s.id}`} className="text-link">
-                    View fictional examples <ArrowRight size={16} />
-                  </Link>
+                  {s.id === "corporate" ||
+                  s.id === "project" ||
+                  s.id === "event" ? (
+                    <Link href={`/sample#${s.id}`} className="text-link">
+                      View fictional example <ArrowRight size={16} />
+                    </Link>
+                  ) : (
+                    <span className="text-link">
+                      Included in the expanded workspace
+                    </span>
+                  )}
                 </article>
               ))}
             </div>
+            <p className="fine-print expansion-note">
+              The public sample and full demo use fictional data and currently
+              show the original three prospecting categories. Competitor and
+              hotel-mention refreshes are isolated synthetic previews; live
+              research is not active.
+            </p>
           </div>
         </section>
         <section id="how-it-works" className="public-width process-section">
@@ -148,22 +204,22 @@ export default function Home() {
               [
                 "01",
                 "Set the boundaries",
-                "Confirm your hotel, geography, priorities and exclusions through assisted setup.",
+                "Confirm your hotel identity, market area and the hotels you want to follow.",
               ],
               [
                 "02",
                 "Establish the blueprint",
-                "Start with one organized view of relevant companies, projects and events.",
+                "Build one organized view across companies, projects, events, selected competitors and public mentions of your hotel.",
               ],
               [
                 "03",
                 "Keep the picture current",
-                "Two update cycles weekly across all three scouts, focused on meaningful changes.",
+                "The planned service cadence is two shared weekly updates across all five research views. No schedule is active in this demo.",
               ],
               [
                 "04",
                 "Take it into your workflow",
-                "Save what matters, copy a readable brief or export evidence and context to CSV.",
+                "Review proposed findings, then save, copy or export useful evidence and context to your existing sales tools.",
               ],
             ].map(([n, t, d]) => (
               <div key={n}>
@@ -176,6 +232,11 @@ export default function Home() {
           <p className="fine-print">
             Some cycles may have no meaningful changes. No daily lead quota,
             guaranteed bookings or automated outreach.
+          </p>
+          <p className="fine-print">
+            The isolated synthetic pilot stages proposed findings for an
+            explicit review before publication. Live research, paid provider
+            access, schedules and notifications remain disabled.
           </p>
         </section>
         <section id="pricing" className="pricing-section">
@@ -193,14 +254,14 @@ export default function Home() {
                 <span>/ month per hotel</span>
               </div>
               <p className="muted">
-                Working launch offer · all three scouts included
+                Launch offer · five research views and SCOUT Briefing
               </p>
               <ul className="included">
                 {[
-                  "One initial market blueprint",
-                  "Two update cycles weekly across all three scouts",
-                  "Evidence, relevant dates and clearly stated unknowns",
-                  "Saved findings, readable briefs and CSV exports",
+                  "One initial market blueprint across five research views",
+                  "Two shared weekly update cycles planned across all five views",
+                  "Selected competitor changes and public mentions of your hotel",
+                  "Source-linked SCOUT Briefing, saved findings and CSV exports",
                 ].map((t) => (
                   <li key={t}>
                     <Check size={18} />
@@ -209,8 +270,8 @@ export default function Home() {
                 ))}
               </ul>
               <p>
-                Research quality and delivery costs are still to be validated in
-                a live pilot. Payment and live service activation are not
+                Research quality and delivery costs still need live-pilot
+                validation. Research, payment and service activation are not
                 available in this demo.
               </p>
             </div>
@@ -219,6 +280,24 @@ export default function Home() {
         </section>
         <section className="public-width faq-section">
           <h2>Useful intelligence. Clear limits.</h2>
+          <details>
+            <summary>What goes into the SCOUT Briefing?</summary>
+            <p>
+              The planned briefing brings relevant findings from companies,
+              projects, events, selected competitors and public mentions of your
+              hotel into one source-linked view. It separates observed facts
+              from possible lodging relevance and calls out what remains
+              unknown.
+            </p>
+          </details>
+          <details>
+            <summary>Are new findings published automatically?</summary>
+            <p>
+              The isolated synthetic pilot holds proposed findings for explicit
+              review before publication. Live research and publication are not
+              active in the customer service yet.
+            </p>
+          </details>
           <details>
             <summary>Is this a CRM?</summary>
             <p>

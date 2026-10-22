@@ -21,10 +21,17 @@ export default function SamplePage() {
         </span>
         <h1>What your market blueprint can look like.</h1>
         <p>
-          Three perspectives, with facts, possible lodging relevance and
-          unanswered questions kept separate. These invented examples explain
-          the format. They are not leads, real companies or proof of customer
-          results.
+          This sample shows the three prospecting categories: companies,
+          projects and events. SCOUT’s expanded customer workspace also covers
+          selected competitors and public mentions of your hotel, then brings
+          all five categories into a source-linked briefing. Those expanded
+          findings are not in this sample dataset. Every example below is
+          invented, not a lead, real company or proof of customer results.
+        </p>
+        <p className="fine-print">
+          Competitor and property refreshes and review-before-publication have
+          been exercised only with isolated synthetic fixtures. Live research
+          remains disabled.
         </p>
         <p>
           <a className="button primary" href="/sample/export">

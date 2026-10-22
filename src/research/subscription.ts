@@ -384,7 +384,9 @@ export function processJob(
         (c) => !coverage[c].paused,
       );
       if (!profile.categories.length)
-        throw Error("All three scout categories are paused.");
+        throw Error(
+          "All prospecting categories selected for this demo are paused.",
+        );
       replay(new BudgetedStore(db, job), profile, job.scenario, job.cycle_key, {
         now: new Date(job.started_at ?? now()),
         provider: options.provider,

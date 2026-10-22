@@ -64,9 +64,10 @@ export function SubscriptionControls() {
       <span className="eyebrow">ISOLATED FIXTURE LAB · DELIVERY DISABLED</span>
       <h2>Subscription & delivery rehearsal</h2>
       <p>
-        Queue one initial blueprint, then shared updates across all three
-        scouts. Queue a job, then process it here. Demo history is saved only in
-        this browser.
+        Rehearse the original sample workflow: one prospecting blueprint across
+        companies, projects and events, followed by fictional updates. The
+        planned customer service spans five research categories and includes a
+        SCOUT Briefing. Demo history is saved only in this browser.
       </p>
       <Notice>
         Fictional entitlement only. No SIL connection, live schedule, paid calls
