@@ -40,11 +40,11 @@ export async function broker(command: unknown) {
     const body = await response.json();
     if (!response.ok)
       throw new CustomerError(
-        [400, 401, 403, 409, 429].includes(response.status) &&
+        [400, 401, 403, 404, 409, 413, 429].includes(response.status) &&
           typeof body.error === "string"
           ? body.error
           : "Customer data is temporarily unavailable.",
-        [400, 401, 403, 409, 429].includes(response.status)
+        [400, 401, 403, 404, 409, 413, 429].includes(response.status)
           ? response.status
           : 503,
       );
