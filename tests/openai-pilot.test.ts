@@ -20,6 +20,7 @@ test("OpenAI pilot migration is additive, empty, and refuses synthetic policy sc
     "0006_provider_preparation.sql",
     "0007_pilot_dispatch.sql",
     "0008_openai_manual_pilot.sql",
+    "0009_sil_research_permission.sql",
   ])
     db.exec(readFileSync(`cloudflare/migrations/${file}`, "utf8"));
 
@@ -69,6 +70,7 @@ test("real OpenAI pilot status refuses the isolated synthetic tenant before prov
     "0006_provider_preparation.sql",
     "0007_pilot_dispatch.sql",
     "0008_openai_manual_pilot.sql",
+    "0009_sil_research_permission.sql",
   ])
     db.exec(readFileSync(`cloudflare/migrations/${file}`, "utf8"));
   let networkCalls = 0;
@@ -110,6 +112,7 @@ test("ABC Hotel editor status exposes disabled gates without an OpenAI request",
     "0006_provider_preparation.sql",
     "0007_pilot_dispatch.sql",
     "0008_openai_manual_pilot.sql",
+    "0009_sil_research_permission.sql",
   ])
     db.exec(readFileSync(`cloudflare/migrations/${file}`, "utf8"));
   const tenantId = "tenant_abc";
@@ -155,7 +158,7 @@ test("ABC Hotel editor status exposes disabled gates without an OpenAI request",
   assert.equal(status.notificationsEnabled, false);
   assert.ok(status.blockers.includes("SOURCE_POLICY_NOT_INSTALLED"));
   assert.ok(status.blockers.includes("HOTEL_RESEARCH_AREA_REQUIRED"));
-  assert.ok(status.blockers.includes("ADMINISTRATOR_ACCESS_REQUIRED"));
+  assert.ok(status.blockers.includes("SCOUT_RESEARCH_PERMISSION_REQUIRED"));
   assert.equal(networkCalls, 0);
   assert.equal(
     (
@@ -186,12 +189,13 @@ async function pilotSetup() {
     "0006_provider_preparation.sql",
     "0007_pilot_dispatch.sql",
     "0008_openai_manual_pilot.sql",
+    "0009_sil_research_permission.sql",
   ])
     db.exec(readFileSync(`cloudflare/migrations/${file}`, "utf8"));
   const tenant = "tenant_abc",
     property = "property_abc_abc_hotel",
     user = "unit_test_admin";
-  provision(db, tenant, property, user, "admin");
+  provision(db, tenant, property, user, "editor");
   db.prepare(
     "UPDATE customer_properties SET last_actor='unit_test_admin',updated_at='2026-10-22T00:00:00Z',profile_json=? WHERE tenant_id=? AND property_id=?",
   ).run(
@@ -206,7 +210,9 @@ async function pilotSetup() {
     tenant,
     property,
   );
-  const store = new CustomerStore(adapter(db), auth(tenant, property, user));
+  const pilotAuth = auth(tenant, property, user);
+  pilotAuth.validate = async () => ({ manualResearch: true });
+  const store = new CustomerStore(adapter(db), pilotAuth);
   const login = await store.login("unit@example.com", "fixture-only", "unit");
   const scoped = await store.expansionScope(login.token);
   const identity = {
@@ -324,7 +330,16 @@ async function pilotSetup() {
     Date.now,
     () => transport,
   );
-  return { db, dispatcher, calls: () => calls, tenant, property };
+  return {
+    db,
+    dispatcher,
+    calls: () => calls,
+    tenant,
+    property,
+    revoke: () => {
+      pilotAuth.validate = async () => ({ manualResearch: false });
+    },
+  };
 }
 
 test("manual pilot atomically persists five cited categories and briefing; duplicate and concurrent requests do not repeat spend", async () => {
@@ -385,6 +400,39 @@ test("manual pilot stops on configuration drift without spend, and rejects a sec
         "INSERT INTO customer_openai_pilot_policies SELECT tenant_id,property_id,'second',expires_at,total_micros,max_categories,allowed_domains_json,retention_policy,approved_by,approved_at FROM customer_openai_pilot_policies",
       ),
     /UNIQUE/,
+  );
+  db.close();
+});
+
+test("SIL revocation stops an existing editor pilot before spend; local role is unchanged", async () => {
+  const { db, dispatcher, calls, revoke } = await pilotSetup();
+  const state = await dispatcher.execute({
+    action: "start",
+    requestKey: "unit-revoke-1",
+  });
+  revoke();
+  await assert.rejects(
+    dispatcher.execute({ action: "advance", jobId: state.job!.id }),
+    /reverified/,
+  );
+  assert.equal(calls(), 0);
+  assert.equal(
+    (
+      db
+        .prepare(
+          "SELECT role FROM customer_memberships WHERE user_id='unit_test_admin'",
+        )
+        .get() as { role: string }
+    ).role,
+    "editor",
+  );
+  assert.equal(
+    (
+      db
+        .prepare("SELECT count(*) n FROM customer_research_authorizations")
+        .get() as { n: number }
+    ).n,
+    0,
   );
   db.close();
 });

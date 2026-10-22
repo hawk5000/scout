@@ -8,13 +8,16 @@ const identity = z.object({
   appKey: z.string().min(1).max(80),
   credentialVersion: z.number().int().positive(),
 });
+const scoutPermissions = z.object({ manualResearch: z.boolean() }).strict();
 const loginResult = identity.extend({
+  scoutPermissions: scoutPermissions.optional(),
   loginAllowed: z.literal(true),
   accessAllowed: z.literal(true),
   mustChangePassword: z.literal(false),
   propertyName: z.string().min(1).max(300),
 });
 const statusResult = identity.extend({
+  scoutPermissions: scoutPermissions.optional(),
   sessionValid: z.literal(true),
   mustChangePassword: z.literal(false),
 });
@@ -24,7 +27,7 @@ export interface AuthProvider {
     email: string,
     password: string,
   ): Promise<Identity & { propertyName: string }>;
-  validate(session: Identity): Promise<void>;
+  validate(session: Identity): Promise<void | { manualResearch: boolean }>;
 }
 export class SilAuth implements AuthProvider {
   constructor(
@@ -100,5 +103,8 @@ export class SilAuth implements AuthProvider {
         "Your session is no longer valid. Please sign in again.",
         401,
       );
+    return {
+      manualResearch: result.data.scoutPermissions?.manualResearch === true,
+    };
   }
 }

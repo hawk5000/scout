@@ -220,8 +220,11 @@ export async function handleCustomer(
     }
     if (input.operation === "openai-connection") {
       const scope = await store.expansionScope(input.token);
-      if (scope.role !== "admin")
-        throw new CustomerError("Administrator access is required.", 403);
+      if (!scope.manualResearchAllowed)
+        throw new CustomerError(
+          "SIL permission for SCOUT manual research is required.",
+          403,
+        );
       const status = await verifyOpenAiConnection(
         env.OPENAI_API_KEY,
         openAiFetch,
@@ -230,8 +233,11 @@ export async function handleCustomer(
     }
     if (input.operation === "openai-pilot") {
       const scope = await store.expansionScope(input.token);
-      if (input.input.action !== "status" && scope.role !== "admin")
-        throw new CustomerError("Administrator access is required.", 403);
+      if (input.input.action !== "status" && !scope.manualResearchAllowed)
+        throw new CustomerError(
+          "SIL permission for SCOUT manual research is required.",
+          403,
+        );
       const dispatcher = new OpenAiPilotDispatcher(
         env.DB,
         scope,

@@ -91,8 +91,11 @@ export class OpenAiPilotDispatcher {
     return [this.scope.tenantId, this.scope.propertyId] as const;
   }
   private async access(adminOnly = true) {
-    if (adminOnly && this.scope.role !== "admin")
-      throw new CustomerError("Administrator access is required.", 403);
+    if (adminOnly && !this.scope.manualResearchAllowed)
+      throw new CustomerError(
+        "SIL permission for SCOUT manual research is required.",
+        403,
+      );
     if (!adminOnly && !["viewer", "editor", "admin"].includes(this.scope.role))
       throw new CustomerError("Hotel access is required.", 403);
     if (
@@ -109,12 +112,12 @@ export class OpenAiPilotDispatcher {
       fresh.propertyId !== this.scope.propertyId ||
       fresh.actor !== this.scope.actor ||
       fresh.sessionHash !== this.scope.sessionHash ||
-      (adminOnly && fresh.role !== "admin")
+      (adminOnly && !fresh.manualResearchAllowed)
     )
       throw new CustomerError("Hotel access must be reverified.", 403);
     const session = await this.db
       .prepare(
-        `SELECT 1 AS ok FROM customer_sessions s JOIN customer_memberships m USING(tenant_id,property_id,user_id) JOIN customer_properties p USING(tenant_id,property_id) WHERE s.token_hash=? AND s.tenant_id=? AND s.property_id=? AND s.user_id=? AND s.expires_at>? AND m.active=1 AND ${adminOnly ? "m.role='admin'" : "m.role IN('viewer','editor','admin')"} AND p.active=1`,
+        `SELECT 1 AS ok FROM customer_sessions s JOIN customer_memberships m USING(tenant_id,property_id,user_id) JOIN customer_properties p USING(tenant_id,property_id) WHERE s.token_hash=? AND s.tenant_id=? AND s.property_id=? AND s.user_id=? AND s.expires_at>? AND m.active=1 AND ${adminOnly ? "EXISTS(SELECT 1 FROM customer_research_authorizations ra WHERE ra.session_hash=s.token_hash AND ra.tenant_id=s.tenant_id AND ra.property_id=s.property_id AND ra.user_id=s.user_id AND ra.valid_until>CAST(strftime('%s','now') AS INTEGER)*1000)" : "m.role IN('viewer','editor','admin')"} AND p.active=1`,
       )
       .bind(
         this.scope.sessionHash,
@@ -249,8 +252,8 @@ export class OpenAiPilotDispatcher {
     await this.access(false);
     const policy = await this.policy();
     const blockers = await this.blockers(policy);
-    if (this.scope.role !== "admin")
-      blockers.push("ADMINISTRATOR_ACCESS_REQUIRED");
+    if (!this.scope.manualResearchAllowed)
+      blockers.push("SCOUT_RESEARCH_PERMISSION_REQUIRED");
     let job: Job | null = null;
     try {
       job = await this.db
@@ -432,7 +435,7 @@ export class OpenAiPilotDispatcher {
     await this.access();
     const ok = await this.db
       .prepare(
-        "SELECT 1 AS ok FROM customer_openai_pilot_jobs j JOIN customer_openai_pilot_policies p ON p.tenant_id=j.tenant_id AND p.property_id=j.property_id AND p.id=j.policy_id JOIN customer_sessions s ON s.token_hash=j.session_hash JOIN customer_memberships m USING(tenant_id,property_id,user_id) JOIN customer_properties h USING(tenant_id,property_id) LEFT JOIN customer_expansion_config e USING(tenant_id,property_id) WHERE j.tenant_id=? AND j.property_id=? AND j.id=? AND j.state='running' AND j.lease=? AND j.lease_until>? AND p.expires_at>? AND s.expires_at>? AND m.active=1 AND m.role='admin' AND h.active=1 AND COALESCE(json_extract(e.document_json,'$.paused'),0)!=1",
+        "SELECT 1 AS ok FROM customer_openai_pilot_jobs j JOIN customer_openai_pilot_policies p ON p.tenant_id=j.tenant_id AND p.property_id=j.property_id AND p.id=j.policy_id JOIN customer_sessions s ON s.token_hash=j.session_hash JOIN customer_memberships m USING(tenant_id,property_id,user_id) JOIN customer_properties h USING(tenant_id,property_id) LEFT JOIN customer_expansion_config e USING(tenant_id,property_id) WHERE j.tenant_id=? AND j.property_id=? AND j.id=? AND j.state='running' AND j.lease=? AND j.lease_until>? AND p.expires_at>? AND s.expires_at>? AND m.active=1 AND EXISTS(SELECT 1 FROM customer_research_authorizations ra WHERE ra.session_hash=s.token_hash AND ra.tenant_id=s.tenant_id AND ra.property_id=s.property_id AND ra.user_id=s.user_id AND ra.valid_until>CAST(strftime('%s','now') AS INTEGER)*1000) AND h.active=1 AND COALESCE(json_extract(e.document_json,'$.paused'),0)!=1",
       )
       .bind(...this.bind(), job.id, fence, this.now(), this.now(), this.now())
       .first<{ ok: number }>();
