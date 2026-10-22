@@ -66,7 +66,10 @@ export function providerHttpRequest(
 }
 export interface SourceTransport {
   readonly mode: "disabled" | "synthetic";
-  exchange(request: SourceRequest): Promise<SourceResponse>;
+  exchange(
+    request: SourceRequest,
+    signal?: AbortSignal,
+  ): Promise<SourceResponse>;
 }
 export const disabledTransport: SourceTransport = {
   mode: "disabled",
@@ -142,10 +145,11 @@ export class BoundedSources {
     if (!(await this.ledger.reserve(key, maximumMicros)))
       throw new SourceError("BUDGET_OR_DUPLICATE");
     this.calls++;
+    const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       const response = await Promise.race([
-        this.transport.exchange(request),
+        this.transport.exchange(request, controller.signal),
         new Promise<never>((_, reject) => {
           timer = setTimeout(
             () => reject(new SourceError("SOURCE_TIMEOUT")),
@@ -178,6 +182,7 @@ export class BoundedSources {
         ? error
         : new SourceError("SOURCE_INVALID_RESPONSE");
     } finally {
+      controller.abort();
       clearTimeout(timer);
     }
   }
