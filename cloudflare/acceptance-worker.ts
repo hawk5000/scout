@@ -9,6 +9,7 @@ import { ReviewedImports } from "../src/customer/reviewed-imports";
 import { PilotDispatcher } from "../src/research/pilot-dispatcher";
 import { marketCategories } from "../src/customer/market-contracts";
 // Dedicated acceptance entrypoint. Never imported by the production Worker.
+const hostedAcceptancePilotId = "hosted_pass_c_acceptance_20261022";
 export interface AcceptanceEnv extends Env {
   FIXTURE_PASSWORD?: string;
   ACCEPTANCE_EXPIRES_AT?: string;
@@ -224,7 +225,7 @@ async function handlePilot(
         .bind(
           scope.tenantId,
           scope.propertyId,
-          "hosted_pass_c",
+          hostedAcceptancePilotId,
           expiryMs,
           JSON.stringify(policy),
         )
@@ -254,7 +255,7 @@ async function handlePilot(
         },
       );
       const status = await dispatcher.run(
-        "hosted_pass_c",
+        hostedAcceptancePilotId,
         body.requestKey ?? "",
       );
       return Response.json(status);
