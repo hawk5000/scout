@@ -327,10 +327,12 @@ export function PublicDemoApp() {
           className="public-demo-brand"
           aria-label="SCOUT demo home"
         >
-          <span className="public-demo-mark">S</span>
-          <span>
-            SCOUT<small>by SalesHospitality</small>
-          </span>
+          <img
+            src="/brand/scout-main.webp"
+            width={864}
+            height={576}
+            alt="SCOUT by SalesHospitality"
+          />
         </Link>
         <div className="public-demo-hotel">
           <span className="public-demo-eyebrow">FICTIONAL DEMO HOTEL</span>
@@ -384,6 +386,13 @@ export function PublicDemoApp() {
           >
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
+          <Link
+            href="/demo"
+            className="public-demo-mobile-brand"
+            aria-label="SCOUT demo home"
+          >
+            <img src="/brand/scout-icon.webp" width={48} height={48} alt="" />
+          </Link>
           <div className="public-demo-breadcrumb">
             Willow House Hotel <span>/</span>{" "}
             {current?.label ??
