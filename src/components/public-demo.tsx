@@ -198,6 +198,9 @@ export function PublicDemoApp() {
       />
     );
   } else if (page === "briefing") {
+    title = "A sample briefing for your hotel.";
+    subtitle =
+      "An example of how SCOUT connects evidence to practical implications and the questions still to confirm.";
     content = (
       <Briefing
         onOpen={(id) => (window.location.href = `/demo/findings/${id}`)}
@@ -217,15 +220,29 @@ export function PublicDemoApp() {
         ? "Follow noteworthy changes at the competitors selected for a hotel’s local market. This sample follows one fictional hotel."
         : "See public mentions with source dates and transparent identity context. A single mention never implies a trend.";
     content = (
-      <FindingList
-        findings={findings}
-        saved={prefs.saved}
-        dismissed={prefs.dismissed}
-        onSave={toggleSaved}
-        onDismiss={toggleDismissed}
-        onCopy={copyFinding}
-        onExport={() => exportFindings(findings)}
-      />
+      <>
+        <div className="public-demo-callout">
+          <strong>
+            {page === "competitors"
+              ? "Selected competitor in this sample"
+              : "Hotel identity context in this sample"}
+          </strong>
+          <p>
+            {page === "competitors"
+              ? "Harbor Ridge Hotel is the one fictional hotel in Willow House Hotel’s illustrative comp set. No other hotels are being monitored."
+              : "The fictional mention is matched to Willow House Hotel by the sample name and reserved .example identity. This is not a real identity check."}
+          </p>
+        </div>
+        <FindingList
+          findings={findings}
+          saved={prefs.saved}
+          dismissed={prefs.dismissed}
+          onSave={toggleSaved}
+          onDismiss={toggleDismissed}
+          onCopy={copyFinding}
+          onExport={() => exportFindings(findings)}
+        />
+      </>
     );
   } else if (page === "saved") {
     title = "Saved findings.";
@@ -697,6 +714,11 @@ function FindingCard({
           {finding.category}
         </span>
         <span>{finding.status}</span>
+        {finding.sentiment && (
+          <span className="public-demo-sentiment">
+            {finding.sentiment} tone
+          </span>
+        )}
       </div>
       <h2>
         <Link href={`/demo/findings/${finding.id}`}>{finding.title}</Link>
@@ -766,6 +788,11 @@ function FindingDetail({
             {finding.category}
           </span>
           <span>{finding.status}</span>
+          {finding.sentiment && (
+            <span className="public-demo-sentiment">
+              {finding.sentiment} tone
+            </span>
+          )}
           <p>{finding.summary}</p>
         </div>
         <section className="public-demo-detail-section">
