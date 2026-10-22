@@ -1,5 +1,11 @@
 # Project status
 
+## 2026-10-22 — Briefing export formatting
+
+Added a self-contained, print-ready HTML export for stored SCOUT Briefing snapshots. The report presents a clear title and version/status metadata, synthetic-data disclosure, coverage outcomes, finding statements, practical implications, unknowns, source links with published/retrieved dates, related developments and print styles for saving to PDF. Source text is HTML-escaped and only HTTP(S) evidence URLs become links. Existing CSV and plain-text exports remain available. The customer Briefing screen now offers “Download formatted report”; open the downloaded HTML in a browser to print or save as PDF.
+
+Verification: `npm test` passed (122/122); `npm run typecheck` passed; `npm run build` passed. The export is generated from an already stored briefing and does not trigger a research refresh. All content is still synthetic fixture data, with no live research, paid APIs, schedules or notifications enabled. This local change has not yet been pushed, deployed or browser-verified on Vercel. Next: release through the protected `main` PR path and verify the formatted export on the stable app if publication is requested.
+
 Current status (2026-10-21): **Customer accounts and findings persistence foundation are deployed to production. ABC Hotel profile and membership are preserved. Fresh owner-entered SIL sign-in and profile persistence are verified.** Live research, paid calls, notifications and direct ingestion remain disabled. Reviewed-import operator access is enabled only for ABC Hotel.
 
 ## Initial handoff — historical
