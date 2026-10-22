@@ -782,3 +782,12 @@ Next pass: obtain the administrator session and source/retention approvals, veri
 - Exact remaining blocker: the owner declined SCOUT role elevation and requested SIL-managed permission. Existing SIL login returns a property role, but session-status does not revalidate a research permission; SCOUT uses its local role. SIL admin-console login is not SCOUT customer admin authorization. A scoped SIL-only research grant plus login/session contract integration must be explicitly authorized in the SIL repo; see OPENAI_PROVIDER_SETUP.md. Do not alter shared account roles.
 - No OpenAI requests, paid verification, live findings or billed spend. Schedules and notifications remain off. Existing ABC data and synthetic isolation preserved.
 - Production deployment verification is recorded below after release.
+
+### Production release evidence
+
+- PR #9 merged to `main`: `cdd45772a6356fb0e740fa37cb1ec9b5a7664d9b`.
+- Cloudflare Worker version `8dba655c-4676-48cb-a53e-7496ca142927`, deployed from that clean tracked revision using existing bindings and retained secrets.
+- Vercel deployment `dpl_9gs2JbVLqwLxTmGZrQTzNFnu1VQ5` is Production/READY; API metadata confirms the exact main SHA and stable alias `https://scout-olive-ten.vercel.app`.
+- Hosted browser opens the customer sign-in page; existing browser session has expired. Unauthenticated pilot and connection routes return 401 with private/no-store responses. Authenticated admin execution is unverified and deliberately blocked by the unchanged editor membership.
+- Remote readback: migrations 0001–0008 recorded; one policy expires 2026-10-28 22:10:16 UTC; job/month caps $1.25 each; zero pilot jobs and zero provider ledger calls. Source approval and cap are complete, but do not confer an application administrator role.
+- Exact next owner action: authorize a change in the SIL repository to add a SCOUT-specific manual-research grant and revalidate it through the server-to-server customer login/session contract, followed by SCOUT consumption. Preserve ABC Hotel's editor membership and all other app access. Do not change a shared SIL role as a workaround. No additional paid-cycle approval is needed within the existing cap.
