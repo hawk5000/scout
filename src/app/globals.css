@@ -3390,31 +3390,33 @@ input[type="checkbox"] {
   background: #173d31;
 }
 .public-demo-brand {
-  display: flex;
+  display: inline-flex;
+  width: 100%;
   align-items: center;
-  gap: 0.7rem;
   color: inherit;
   text-decoration: none;
-  font-family: var(--serif);
-  font-size: 1.5rem;
-  line-height: 1;
 }
-.public-demo-brand small {
+.public-demo-brand img {
   display: block;
-  margin-top: 0.4rem;
-  color: #cbd9cf;
-  font: 11px var(--sans);
-  letter-spacing: 0.02em;
+  width: 166px;
+  max-width: 100%;
+  height: auto;
+  border-radius: 5px;
 }
-.public-demo-mark {
-  display: grid;
-  width: 40px;
-  height: 40px;
-  place-items: center;
-  border: 1px solid #d9c98e;
+.public-demo-mobile-brand {
+  display: none;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+.public-demo-mobile-brand img {
+  display: block;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
   border-radius: 50%;
-  color: #e6d9a8;
-  font-size: 1.4rem;
 }
 .public-demo-hotel {
   display: grid;
@@ -3584,6 +3586,7 @@ input[type="checkbox"] {
   .public-demo-sidebar { position: fixed; z-index: 20; inset: 0 auto 0 0; width: min(300px, 86vw); height: 100dvh; transform: translateX(-105%); transition: transform 180ms ease; box-shadow: 12px 0 28px rgb(0 0 0 / 14%); }
   .public-demo-sidebar.is-open { transform: translateX(0); }
   .public-demo-menu { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; margin-left: -0.5rem; }
+  .public-demo-mobile-brand { display: inline-flex; }
   .public-demo-topbar { justify-content: flex-start; gap: 0.6rem; min-height: 56px; padding: 0 1rem; }
   .public-demo-fiction-tag { margin-left: auto; }
   .public-demo-breadcrumb { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
