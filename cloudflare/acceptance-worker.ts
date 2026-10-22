@@ -280,6 +280,19 @@ async function handlePilot(
     );
     if (body.operation === "status" && body.jobId)
       return Response.json(await dispatcher.status(body.jobId));
+    if (body.operation === "snapshot" && body.jobId) {
+      const snapshot = await dispatcher.approvedSnapshot(body.jobId);
+      return Response.json({
+        reviewId: snapshot.reviewId,
+        approvalHash: snapshot.approvalHash,
+        records: snapshot.market.records.length,
+        versions: snapshot.market.records.map((r) => ({
+          id: r.id,
+          version: r.version,
+          evidence: r.evidence.map((e) => e.id),
+        })),
+      });
+    }
     if (body.operation === "review" && body.reviewId) {
       const review = await reviewer.execute(
         { ...scope, dataMode: "synthetic" },
