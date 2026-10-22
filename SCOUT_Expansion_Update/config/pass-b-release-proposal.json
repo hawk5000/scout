@@ -1,0 +1,47 @@
+{
+  "proposalOnly": true,
+  "approved": false,
+  "researchEnabled": false,
+  "paidCallsEnabled": false,
+  "schedulesEnabled": false,
+  "notificationsEnabled": false,
+  "intendedTenant": "tenant_abc",
+  "intendedProperty": "property_abc_abc_hotel",
+  "propertyIdentityApproved": false,
+  "selectedCompetitors": [],
+  "sourceGrants": [],
+  "providers": {
+    "discovery": "brave-web-search",
+    "extractionCandidate": "gpt-6-luna",
+    "briefing": "existing-deterministic-evidence-snapshots",
+    "rateVersion": "2026-10-21-standard-v1",
+    "accessVerified": false,
+    "storageRightsVerified": false
+  },
+  "proposedLimits": {
+    "searchCallsPerRefresh": 5,
+    "pagesPerRefresh": 20,
+    "modelCallsPerRefresh": 5,
+    "inputTokenCeilingPerCall": 33024,
+    "outputTokenCeilingPerCall": 2000,
+    "retryCount": 0,
+    "requestTimeoutMs": 10000,
+    "jobRuntimeMs": 120000,
+    "freshnessHours": 24,
+    "perRefreshUsd": 0.1,
+    "propertyMonthlyUsd": 2,
+    "onDemandRefreshesPerMonth": 10,
+    "scheduledRefreshesEnabled": 0
+  },
+  "estimatedMaximumProviderUsdPerRefresh": 0.046515,
+  "estimateExcludes": ["hosting", "storage", "support", "tax", "any separately licensed source"],
+  "requiredCategories": ["corporate", "project", "event", "competitor", "property"],
+  "optionalUnapprovedSources": ["review APIs", "social feeds", "paywalled sources", "PDF or JavaScript-only portals"],
+  "activationRequires": [
+    "Owner approval of exact identity, selected competitors, source grants and limits",
+    "Provider account access and storage permissions verified securely",
+    "Approved server transport with bounded streaming, DNS-safe source egress and entitlement/lease revalidation before every call",
+    "Deploy additive 0006 migration and approve scoped USD policy; preserve existing data",
+    "Explicit authorization for a bounded baseline and update pilot with manual source-quality review"
+  ]
+}

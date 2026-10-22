@@ -1,5 +1,6 @@
 import { handleCustomer, type Env } from "./customer/worker";
 import { digest } from "../src/customer/store";
+import { recordedAcceptanceProvider } from "./acceptance-provider";
 // Dedicated acceptance entrypoint. Never imported by the production Worker.
 export interface AcceptanceEnv extends Env {
   FIXTURE_PASSWORD?: string;
@@ -94,6 +95,7 @@ export default {
         SIL_SERVICE_TOKEN: "isolated-transport-no-network",
       },
       transport,
+      (scope) => recordedAcceptanceProvider(env.DB, scope),
     );
   },
 };

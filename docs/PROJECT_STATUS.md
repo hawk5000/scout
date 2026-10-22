@@ -562,3 +562,31 @@ Screenshots are in `docs/qa/expansion-pass-a/`: competitor-desktop.png, property
 No Pass A implementation blocker remains. Production research is deliberately blocked pending approved source providers/access rights, an owner-approved live hotel identity and selected comp set, finite per-refresh/monthly/on-demand budgets, current documented provider/model rates, freshness and required/optional coverage policy, and explicit authorization for bounded live validation. Hosting/infrastructure/support costs are not measured by artificial fixture units. Synthetic checks do not establish live accuracy, provider coverage or commercial readiness.
 
 Stop after Pass A. Pass B source-adapter preparation and Pass C live validation have not been started. Roll back application/Worker code if needed while retaining the additive tables; never drop expansion data or restore over customer storage as a rollback shortcut.
+
+
+## 2026-10-21 — Expansion Pass B: local provider preparation
+
+Implemented the documented Brave Web Search request/response adapter and OpenAI Responses structured extraction candidate (`gpt-6-luna`), public text/HTML retrieval boundary, exact-host credential serializers, source normalization/receipt validation and conservative cost accounting. Official documentation and current list pricing were checked during this pass. See `SCOUT_Expansion_Update/PROVIDER_READINESS.md` and `config/pass-b-release-proposal.json` for source-by-source limitations, citations and the inert release proposal.
+
+The prepared provider runs discovery → retrieval → extraction through the existing five-category ingestion, identity checks and immutable briefing snapshots using isolated synthetic API-shaped responses. Provider failures become honest persisted category failures; ambiguous identities are excluded from confident brief claims. Publication is unknown/null in the first integrated adapter rather than invented from crawl timestamps. Source quotes are validated, but semantic interpretation and live quality remain unverified. Existing original fixture scenarios remain available and deployed construction is unchanged.
+
+Added local-only additive migration `0006_provider_preparation.sql` and a fixture-scoped micro-USD ledger: atomic property/month/job caps, duplicate call denial, matching rate version, expiry check (2026-11-20 UTC), actual token reconciliation, full hold for unknown usage. Artificial Pass A units are not represented as real money. Default transport is hard-disabled, without an environment activation switch or credential lookup; no new endpoint can invoke paid research.
+
+Verification at final milestone:
+- `npm test`: **108 passed**, including **12 new provider tests**. Covers disabled zero-dispatch/reservation, shared concurrent caps, idempotency, unknown costs, rate expiry/version, scoped budget denial, source access/redirect/size failures, stale evidence, fabricated quotations, identity downgrade, credential-host confinement, five-category persisted briefing integration and failed-coverage persistence.
+- `npm run typecheck`: passed. Final production build: passed (includes TypeScript).
+- `npm run test:http`: **111 assertions passed** against compiled HTTP routes; no local browser used.
+- Formatting of all changed TypeScript/tests passed; `git diff --check` passed. Repository-wide `format:check` reports a pre-existing formatting issue in unchanged `src/customer/broker.ts`; left unrelated code untouched.
+- One adapter integration failure identified discovery/receipt canonical URL disagreement; fixed and targeted tests passed before final milestone.
+- No remote database commands or customer writes, no new credentials, no deployment, no research/model calls, no schedules or notifications. ABC Hotel data was not touched. Existing user images/unrelated normalization changes were preserved.
+
+Not verified: real provider credentials/access, actual source permissions, HTTP/DNS egress, model semantic quality, live provider costs and deployed Pass B acceptance. No deployment or browser acceptance was attempted for this local preparation request. The application remains on the previously deployed Pass A release.
+
+Approval needed before Pass C: owner-approved ABC Hotel identity/domain and exact selected comp set; explicit primary-source grants and storage rights; provider/model access; finite per-refresh/monthly/on-demand limits and freshness/coverage policy; a separately authorized scoped dispatcher release and bounded baseline/update quality pilot. Proposed provider envelope is $0.046515/refresh, with proposed caps $0.10/refresh and $2/month (10 on-demand refreshes); excludes infrastructure, support, tax and licensed data. These are not approved spending or customer-plan changes. Review/social access remains unavailable, not zero mentions.
+
+Next pass: after these approvals, bind the provider to a durable live job with server-derived SIL scope, per-call entitlement/pause/lease checks and DNS-safe bounded network transport; apply the additive ledger migration to existing D1, deploy the scoped release, and conduct explicitly authorized Pass C baseline/update validation. No live dispatcher is enabled by this preparation. Schedules and notifications remain independently disabled. Do not claim live readiness from synthetic tests.
+
+
+## Pass B hosted acceptance preparation — 2026-10-21 PDT
+
+The existing expiring acceptance Worker now injects a synthetic recorded-response provider into the real expansion orchestrator. Its provider ledger is keyed to the durable job ID. Production imports no replay provider; existing customer gates remain unchanged. The additive 0006 ledger migration is intended only for the existing acceptance D1 during this pass. A new entrypoint test completes all five categories with network access forbidden, checks 16 recorded calls, and confirms duplicate advances spend nothing extra. Local milestone: 109 tests passed, TypeScript and production build passed. Hosted verification remains pending until recorded below. Branch: codex/expansion-pass-b-acceptance; no production promotion is intended.

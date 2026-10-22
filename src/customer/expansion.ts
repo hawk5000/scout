@@ -1,4 +1,5 @@
 import { CustomerError } from "./contracts";
+import { SourceError } from "../research/source-adapters";
 import { type Database, digest } from "./store";
 import { MarketIngestion } from "./ingestion";
 import {
@@ -15,7 +16,10 @@ import {
   type ExpansionCommand,
   type Outcome,
 } from "./expansion-contracts";
-import { fixtureItems } from "./expansion-fixtures";
+import {
+  fixtureExpansionProvider,
+  type ExpansionProvider,
+} from "./expansion-provider";
 export type ExpansionScope = {
   tenantId: string;
   propertyId: string;
@@ -73,6 +77,7 @@ export class Expansion {
     private scope: ExpansionScope,
     private fixtures = false,
     private now: () => number = Date.now,
+    private provider: ExpansionProvider = fixtureExpansionProvider,
   ) {}
   private bind() {
     return [this.scope.tenantId, this.scope.propertyId];
@@ -499,64 +504,85 @@ export class Expansion {
       changedIds: [],
     };
     if (
-      doc.scenario === "failed" ||
-      (doc.scenario === "partial" && category === "competitor")
+      this.provider === fixtureExpansionProvider &&
+      (doc.scenario === "failed" ||
+        (doc.scenario === "partial" && category === "competitor"))
     ) {
       outcome.status = "failed";
       outcome.code = "SOURCE_UNAVAILABLE";
       outcome.message =
         "Simulated source unavailable. Coverage is incomplete; this does not mean there were no changes.";
     } else {
-      const batchKey = `expansion_${id}_${category}`;
-      // A committed batch is the durable checkpoint if a worker stopped before writing its job outcome.
-      const completed = market.document.runs.find(
-        (r) => r.batchKey === batchKey,
-      );
-      if (!completed) {
-        const items = await fixtureItems(
-          category,
-          doc.config,
-          this.scope.propertyId,
-          doc.scenario,
-          at,
+      try {
+        const batchKey = `expansion_${id}_${category}`;
+        // A committed batch is the durable checkpoint if a worker stopped before writing its job outcome.
+        const completed = market.document.runs.find(
+          (r) => r.batchKey === batchKey,
         );
-        await new MarketIngestion(this.db, this.now).ingest(
-          {
-            ...this.scope,
-            dataMode: "synthetic",
-            jobGuard: { id, lease: fence },
-          },
-          {
-            batchKey,
-            expectedRevision: market.revision,
-            observedAt: at,
-            status: "Completed",
-            categories: [category],
-            warnings: [],
-            items,
-          },
-        );
-        market = await this.market();
-      }
-      const run = market.document.runs.find((r) => r.batchKey === batchKey)!;
-      outcome.newIds = run.newIds;
-      outcome.changedIds = run.changedIds;
-      outcome.checkedAt = run.at;
-      outcome.lastSuccessAt = run.at;
-      if (run.status !== "Completed") {
-        outcome.status = "partial";
-        outcome.code = "EVIDENCE_CONFLICT";
-        outcome.message = run.warnings.join(" ");
-      } else if (category === "property" && doc.scenario === "ambiguous") {
-        outcome.status = "partial";
-        outcome.code = "IDENTITY_AMBIGUOUS";
+        if (!completed) {
+          if (this.provider.mode !== "synthetic")
+            throw new CustomerError("Live research remains disabled.", 403);
+          const items = await this.provider.research({
+            jobId: id,
+            category,
+            config: doc.config,
+            propertyId: this.scope.propertyId,
+            scenario: doc.scenario,
+            at,
+          });
+          await new MarketIngestion(this.db, this.now).ingest(
+            {
+              ...this.scope,
+              dataMode: "synthetic",
+              jobGuard: { id, lease: fence },
+            },
+            {
+              batchKey,
+              expectedRevision: market.revision,
+              observedAt: at,
+              status: "Completed",
+              categories: [category],
+              warnings: [],
+              items,
+            },
+          );
+          market = await this.market();
+        }
+        const run = market.document.runs.find((r) => r.batchKey === batchKey)!;
+        outcome.newIds = run.newIds;
+        outcome.changedIds = run.changedIds;
+        outcome.checkedAt = run.at;
+        outcome.lastSuccessAt = run.at;
+        if (run.status !== "Completed") {
+          outcome.status = "partial";
+          outcome.code = "EVIDENCE_CONFLICT";
+          outcome.message = run.warnings.join(" ");
+        } else if (
+          (category === "property" && doc.scenario === "ambiguous") ||
+          market.document.records.some(
+            (f) =>
+              f.categories.includes(category) &&
+              f.lastCheckedAt === run.at &&
+              f.context &&
+              f.context.match !== "confirmed",
+          )
+        ) {
+          outcome.status = "partial";
+          outcome.code = "IDENTITY_AMBIGUOUS";
+          outcome.message =
+            "A similar-name mention was held for identity review and excluded from confident briefing claims.";
+        } else if (!run.newIds.length && !run.changedIds.length) {
+          outcome.status = "no-change";
+          outcome.code = "NO_MATERIAL_CHANGE";
+          outcome.message =
+            "No material changes found in the checked fixture sources. Existing findings remain ongoing context.";
+        }
+      } catch (error) {
+        if (!(error instanceof SourceError)) throw error;
+        outcome.status = "failed";
+        outcome.code = error.code;
         outcome.message =
-          "A similar-name mention was held for identity review and excluded from confident briefing claims.";
-      } else if (!run.newIds.length && !run.changedIds.length) {
-        outcome.status = "no-change";
-        outcome.code = "NO_MATERIAL_CHANGE";
-        outcome.message =
-          "No material changes found in the checked fixture sources. Existing findings remain ongoing context.";
+          "Source check could not complete. Prior findings remain available; this is not a zero-findings result.";
       }
     }
     doc.outcomes.push(outcome);

@@ -11,7 +11,8 @@ import { CustomerStore, digest, type Database } from "../../src/customer/store";
 import { findingStateMutation } from "../../src/customer/market-contracts";
 import { MarketIngestion } from "../../src/customer/ingestion";
 import { ReviewedImports } from "../../src/customer/reviewed-imports";
-import { Expansion } from "../../src/customer/expansion";
+import { Expansion, type ExpansionScope } from "../../src/customer/expansion";
+import type { ExpansionProvider } from "../../src/customer/expansion-provider";
 import { expansionCommand } from "../../src/customer/expansion-contracts";
 export interface Env {
   EXPANSION_FIXTURES?: string;
@@ -73,6 +74,7 @@ export async function handleCustomer(
   request: Request,
   env: Env,
   transport: typeof fetch = (input, init) => fetch(input, init),
+  acceptanceProvider?: (scope: ExpansionScope) => ExpansionProvider,
 ): Promise<Response> {
   try {
     if (
@@ -179,6 +181,8 @@ export async function handleCustomer(
         env.DB,
         scope,
         env.EXPANSION_FIXTURES === "true",
+        Date.now,
+        acceptanceProvider?.(scope),
       ).execute(input.input);
       return Response.json(result, { headers: customerHeaders });
     }
