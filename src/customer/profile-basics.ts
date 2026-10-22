@@ -23,6 +23,32 @@ export function profileFromBasics(
     ...baseline,
     name: value("name"),
     website: value("website"),
+    ...(form.has("marketCenter")
+      ? { marketCenter: value("marketCenter") }
+      : {}),
+    ...(form.has("radiusMiles")
+      ? {
+          radiusMiles: value("radiusMiles")
+            ? Number(value("radiusMiles"))
+            : null,
+        }
+      : {}),
+    ...(form.has("includedPlaces")
+      ? {
+          includedPlaces: value("includedPlaces")
+            .split("\n")
+            .map((place) => place.trim())
+            .filter(Boolean),
+        }
+      : {}),
+    ...(form.has("excludedPlaces")
+      ? {
+          excludedPlaces: value("excludedPlaces")
+            .split("\n")
+            .map((place) => place.trim())
+            .filter(Boolean),
+        }
+      : {}),
     ...(hasAddress || current?.postalAddress
       ? {
           postalAddress,

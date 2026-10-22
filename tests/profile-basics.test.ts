@@ -36,6 +36,37 @@ test("simple profile edits preserve legacy address and all operator-managed sett
   assert.equal(draft.confirmed, false);
   assert.deepEqual(draft.scheduleDays, []);
 });
+test("market area fields save with a profile and can be cleared deliberately", () => {
+  const previous = customerDraftProfile.parse({ name: "Hotel" });
+  const saved = profileFromBasics(
+    previous,
+    form({
+      name: "Hotel",
+      marketCenter: "Portland west side",
+      radiusMiles: "15",
+      includedPlaces: "Hillsboro\nBeaverton",
+      excludedPlaces: "Downtown Portland",
+    }),
+  );
+  assert.equal(saved.marketCenter, "Portland west side");
+  assert.equal(saved.radiusMiles, 15);
+  assert.deepEqual(saved.includedPlaces, ["Hillsboro", "Beaverton"]);
+  assert.deepEqual(saved.excludedPlaces, ["Downtown Portland"]);
+  const cleared = profileFromBasics(
+    saved,
+    form({
+      name: "Hotel",
+      marketCenter: "",
+      radiusMiles: "",
+      includedPlaces: "",
+      excludedPlaces: "",
+    }),
+  );
+  assert.equal(cleared.marketCenter, "");
+  assert.equal(cleared.radiusMiles, null);
+  assert.deepEqual(cleared.includedPlaces, []);
+  assert.deepEqual(cleared.excludedPlaces, []);
+});
 test("full address persists through customer sign-out/sign-in without modifying coverage or enabling research", async () => {
   const db = database();
   try {

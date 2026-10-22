@@ -1,0 +1,38 @@
+.customer-form .profile-help {
+  margin: 0;
+  color: #43584a;
+}
+
+.customer-form .comp-hotel-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #b7c7b5;
+  border-left: 4px solid #b48a2c;
+  border-radius: 6px;
+  background: #f6f7f0;
+}
+
+.customer-form .comp-hotel-card label {
+  margin-bottom: 0;
+}
+
+.comp-hotel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #183e32;
+}
+
+.text-button {
+  border: 0;
+  background: transparent;
+  color: #7a3628;
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+.customer-form .button.secondary {
+  justify-self: start;
+}
