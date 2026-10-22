@@ -288,7 +288,7 @@ async function handlePilot(
         records: snapshot.market.records.length,
         versions: snapshot.market.records.map((r) => ({
           id: r.id,
-          version: r.version,
+          version: r.versions.length,
           evidence: r.evidence.map((e) => e.id),
         })),
       });
