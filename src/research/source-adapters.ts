@@ -65,7 +65,7 @@ export function providerHttpRequest(
   });
 }
 export interface SourceTransport {
-  readonly mode: "disabled" | "synthetic";
+  readonly mode: "disabled" | "synthetic" | "live";
   exchange(
     request: SourceRequest,
     signal?: AbortSignal,
@@ -118,6 +118,7 @@ export class BoundedSources {
     private transport: SourceTransport,
     private ledger: CallLedger,
     private now = Date.now,
+    private allowLive = false,
   ) {
     this.started = now();
   }
@@ -127,7 +128,10 @@ export class BoundedSources {
     maximumMicros: number,
     usage: (body: string) => number | null,
   ) {
-    if (this.transport.mode !== "synthetic")
+    if (
+      this.transport.mode !== "synthetic" &&
+      !(this.transport.mode === "live" && this.allowLive)
+    )
       throw new SourceError("LIVE_DISABLED");
     if (this.now() >= Date.parse(rateCard.expiresAt))
       throw new SourceError("RATE_REVIEW_REQUIRED");
