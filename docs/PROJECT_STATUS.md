@@ -609,3 +609,11 @@ Production was not promoted: it remains `9b788ef80786da1a6e7882da4cce0c9ff845708
 No blocker remains for isolated Pass B acceptance. Synthetic tests do not verify live source access, quality, permissions, model interpretation or real charges. Next: review the existing release proposal and obtain explicit approval for hotel identity/comp set, source and storage rights, provider access, finite budgets and a bounded Pass C live pilot before any dispatcher activation or production promotion. Schedules and notifications require independent authorization.
 
 Evidence: `docs/qa/expansion-pass-b/` screenshots; reusable checks in `scripts/hosted-pass-b-acceptance.ts` and `scripts/hosted-provider-ledger.ts`. Local sanitized machine results remain in ignored `.vercel/pass-b-hosted-results.json` and `.vercel/pass-b-ledger-results.json`. Screenshots show fictional fixtures only.
+
+## Public demo aligned with expanded SCOUT — 2026-10-22 PDT
+
+Replaced `/demo`'s outdated three-category/local-session sample with a self-contained fictional workspace aligned to the current five research areas: Corporate, Project, Event, Competitor and Property, plus an evidence-linked SCOUT Briefing. The overview explains each area, while the Market Blueprint supports search, category filters, finding details, save, dismiss/restore, copy and CSV export. Competitor and own-property mention views show dates, source identity, lodging relevance and unknowns. Brief sections link directly to their sample finding details.
+
+All example hotel, competitor, organization, event, review and source records are fictional. Citations use reserved `.example` hosts and dates are marked illustrative. This public demo has no session, customer, Worker, D1 or research API calls; save/dismiss preferences are namespaced in browser local storage only. No sample data is written to customer records. Live research, paid calls, schedules and notifications remain disabled.
+
+On the production `main` baseline, local verification passed: 111 tests, TypeScript, production build and formatting checks for the changed TypeScript files. The demo fixture tests verify all five categories, reserved source hosts, briefing evidence references, lodging implications, unknowns and CSV formula neutralization. Vercel deployment/browser verification is pending for this release.
