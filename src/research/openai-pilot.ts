@@ -19,6 +19,16 @@ import {
   searchWithOpenAI,
 } from "./openai-web-search";
 
+// Stored expansion configuration also contains internal membership history.
+// Validate the public settings without treating that server-owned history as form input.
+function parseStoredConfiguration(json: string) {
+  const { own, competitors, paused } = JSON.parse(json);
+  return expansionConfiguration.parse({
+    own,
+    competitors,
+    ...(paused === undefined ? {} : { paused }),
+  });
+}
 const domainsByCategory = z.record(
   z.enum(marketCategories),
   z
@@ -232,9 +242,7 @@ export class OpenAiPilotDispatcher {
     if (!configuration) blockers.push("HOTEL_RESEARCH_AREA_REQUIRED");
     else {
       try {
-        const config = expansionConfiguration.parse(
-          JSON.parse(configuration.document_json),
-        );
+        const config = parseStoredConfiguration(configuration.document_json);
         if (config.competitors.filter((c) => c.active).length !== 3)
           blockers.push("THREE_SELECTED_COMPETITORS_REQUIRED");
       } catch {
@@ -480,9 +488,7 @@ export class OpenAiPilotDispatcher {
     let profile, config, grants;
     try {
       profile = customerDraftProfile.parse(JSON.parse(profileRow.profile_json));
-      config = expansionConfiguration.parse(
-        JSON.parse(configRow.document_json),
-      );
+      config = parseStoredConfiguration(configRow.document_json);
       grants = policyDocument.parse(JSON.parse(policy.allowed_domains_json));
     } catch {
       return this.failStep(
