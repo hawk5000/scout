@@ -21,6 +21,10 @@ test("public demo includes every product category and reserved fictional evidenc
     assert.ok(finding.relevance.length > 20);
     assert.ok(finding.unknowns.length > 0);
   }
+  const propertyMention = publicDemoFindings.find(
+    (finding) => finding.category === "Property",
+  );
+  assert.equal(propertyMention?.sentiment, "Mixed");
   const linkedIds = publicDemoBriefing.sections.flatMap(
     (section) => section.findingIds,
   );

@@ -3506,6 +3506,7 @@ input[type="checkbox"] {
 .public-demo-finding-card.category-competitor, .public-demo-detail-hero.category-competitor { border-left-color: #9b6941; }
 .public-demo-finding-card.category-property, .public-demo-detail-hero.category-property { border-left-color: #526e93; }
 .public-demo-card-top { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; color: #69736a; font-size: 10px; }
+.public-demo-sentiment { margin-left: auto; padding: 0.18rem 0.45rem; border-radius: 99px; background: #f3eadb; color: #735a2b; font-size: 9px; font-weight: 700; }
 .public-demo-category-chip { display: inline-flex; align-items: center; padding: 0.2rem 0.5rem; border-radius: 99px; background: #e6efe7; color: #285642; font-size: 10px; font-weight: 700; }
 .public-demo-category-chip.category-project { background: #e9edf5; color: #3b587d; }
 .public-demo-category-chip.category-event { background: #f2ecde; color: #775d2a; }
