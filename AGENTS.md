@@ -26,6 +26,6 @@ Read docs/PRODUCT.md, docs/BUILD_PLAN.md and docs/PROJECT_STATUS.md first. Use `
 ## Production release path
 
 - `main` is the sole production release branch for the SCOUT Vercel project. A feature-branch deployment is a preview and must never be described as the stable customer app.
-- For an approved release, complete and verify the scoped work, merge it to `main`, then verify Vercel labels the exact pushed revision as **Production / Ready** and confirm behavior through `https://scout-olive-ten.vercel.app`.
-- Do not run a production deployment from a feature branch or an uncommitted local checkout. Prefer the existing Git-connected Vercel deployment from `main` so its source and commit remain traceable.
+- For an approved release, complete and verify the scoped work, open a pull request into protected `main`, merge it, then verify Vercel labels the exact pushed revision as **Production / Ready** and confirm behavior through `https://scout-olive-ten.vercel.app`.
+- GitHub requires a pull request for `main` and automatically deletes merged source branches. No review or CI status is configured, so run tests and build before merging. Do not run a production deployment from a feature branch or an uncommitted local checkout. Prefer the existing Git-connected Vercel deployment from `main` so its source and commit remain traceable.
 - Preserve the explicit production-off state for live research, paid calls, scheduled research and notifications unless separately authorized.
