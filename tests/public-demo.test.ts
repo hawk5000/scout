@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   publicDemoBriefing,
+  publicDemoBriefingCsv,
+  publicDemoBriefingText,
   publicDemoCategories,
   publicDemoCsv,
   publicDemoFindings,
@@ -51,4 +53,21 @@ test("public demo CSV labels synthetic content and neutralizes spreadsheet formu
     ]),
     /'=HYPERLINK/,
   );
+});
+
+test("public demo briefing copy and export retain every linked finding, source, date and unknown", () => {
+  const text = publicDemoBriefingText();
+  const csv = publicDemoBriefingCsv();
+  for (const finding of publicDemoFindings) {
+    assert.ok(text.includes(finding.title));
+    assert.ok(text.includes(finding.source.url));
+    assert.ok(csv.includes(finding.source.url));
+    assert.ok(csv.includes(finding.source.published));
+  }
+  assert.match(text, /FICTIONAL SAMPLE/);
+  assert.match(text, /no current research/i);
+  assert.match(csv, /SYNTHETIC — NOT LIVE RESEARCH/);
+  assert.match(csv, /Lodging implication/);
+  assert.match(csv, /Unknowns/);
+  assert.equal(csv.split("\r\n").length, 6);
 });

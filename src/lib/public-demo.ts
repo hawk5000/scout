@@ -176,6 +176,77 @@ export const publicDemoBriefing = {
   ],
 };
 
+/** A readable text copy for the public, isolated demonstration. */
+export function publicDemoBriefingText() {
+  return [
+    `${publicDemoBriefing.title} — Willow House Hotel`,
+    `FICTIONAL SAMPLE · ${publicDemoBriefing.asOf}`,
+    "Every hotel, event, mention and source below is invented; no live research was run.",
+    ...publicDemoBriefing.sections.flatMap((section) => [
+      "",
+      section.heading,
+      section.implication,
+      `Still unknown: ${section.unknowns}`,
+      "Evidence:",
+      ...section.findingIds.flatMap((id) => {
+        const finding = publicDemoFindings.find((item) => item.id === id);
+        return finding
+          ? [
+              `${finding.title} — ${finding.source.label}`,
+              `Published ${finding.source.published}; ${finding.source.url}`,
+            ]
+          : [];
+      }),
+    ]),
+    "",
+    "Illustrative content only. No current research, paid calls, schedules or notifications.",
+  ].join("\n");
+}
+
+/** One row per source-linked finding so a briefing CSV stays auditable. */
+export function publicDemoBriefingCsv() {
+  const header = [
+    "Fictional sample",
+    "Hotel",
+    "Location",
+    "Briefing",
+    "Section",
+    "Finding",
+    "Source",
+    "Source URL",
+    "Published",
+    "Lodging implication",
+    "Unknowns",
+  ];
+  const cell = (value: string) => {
+    const safe = /^[\s]*[=+@\-]/.test(value) ? `'${value}` : value;
+    return `"${safe.replaceAll('"', '""')}"`;
+  };
+  const rows = publicDemoBriefing.sections.flatMap((section) =>
+    section.findingIds.flatMap((id) => {
+      const finding = publicDemoFindings.find((item) => item.id === id);
+      return finding
+        ? [
+            [
+              "SYNTHETIC — NOT LIVE RESEARCH",
+              "Willow House Hotel",
+              "Demo Harbor, Washington",
+              publicDemoBriefing.title,
+              section.heading,
+              finding.title,
+              finding.source.label,
+              finding.source.url,
+              finding.source.published,
+              section.implication,
+              section.unknowns,
+            ],
+          ]
+        : [];
+    }),
+  );
+  return [header, ...rows].map((row) => row.map(cell).join(",")).join("\r\n");
+}
+
 export function publicDemoCsv(findings: PublicDemoFinding[]) {
   const header = [
     "Fictional sample",

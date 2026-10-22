@@ -17,11 +17,14 @@ import {
   MapPin,
   Menu,
   MessageSquareText,
+  Printer,
   Search,
   X,
 } from "lucide-react";
 import {
   publicDemoBriefing,
+  publicDemoBriefingCsv,
+  publicDemoBriefingText,
   publicDemoCategories,
   publicDemoCsv,
   publicDemoFindings,
@@ -140,17 +143,38 @@ export function PublicDemoApp() {
     }
   }
 
-  function exportFindings(findings: PublicDemoFinding[]) {
-    const blob = new Blob(["\ufeff", publicDemoCsv(findings)], {
+  function downloadCsv(csv: string, filename: string) {
+    const blob = new Blob(["\ufeff", csv], {
       type: "text/csv;charset=utf-8",
     });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "SCOUT-fictional-market-blueprint.csv";
+    link.download = filename;
     link.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function exportFindings(
+    findings: PublicDemoFinding[],
+    scope = "market-blueprint",
+  ) {
+    downloadCsv(publicDemoCsv(findings), `SCOUT-fictional-${scope}.csv`);
     setStatus("Fictional sample exported as CSV.");
+  }
+
+  async function copyBriefing() {
+    try {
+      await navigator.clipboard.writeText(publicDemoBriefingText());
+      setStatus("Fictional sample briefing copied with evidence links.");
+    } catch {
+      setStatus("Clipboard access is unavailable in this browser.");
+    }
+  }
+
+  function exportBriefing() {
+    downloadCsv(publicDemoBriefingCsv(), "SCOUT-fictional-briefing.csv");
+    setStatus("Fictional sample briefing exported with source links.");
   }
 
   const activeFindings = useMemo(
@@ -204,6 +228,9 @@ export function PublicDemoApp() {
     content = (
       <Briefing
         onOpen={(id) => (window.location.href = `/demo/findings/${id}`)}
+        onCopy={() => void copyBriefing()}
+        onExport={exportBriefing}
+        onPrint={() => window.print()}
       />
     );
   } else if (page === "competitors" || page === "property") {
@@ -240,7 +267,12 @@ export function PublicDemoApp() {
           onSave={toggleSaved}
           onDismiss={toggleDismissed}
           onCopy={copyFinding}
-          onExport={() => exportFindings(findings)}
+          onExport={() =>
+            exportFindings(
+              findings,
+              page === "property" ? "hotel-mentions" : "competitor-changes",
+            )
+          }
         />
       </>
     );
@@ -260,7 +292,12 @@ export function PublicDemoApp() {
         onCopy={copyFinding}
         onExport={() =>
           exportFindings(
-            publicDemoFindings.filter((item) => prefs.saved.includes(item.id)),
+            publicDemoFindings.filter(
+              (item) =>
+                prefs.saved.includes(item.id) &&
+                !prefs.dismissed.includes(item.id),
+            ),
+            "saved-findings",
           )
         }
       />
@@ -286,7 +323,7 @@ export function PublicDemoApp() {
           onSave={toggleSaved}
           onDismiss={toggleDismissed}
           onCopy={copyFinding}
-          onExport={() => exportFindings(publicDemoFindings)}
+          onExport={() => exportFindings(publicDemoFindings, "updates")}
         />
       </>
     );
@@ -309,7 +346,9 @@ export function PublicDemoApp() {
           onSave={toggleSaved}
           onDismiss={toggleDismissed}
           onCopy={copyFinding}
-          onExport={() => exportFindings(queryFindings(activeFindings))}
+          onExport={() =>
+            exportFindings(queryFindings(activeFindings), "market-blueprint")
+          }
         />
       </>
     );
@@ -436,7 +475,12 @@ export function PublicDemoApp() {
             {page === "blueprint" && (
               <button
                 className="public-demo-button secondary"
-                onClick={() => exportFindings(queryFindings(activeFindings))}
+                onClick={() =>
+                  exportFindings(
+                    queryFindings(activeFindings),
+                    "market-blueprint",
+                  )
+                }
               >
                 <ArrowDownToLine size={16} /> Export CSV
               </button>
@@ -745,13 +789,19 @@ function FindingCard({
         <strong>Why it may matter</strong>
         <p>{finding.relevance}</p>
       </div>
-      <div className="public-demo-source">
-        <span className="public-demo-source-icon">↗</span>
+      <Link
+        href={`/demo/findings/${finding.id}`}
+        className="public-demo-source"
+        aria-label={`View evidence details for ${finding.title}`}
+      >
+        <span className="public-demo-source-icon">
+          <FileSearch size={15} />
+        </span>
         <div>
           <strong>{finding.source.label}</strong>
-          <span>{finding.source.published} · fictional example</span>
+          <span>{finding.source.published} · fictional · view evidence</span>
         </div>
-      </div>
+      </Link>
       {actionsEnabled && (
         <div className="public-demo-card-actions">
           <button className={saved ? "active" : ""} onClick={onSave}>
@@ -866,12 +916,36 @@ function FindingDetail({
   );
 }
 
-function Briefing({ onOpen }: { onOpen: (id: string) => void }) {
+function Briefing({
+  onOpen,
+  onCopy,
+  onExport,
+  onPrint,
+}: {
+  onOpen: (id: string) => void;
+  onCopy: () => void;
+  onExport: () => void;
+  onPrint: () => void;
+}) {
   return (
     <div className="public-demo-briefing">
       <div className="public-demo-briefing-label">
         <ClipboardList size={18} /> FICTIONAL EXAMPLE BRIEFING{" "}
         <span>Not live research</span>
+      </div>
+      <div
+        className="public-demo-briefing-actions"
+        aria-label="Briefing actions"
+      >
+        <button className="public-demo-button secondary" onClick={onCopy}>
+          <Copy size={15} /> Copy briefing
+        </button>
+        <button className="public-demo-button secondary" onClick={onExport}>
+          <ArrowDownToLine size={15} /> Export briefing CSV
+        </button>
+        <button className="public-demo-button" onClick={onPrint}>
+          <Printer size={15} /> Print / save as PDF
+        </button>
       </div>
       <h2>{publicDemoBriefing.title}</h2>
       <p className="public-demo-briefing-intro">
@@ -904,6 +978,24 @@ function Briefing({ onOpen }: { onOpen: (id: string) => void }) {
                     {finding.title}
                     <ArrowRight size={14} />
                   </button>
+                );
+              })}
+            </div>
+            <div className="public-demo-print-evidence">
+              <strong>Source details</strong>
+              {section.findingIds.map((id) => {
+                const finding = publicDemoFindings.find(
+                  (item) => item.id === id,
+                )!;
+                return (
+                  <p key={id}>
+                    <b>{finding.title}</b>
+                    <br />
+                    {finding.source.label} · Published{" "}
+                    {finding.source.published}
+                    <br />
+                    {finding.source.url}
+                  </p>
                 );
               })}
             </div>
