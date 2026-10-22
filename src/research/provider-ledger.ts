@@ -13,10 +13,15 @@ export class ProviderLedger implements CallLedger {
       jobId: string;
       month: string;
     },
+    allowLive = false,
+    private pilotFence?: { lease: string; step: number },
   ) {
     if (
-      !scope.tenantId.startsWith("fixture_") ||
-      !scope.propertyId.startsWith("fixture_") ||
+      ((!scope.tenantId.startsWith("fixture_") ||
+        !scope.propertyId.startsWith("fixture_")) &&
+        !allowLive) ||
+      scope.tenantId.startsWith("fixture_") !==
+        scope.propertyId.startsWith("fixture_") ||
       !/^\d{4}-\d{2}$/.test(scope.month)
     )
       throw new SourceError("LIVE_DISABLED");
@@ -33,7 +38,11 @@ export class ProviderLedger implements CallLedger {
     try {
       const row = await this.db
         .prepare(
-          "INSERT INTO customer_provider_calls(tenant_id,property_id,month,job_id,call_key,maximum_micros,accounted_micros,state) SELECT ?,?,?,?,?,?,?,'reserved' WHERE EXISTS(SELECT 1 FROM customer_provider_limits WHERE tenant_id=? AND property_id=? AND month=? AND rate_version=?) RETURNING call_key",
+          "INSERT INTO customer_provider_calls(tenant_id,property_id,month,job_id,call_key,maximum_micros,accounted_micros,state) SELECT ?,?,?,?,?,?,?,'reserved' WHERE EXISTS(SELECT 1 FROM customer_provider_limits WHERE tenant_id=? AND property_id=? AND month=? AND rate_version=?)" +
+            (this.pilotFence
+              ? " AND EXISTS(SELECT 1 FROM customer_openai_pilot_jobs WHERE tenant_id=? AND property_id=? AND id=? AND lease=? AND step=? AND state='running' AND lease_until>CAST(strftime('%s','now') AS INTEGER)*1000)"
+              : "") +
+            " RETURNING call_key",
         )
         .bind(
           s.tenantId,
@@ -47,6 +56,15 @@ export class ProviderLedger implements CallLedger {
           s.propertyId,
           s.month,
           rateCard.version,
+          ...(this.pilotFence
+            ? [
+                s.tenantId,
+                s.propertyId,
+                s.jobId,
+                this.pilotFence.lease,
+                this.pilotFence.step,
+              ]
+            : []),
         )
         .first();
       return !!row;

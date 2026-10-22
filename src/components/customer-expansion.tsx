@@ -14,6 +14,44 @@ import {
 } from "@/customer/market-contracts";
 import { briefingText } from "@/customer/brief-export";
 import { CustomerMarket } from "./customer-market";
+type LivePilotView = {
+  ready: boolean;
+  blockers: string[];
+  approvedCapUsd: number;
+  job: null | {
+    id: string;
+    state: string;
+    step: number;
+    document: {
+      outcomes?: Array<{ category: string; status: string; code: string }>;
+    };
+    drafts: Array<{
+      category: MarketCategory;
+      outcome: string;
+      summary: string;
+      sources_json: string;
+      citations_json: string;
+      observed_at: string;
+      identity_note: string;
+    }>;
+    briefing: null | {
+      document: {
+        status: string;
+        sections: Array<{
+          heading: string;
+          outcome: string;
+          summary: string;
+          citations: Array<{ url: string; title: string; citedText: string }>;
+          sources: Array<{ url: string; title: string }>;
+          unknowns: string[];
+          identityNote: string;
+        }>;
+      };
+    };
+    spentUsd: number;
+    reservedUsd: number;
+  };
+};
 const purposes = {
   corporate:
     "Companies and business activity that may bring visitors to your market.",
@@ -24,6 +62,47 @@ const purposes = {
   property:
     "Public mentions of your hotel, with identity checks and sentiment in context.",
 };
+function pilotBlockerLabel(code: string) {
+  const labels: Record<string, string> = {
+    PILOT_ACTIVATION_DISABLED:
+      "Live research and paid provider calls are disabled for this release.",
+    OPENAI_SECRET_MISSING:
+      "OpenAI secret is not configured on the research Worker.",
+    SOURCE_POLICY_NOT_INSTALLED:
+      "An administrator must approve a short-lived source and data-retention policy.",
+    PILOT_POLICY_EXPIRED: "The source approval has expired.",
+    PILOT_CAP_MISMATCH:
+      "The approved research limit does not match the $1.25 pilot cap.",
+    SOURCE_GRANTS_INCOMPLETE:
+      "An administrator must approve allowed public-source domains for all five categories.",
+    SOURCE_GRANTS_INVALID: "The approved source list needs correction.",
+    RATE_REVIEW_REQUIRED:
+      "Research pricing needs a current review before spending.",
+    CUSTOMER_BUDGET_NOT_CONFIGURED:
+      "The property's spending limit is not configured.",
+    PROPERTY_RESEARCH_PAUSED: "Research is paused for this hotel.",
+    PILOT_SCOPE_NOT_APPROVED:
+      "This one-time pilot is limited to the approved ABC Hotel account.",
+    ADMINISTRATOR_ACCESS_REQUIRED:
+      "A SCOUT administrator for this hotel must perform the provider check and start the pilot. SIL sign-in alone does not grant this role.",
+    HOTEL_PROFILE_REQUIRED:
+      "Complete the hotel name and address before starting research.",
+    HOTEL_IDENTITY_OR_ADDRESS_REQUIRED:
+      "The hotel's name or market address is missing.",
+    HOTEL_PROFILE_INVALID:
+      "The hotel profile needs correction before starting research.",
+    HOTEL_RESEARCH_AREA_REQUIRED:
+      "Set the hotel research area and selected competitor hotels first.",
+    HOTEL_RESEARCH_AREA_INVALID:
+      "The saved research area or competitor details need correction.",
+    THREE_SELECTED_COMPETITORS_REQUIRED:
+      "Confirm the three selected comp-set properties in the hotel research settings.",
+  };
+  return (
+    labels[code] ??
+    "An administrator must resolve a research approval before the pilot can run."
+  );
+}
 export function CustomerExpansion({
   destination,
   workspace,
@@ -39,6 +118,7 @@ export function CustomerExpansion({
     [providerStatus, setProviderStatus] = useState<
       "not_configured" | "valid" | "denied" | "unavailable" | null
     >(null),
+    [livePilot, setLivePilot] = useState<LivePilotView | null>(null),
     [category, setCategory] = useState<MarketCategory>("competitor"),
     [scenario, setScenario] =
       useState<(typeof fixtureScenarios)[number]>("baseline");
@@ -61,6 +141,19 @@ export function CustomerExpansion({
   }
   useEffect(() => {
     void request().catch((e) => setMessage(e.message));
+  }, []);
+  async function refreshLivePilot() {
+    const response = await fetch("/api/customer/openai-pilot", {
+      cache: "no-store",
+    });
+    const data = await response.json();
+    if (!response.ok)
+      throw Error(data.error || "Live pilot status is unavailable.");
+    setLivePilot(data);
+    return data as LivePilotView;
+  }
+  useEffect(() => {
+    void refreshLivePilot().catch(() => setLivePilot(null));
   }, []);
   async function run(id?: string) {
     setBusy(true);
@@ -115,6 +208,57 @@ export function CustomerExpansion({
       setMessage(
         error instanceof Error ? error.message : "Connection check failed.",
       );
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function runLivePilot() {
+    setBusy(true);
+    setMessage("");
+    try {
+      let next = livePilot;
+      if (!next?.job) {
+        const response = await fetch("/api/customer/openai-pilot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "start",
+            requestKey: crypto.randomUUID(),
+          }),
+        });
+        const data = await response.json();
+        if (!response.ok)
+          throw Error(data.error || "Manual research could not start.");
+        next = data as LivePilotView;
+      }
+      for (
+        let i = 0;
+        i < 5 && next.job && ["queued", "running"].includes(next.job.state);
+        i++
+      ) {
+        const response = await fetch("/api/customer/openai-pilot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "advance", jobId: next.job.id }),
+        });
+        const data = await response.json();
+        if (!response.ok)
+          throw Error(data.error || "Research step did not complete.");
+        next = data as LivePilotView;
+        setLivePilot(next);
+      }
+      setMessage(
+        next.job?.state === "complete"
+          ? "All five categories have review drafts and a source-linked briefing."
+          : `Manual cycle ${next.job?.state ?? "created"}. Review the coverage and citations below.`,
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Manual research did not complete.",
+      );
+      await refreshLivePilot().catch(() => undefined);
     } finally {
       setBusy(false);
     }
@@ -202,6 +346,160 @@ export function CustomerExpansion({
                 run.
               </p>
             </aside>
+          )}
+          {livePilot && (
+            <section
+              className="expansion-panel"
+              aria-label="One-time live research pilot"
+            >
+              <p className="eyebrow">LIVE RESEARCH · REVIEW ONLY</p>
+              <h2>One manual five-category cycle</h2>
+              <p>
+                OpenAI web search checks Corporate, Project, Event, your
+                selected competitors and public mentions of your hotel. Results
+                stay in this private review area until each source and property
+                match is checked. The approved one-time ceiling is $1.25;
+                schedules and notifications stay off.
+              </p>
+              {!livePilot.ready && (
+                <div role="status">
+                  <strong>Not ready to run</strong>
+                  <ul>
+                    {livePilot.blockers.map((code) => (
+                      <li key={code}>{pilotBlockerLabel(code)}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {workspace.role === "admin" &&
+                livePilot.ready &&
+                (!livePilot.job ||
+                  ["queued", "running"].includes(livePilot.job.state)) && (
+                  <button
+                    className="button primary"
+                    type="button"
+                    onClick={() => void runLivePilot()}
+                    disabled={busy}
+                  >
+                    {busy
+                      ? "Checking sources…"
+                      : livePilot.job
+                        ? "Continue the manual cycle"
+                        : "Run the one manual cycle"}
+                  </button>
+                )}
+              {workspace.role !== "admin" && (
+                <p className="fine-print">
+                  A hotel administrator must start or continue this run. You can
+                  review results here after it runs.
+                </p>
+              )}
+              {livePilot.job && (
+                <div className="live-pilot-results">
+                  <p>
+                    <strong>{livePilot.job.state}</strong> ·{" "}
+                    {livePilot.job.step} of 5 categories attempted · usage-based
+                    calculated provider spend $
+                    {livePilot.job.spentUsd.toFixed(4)}
+                    {livePilot.job.reservedUsd
+                      ? ` · reserved $${livePilot.job.reservedUsd.toFixed(4)}`
+                      : ""}
+                  </p>
+                  {livePilot.job.drafts.map((draft) => {
+                    const sources = JSON.parse(draft.sources_json) as Array<{
+                      url: string;
+                      title: string;
+                    }>;
+                    const citations = JSON.parse(
+                      draft.citations_json,
+                    ) as Array<{
+                      url: string;
+                      title: string;
+                      citedText: string;
+                    }>;
+                    return (
+                      <article className="finding-card" key={draft.category}>
+                        <h3>
+                          {categoryLabels[draft.category]} ·{" "}
+                          {draft.outcome.replaceAll("_", " ")}
+                        </h3>
+                        <p>
+                          {draft.summary ||
+                            "No cited summary returned for this category."}
+                        </p>
+                        <p className="fine-print">
+                          Observed{" "}
+                          {new Date(draft.observed_at).toLocaleString()}.
+                          Provider summaries are paraphrases; review the source
+                          before using them. {draft.identity_note}
+                        </p>
+                        <ul>
+                          {(citations.length ? citations : sources).map(
+                            (source) => (
+                              <li key={source.url}>
+                                <a
+                                  href={source.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  {source.title || source.url}
+                                </a>
+                                {"citedText" in source && source.citedText
+                                  ? ` — Summary citation: ${source.citedText}`
+                                  : ""}
+                              </li>
+                            ),
+                          )}
+                        </ul>
+                      </article>
+                    );
+                  })}
+                  {livePilot.job.briefing && (
+                    <div className="briefing-action">
+                      <h3>
+                        SCOUT Briefing ·{" "}
+                        {livePilot.job.briefing.document.status}
+                      </h3>
+                      <p>
+                        Version 1 · Review draft only. Findings are not in the
+                        Market Blueprint.
+                      </p>
+                      {livePilot.job.briefing.document.sections.map(
+                        (section) => (
+                          <article key={section.heading}>
+                            <h4>{section.heading}</h4>
+                            <p>
+                              {section.summary ||
+                                "No cited summary was available."}
+                            </p>
+                            <p>
+                              <strong>Unknowns:</strong>{" "}
+                              {section.unknowns.join(" ")}
+                            </p>
+                            <ul>
+                              {section.citations.map((citation) => (
+                                <li key={citation.url}>
+                                  <a
+                                    href={citation.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    {citation.title}
+                                  </a>
+                                  {citation.citedText
+                                    ? ` — Summary citation: ${citation.citedText}`
+                                    : ""}
+                                </li>
+                              ))}
+                            </ul>
+                          </article>
+                        ),
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </section>
           )}
           {state.fixturesEnabled && (
             <aside className="expansion-notice">

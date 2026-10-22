@@ -771,6 +771,8 @@ test("OpenAI: citations must match the API search receipt and source grants", as
                       type: "url_citation",
                       url: "https://other.example/claim",
                       title: "Unknown",
+                      start_index: 0,
+                      end_index: 10,
                     },
                   ],
                 },
