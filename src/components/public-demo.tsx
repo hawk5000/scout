@@ -491,17 +491,19 @@ function Overview({
             <span>Independent hotel · Demo Harbor</span>
           </div>
           <span className="public-demo-ready-dot">Fictional</span>
-          <div className="public-demo-welcome-metric">
-            <span>{findings.length}</span>
-            <small>sample findings</small>
-          </div>
-          <div className="public-demo-welcome-metric">
-            <span>5</span>
-            <small>research categories</small>
-          </div>
-          <div className="public-demo-welcome-metric">
-            <span>{savedCount}</span>
-            <small>saved by you</small>
+          <div className="public-demo-welcome-metrics">
+            <div className="public-demo-welcome-metric">
+              <span>{findings.length}</span>
+              <small>sample findings</small>
+            </div>
+            <div className="public-demo-welcome-metric">
+              <span>5</span>
+              <small>research categories</small>
+            </div>
+            <div className="public-demo-welcome-metric">
+              <span>{savedCount}</span>
+              <small>saved by you</small>
+            </div>
           </div>
         </div>
       </section>
