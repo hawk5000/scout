@@ -97,6 +97,28 @@ export function CustomerExpansion({
       (j) => j.state === "queued" || j.state === "running",
     );
   const brief = state?.brief;
+  async function downloadBrief(format: "csv" | "text") {
+    if (!brief) return;
+    try {
+      const response = await fetch(
+        `/api/customer/expansion?briefId=${brief.id}&format=${format}`,
+        { cache: "no-store" },
+      );
+      if (!response.ok)
+        throw Error((await response.json()).error || "Export unavailable.");
+      const blob = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = blob;
+      link.download = `scout-briefing-${brief.version}.${format === "csv" ? "csv" : "txt"}`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(blob), 1000);
+      setMessage(
+        "Briefing downloaded with sources, coverage and fictional-data labels.",
+      );
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Export failed.");
+    }
+  }
   return (
     <section className="expansion-workspace">
       <p className="eyebrow">
@@ -395,12 +417,20 @@ export function CustomerExpansion({
                     <a
                       className="button secondary"
                       href={`/api/customer/expansion?briefId=${brief.id}&format=csv`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        void downloadBrief("csv");
+                      }}
                     >
                       Export briefing CSV
                     </a>
                     <a
                       className="button secondary"
                       href={`/api/customer/expansion?briefId=${brief.id}&format=text`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        void downloadBrief("text");
+                      }}
                     >
                       Export text
                     </a>
