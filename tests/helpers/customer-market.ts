@@ -11,6 +11,18 @@ export const scope = {
 };
 export function adapter(db: DatabaseSync): Database {
   return {
+    async batch(statements) {
+      db.exec("BEGIN");
+      try {
+        const result = [];
+        for (const statement of statements) result.push(await statement.run());
+        db.exec("COMMIT");
+        return result;
+      } catch (error) {
+        db.exec("ROLLBACK");
+        throw error;
+      }
+    },
     prepare(sql) {
       let values: unknown[] = [];
       const s: Statement = {
@@ -22,9 +34,12 @@ export function adapter(db: DatabaseSync): Database {
           return (db.prepare(sql).get(...(values as never[])) ??
             null) as T | null;
         },
+        async all() {
+          return { results: db.prepare(sql).all(...(values as never[])) };
+        },
         async run() {
-          db.prepare(sql).run(...(values as never[]));
-          return { meta: { changes: 1 } };
+          const result = db.prepare(sql).run(...(values as never[]));
+          return { meta: { changes: Number(result.changes) } };
         },
       };
       return s;

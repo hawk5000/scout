@@ -32,7 +32,14 @@ export async function broker(command: unknown) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(command),
-        signal: AbortSignal.timeout(25000),
+        signal: AbortSignal.timeout(
+          typeof command === "object" &&
+            command !== null &&
+            "operation" in command &&
+            command.operation === "openai-pilot"
+            ? 90000
+            : 25000,
+        ),
         redirect: "error",
         cache: "no-store",
       },

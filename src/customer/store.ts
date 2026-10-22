@@ -9,10 +9,12 @@ import type { AuthProvider, Identity } from "./sil";
 export interface Statement {
   bind(...values: unknown[]): Statement;
   first<T>(): Promise<T | null>;
+  all?(): Promise<{ results: unknown[] }>;
   run(): Promise<{ meta: { changes: number } }>;
 }
 export interface Database {
   prepare(sql: string): Statement;
+  batch?(statements: Statement[]): Promise<unknown[]>;
 }
 export async function digest(value: string) {
   return Array.from(

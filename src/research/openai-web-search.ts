@@ -51,7 +51,7 @@ export class OpenAIWebSearchTransport implements SourceTransport {
           timer = setTimeout(() => {
             controller.abort();
             reject(new SourceError("SOURCE_TIMEOUT"));
-          }, limits.timeoutMs);
+          }, 60_000);
         }),
       ]);
       if (response.redirected || (response.url && response.url !== endpoint))
@@ -226,6 +226,8 @@ export async function searchWithOpenAI(input: {
           type: z.literal("url_citation"),
           url: z.url().max(2048),
           title: z.string().max(2000).optional(),
+          start_index: z.number().int().nonnegative(),
+          end_index: z.number().int().nonnegative(),
         })
         .passthrough(),
     )
@@ -238,7 +240,18 @@ export async function searchWithOpenAI(input: {
     const url = sourceUrl(annotation.url, allowed);
     if (!sources.has(url))
       throw new SourceError("CITATION_NOT_IN_SEARCH_RECEIPT");
-    return { url, title: annotation.title ?? sources.get(url)!.title };
+    if (
+      annotation.start_index >= annotation.end_index ||
+      annotation.end_index > text.length
+    )
+      throw new SourceError("CITATION_RANGE_INVALID");
+    return {
+      url,
+      title: annotation.title ?? sources.get(url)!.title,
+      startIndex: annotation.start_index,
+      endIndex: annotation.end_index,
+      citedText: text.slice(annotation.start_index, annotation.end_index),
+    };
   });
   return {
     text,

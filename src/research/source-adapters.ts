@@ -119,6 +119,7 @@ export class BoundedSources {
     private ledger: CallLedger,
     private now = Date.now,
     private allowLive = false,
+    private timeoutMs: number = limits.timeoutMs,
   ) {
     this.started = now();
   }
@@ -157,7 +158,7 @@ export class BoundedSources {
         new Promise<never>((_, reject) => {
           timer = setTimeout(
             () => reject(new SourceError("SOURCE_TIMEOUT")),
-            limits.timeoutMs,
+            this.timeoutMs,
           );
         }),
       ]);

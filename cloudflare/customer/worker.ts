@@ -15,6 +15,10 @@ import { Expansion, type ExpansionScope } from "../../src/customer/expansion";
 import type { ExpansionProvider } from "../../src/customer/expansion-provider";
 import { expansionCommand } from "../../src/customer/expansion-contracts";
 import { verifyOpenAiConnection } from "../../src/research/openai-web-search";
+import {
+  OpenAiPilotDispatcher,
+  type OpenAiPilotAction,
+} from "../../src/research/openai-pilot";
 export interface Env {
   EXPANSION_FIXTURES?: string;
   REVIEW_ENABLED?: string;
@@ -76,6 +80,24 @@ const command = z.discriminatedUnion("operation", [
     .object({
       operation: z.literal("openai-connection"),
       token: z.string().max(128),
+    })
+    .strict(),
+  z
+    .object({
+      operation: z.literal("openai-pilot"),
+      token: z.string().max(128),
+      input: z.discriminatedUnion("action", [
+        z.object({ action: z.literal("status") }).strict(),
+        z
+          .object({
+            action: z.literal("start"),
+            requestKey: z.string().regex(/^[a-zA-Z0-9_-]{8,100}$/),
+          })
+          .strict(),
+        z
+          .object({ action: z.literal("advance"), jobId: z.string().uuid() })
+          .strict(),
+      ]),
     })
     .strict(),
 ]);
@@ -205,6 +227,23 @@ export async function handleCustomer(
         openAiFetch,
       );
       return Response.json({ status }, { headers: customerHeaders });
+    }
+    if (input.operation === "openai-pilot") {
+      const scope = await store.expansionScope(input.token);
+      if (input.input.action !== "status" && scope.role !== "admin")
+        throw new CustomerError("Administrator access is required.", 403);
+      const dispatcher = new OpenAiPilotDispatcher(
+        env.DB,
+        scope,
+        env.OPENAI_API_KEY,
+        () => store.expansionScope(input.token),
+        openAiFetch,
+      );
+      const result =
+        input.input.action === "status"
+          ? await dispatcher.status()
+          : await dispatcher.execute(input.input as OpenAiPilotAction);
+      return Response.json(result, { headers: customerHeaders });
     }
     const result =
       input.operation === "login"
