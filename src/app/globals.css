@@ -3468,13 +3468,13 @@ input[type="checkbox"] {
 .public-demo-welcome .public-demo-eyebrow { color: #d7c786; }
 .public-demo-welcome h2 { max-width: 630px; margin: 0.65rem 0 0.7rem; font-size: clamp(31px, 3.4vw, 45px); }
 .public-demo-welcome > div:first-child > p { max-width: 610px; margin-bottom: 1.2rem; color: #e0e8df; }
-.public-demo-welcome-card { display: grid; grid-template-columns: 42px 1fr auto; gap: 0.8rem; align-items: center; padding: 1.1rem; border: 1px solid #567263; border-radius: 8px; background: #214c3b; }
+.public-demo-welcome-card { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; gap: 0.8rem; align-items: center; padding: 1.1rem; border: 1px solid #567263; border-radius: 8px; background: #214c3b; }
 .public-demo-avatar { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 7px; background: #e6ddbb; color: #28543f; }
 .public-demo-welcome-card > div:nth-child(2) { display: grid; }
 .public-demo-welcome-card > div:nth-child(2) span { color: #c9d7cc; font-size: 11px; }
 .public-demo-ready-dot { color: #e6d9a8; font-size: 10px; }
-.public-demo-welcome-metric { display: grid; gap: 0.1rem; padding-top: 0.8rem; border-top: 1px solid #587565; }
-.public-demo-welcome-metric:nth-of-type(4) { grid-column: 1; }
+.public-demo-welcome-metrics { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.8rem; }
+.public-demo-welcome-metric { display: grid; min-width: 0; gap: 0.1rem; padding-top: 0.8rem; border-top: 1px solid #587565; }
 .public-demo-welcome-metric span { font: 25px var(--serif); }
 .public-demo-welcome-metric small { color: #d0ddd3; font-size: 10px; }
 .public-demo-category-section, .public-demo-recent { margin-top: 2.4rem; }
