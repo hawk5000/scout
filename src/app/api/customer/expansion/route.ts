@@ -9,7 +9,11 @@ import {
 import { CustomerError, customerHeaders, readJson } from "@/customer/contracts";
 import { expansionCommand } from "@/customer/expansion-contracts";
 import type { ExpansionState } from "@/customer/expansion";
-import { briefingCsv, briefingText } from "@/customer/brief-export";
+import {
+  briefingCsv,
+  briefingHtml,
+  briefingText,
+} from "@/customer/brief-export";
 export async function GET(request: Request) {
   try {
     const params = new URL(request.url).searchParams;
@@ -18,7 +22,7 @@ export async function GET(request: Request) {
     const query = z
       .object({
         briefId: z.string().uuid().optional(),
-        format: z.enum(["csv", "text"]).optional(),
+        format: z.enum(["csv", "text", "html"]).optional(),
       })
       .strict()
       .parse(Object.fromEntries(params));
@@ -36,15 +40,19 @@ export async function GET(request: Request) {
       return new Response(
         query.format === "csv"
           ? briefingCsv(state.brief)
-          : briefingText(state.brief),
+          : query.format === "html"
+            ? briefingHtml(state.brief)
+            : briefingText(state.brief),
         {
           headers: {
             ...customerHeaders,
             "Content-Type":
               query.format === "csv"
                 ? "text/csv; charset=utf-8"
-                : "text/plain; charset=utf-8",
-            "Content-Disposition": `attachment; filename="scout-briefing-${state.brief.version}.${query.format === "csv" ? "csv" : "txt"}"`,
+                : query.format === "html"
+                  ? "text/html; charset=utf-8"
+                  : "text/plain; charset=utf-8",
+            "Content-Disposition": `attachment; filename="scout-briefing-${state.brief.version}.${query.format === "csv" ? "csv" : query.format === "html" ? "html" : "txt"}"`,
           },
         },
       );

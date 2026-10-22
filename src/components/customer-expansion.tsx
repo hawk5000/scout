@@ -97,7 +97,7 @@ export function CustomerExpansion({
       (j) => j.state === "queued" || j.state === "running",
     );
   const brief = state?.brief;
-  async function downloadBrief(format: "csv" | "text") {
+  async function downloadBrief(format: "csv" | "text" | "html") {
     if (!brief) return;
     try {
       const response = await fetch(
@@ -109,11 +109,13 @@ export function CustomerExpansion({
       const blob = URL.createObjectURL(await response.blob());
       const link = document.createElement("a");
       link.href = blob;
-      link.download = `scout-briefing-${brief.version}.${format === "csv" ? "csv" : "txt"}`;
+      link.download = `scout-briefing-${brief.version}.${format === "csv" ? "csv" : format === "html" ? "html" : "txt"}`;
       link.click();
       setTimeout(() => URL.revokeObjectURL(blob), 1000);
       setMessage(
-        "Briefing downloaded with sources, coverage and fictional-data labels.",
+        format === "html"
+          ? "Formatted briefing downloaded. Open it in a browser to print or save as PDF."
+          : "Briefing downloaded with sources, coverage and fictional-data labels.",
       );
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Export failed.");
@@ -414,6 +416,16 @@ export function CustomerExpansion({
                     >
                       Copy briefing
                     </button>
+                    <a
+                      className="button secondary"
+                      href={`/api/customer/expansion?briefId=${brief.id}&format=html`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        void downloadBrief("html");
+                      }}
+                    >
+                      Download formatted report
+                    </a>
                     <a
                       className="button secondary"
                       href={`/api/customer/expansion?briefId=${brief.id}&format=csv`}

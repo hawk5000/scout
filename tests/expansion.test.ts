@@ -18,7 +18,11 @@ import {
 } from "../src/customer/expansion-fixtures";
 import { MarketIngestion } from "../src/customer/ingestion";
 import { storedMarket } from "../src/customer/market-contracts";
-import { briefingCsv, briefingText } from "../src/customer/brief-export";
+import {
+  briefingCsv,
+  briefingHtml,
+  briefingText,
+} from "../src/customer/brief-export";
 import type { ExpansionConfiguration } from "../src/customer/expansion-contracts";
 const config: ExpansionConfiguration = {
   own: {
@@ -116,6 +120,21 @@ test("expansion: five categories persist before exact-version brief, linked even
   assert.equal(mention.evidence[0].retrievalStatus, "retrieved");
   assert.ok(briefingText(state.brief!).includes("sources.example"));
   assert.ok(briefingCsv(state.brief!).includes("FICTIONAL SYNTHETIC FIXTURE"));
+  const html = briefingHtml(state.brief!);
+  assert.match(html, /Market briefing/);
+  assert.match(html, /Research coverage/);
+  assert.match(html, /Why it may matter/);
+  assert.match(html, /What remains unknown/);
+  assert.match(html, /@media print/);
+  assert.match(html, /https:\/\/sources\.example/);
+  assert.match(html, /Fictional synthetic sample/);
+  const hostileBrief = structuredClone(state.brief!);
+  hostileBrief.sections[0].items[0].statement = "<script>alert('x')</script>";
+  const safeHtml = briefingHtml(hostileBrief);
+  assert.ok(
+    safeHtml.includes("&lt;script&gt;alert(&#39;x&#39;)&lt;/script&gt;"),
+  );
+  assert.ok(!safeHtml.includes("<script>alert"));
   for (const section of state.brief!.sections)
     for (const item of section.items) {
       const f: NonNullable<typeof state.brief>["records"][number] =
