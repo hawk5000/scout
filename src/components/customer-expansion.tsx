@@ -1,4 +1,5 @@
 "use client";
+import { CustomerBlueprint } from "./customer-blueprint";
 import { useEffect, useState } from "react";
 import type { CustomerWorkspace } from "@/customer/contracts";
 import type { ExpansionState } from "@/customer/expansion";
@@ -329,6 +330,7 @@ export function CustomerExpansion({
           ? "One source-linked brief across your market, selected competitors and your hotel's public mentions."
           : "Explore useful findings by research category. You choose the competitor hotels; SCOUT keeps the evidence together."}
       </p>
+      <CustomerBlueprint />
       <p role="status">{message}</p>
       {!state ? (
         <p>Loading hotel research information...</p>
@@ -374,15 +376,15 @@ export function CustomerExpansion({
               aria-label="One-time live research pilot"
             >
               <p className="eyebrow">LIVE RESEARCH · REVIEW ONLY</p>
-              <h2>One manual five-category cycle</h2>
+              <h2>Previous pilot record</h2>
               <p>
-                OpenAI web search checks Corporate, Project, Event, your
+                This earlier pilot checked Corporate, Project, Event, your
                 selected competitors and public mentions of your hotel. Results
                 stay in this private review area until each source and property
                 match is checked. The approved one-time ceiling is $1.25;
                 schedules and notifications stay off.
               </p>
-              {!livePilot.ready && (
+              {!false && livePilot.ready && (
                 <div role="status">
                   <strong>Not ready to run</strong>
                   <ul>
@@ -392,41 +394,10 @@ export function CustomerExpansion({
                   </ul>
                 </div>
               )}
-              {workspace.manualResearchAllowed === true &&
-                livePilot.ready &&
-                (!livePilot.job ||
-                  ["queued", "running"].includes(livePilot.job.state) ||
-                  livePilot.job.resumable) && (
-                  <button
-                    className="button primary"
-                    type="button"
-                    onClick={() => void runLivePilot()}
-                    disabled={busy}
-                  >
-                    {busy
-                      ? "Checking sources…"
-                      : livePilot.job
-                        ? "Continue the manual cycle"
-                        : "Run the one manual cycle"}
-                  </button>
-                )}
-              {workspace.manualResearchAllowed === true &&
-                livePilot.ready &&
-                livePilot.retryAvailable && (
-                  <button
-                    className="button primary"
-                    disabled={busy}
-                    onClick={() => void runLivePilot(true)}
-                  >
-                    Retry the failed categories within the original $1.25 cap
-                  </button>
-                )}
-              {workspace.manualResearchAllowed !== true && (
-                <p className="fine-print">
-                  A hotel user with SCOUT research permission must start or
-                  continue this run. You can review results here after it runs.
-                </p>
-              )}
+              <p>
+                Legacy dispatch is closed. New research starts with the market
+                baseline and a plan-specific approval.
+              </p>
               {livePilot.job && (
                 <div className="live-pilot-results">
                   <p>

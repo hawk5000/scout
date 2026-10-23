@@ -26,9 +26,35 @@ export const observationContext = z
     excerpt: z.string().min(1).max(500),
   })
   .strict();
+export const entityDetails = z
+  .object({
+    type: z.enum([
+      "employer",
+      "business-park",
+      "medical",
+      "education",
+      "venue",
+      "other-demand-generator",
+    ]),
+    website: z.url().startsWith("https://"),
+    localAddress: z.string().trim().min(5).max(500),
+    localOperation: z.string().trim().min(10).max(2000),
+    locationSourceUrls: z.array(z.url()).min(1).max(8),
+    knownDates: z
+      .array(
+        z.object({
+          label: z.string().max(100),
+          value: z.string().max(200),
+          sourceUrl: z.url(),
+        }),
+      )
+      .max(12),
+  })
+  .strict();
 const marketCandidate = z
   .object({
     ...candidateSchema.shape,
+    entity: entityDetails.optional(),
     kind: z.enum(categories),
     categories: z.array(z.enum(categories)).min(1).max(5),
   })
@@ -52,6 +78,7 @@ export const assessmentSchema = z
   .strict();
 export const ingestionSchema = z
   .object({
+    researchMode: z.enum(["baseline", "update"]).optional(),
     batchKey: z.string().regex(/^[a-zA-Z0-9_-]{8,100}$/),
     expectedRevision: z.number().int().nonnegative(),
     observedAt: z.iso.datetime(),
@@ -73,6 +100,9 @@ export const ingestionSchema = z
                     url: z.url().max(2048),
                     retrievedAt: z.iso.datetime(),
                     contentHash: z.string().regex(/^[a-f0-9]{64}$/),
+                    basis: z
+                      .enum(["retrieved-page", "provider-citation"])
+                      .optional(),
                   })
                   .strict(),
               )
@@ -91,6 +121,23 @@ export const ingestionSchema = z
         message: "Incomplete coverage requires an explanation.",
       });
     for (const item of batch.items) {
+      const entity = item.candidate.entity;
+      if (
+        entity &&
+        (item.candidate.kind !== "corporate" ||
+          [
+            ...entity.locationSourceUrls,
+            ...entity.knownDates.map((d) => d.sourceUrl),
+          ].some(
+            (url) =>
+              !item.candidate.sources.some((source) => source.url === url),
+          ))
+      )
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "Entity location and dates require matching evidence sources.",
+        });
       if (
         item.candidate.categories.some(
           (c) => c === "competitor" || c === "property",
@@ -135,6 +182,10 @@ export type Ingestion = z.infer<typeof ingestionSchema>;
 export const marketRecord = z
   .object({
     id: z.string(),
+    entity: entityDetails.optional(),
+    discovery: z
+      .enum(["market-context", "newly-discovered", "material-change"])
+      .optional(),
     key: z.string(),
     title: z.string(),
     summary: z.string(),
@@ -153,6 +204,7 @@ export const marketRecord = z
         publishedAt: z.iso.date().nullable(),
         retrievedAt: z.iso.datetime(),
         contentHash: z.string(),
+        basis: z.enum(["retrieved-page", "provider-citation"]).optional(),
         excerpt: z.string().max(500).optional(),
         sourceClass: z.string().optional(),
         originId: z.string().optional(),
@@ -166,6 +218,7 @@ export const marketRecord = z
     versions: z.array(
       z.object({
         at: z.iso.datetime(),
+        entity: entityDetails.optional(),
         summary: z.string(),
         before: factsSchema.nullable(),
         after: factsSchema,
@@ -178,6 +231,7 @@ export const marketRecord = z
   .strict();
 export const marketRun = z
   .object({
+    researchMode: z.enum(["baseline", "update"]).optional(),
     batchKey: z.string(),
     at: z.iso.datetime(),
     status: z.enum(["Completed", "Partial", "Needs attention"]),
