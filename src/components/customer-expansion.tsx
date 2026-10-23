@@ -1,207 +1,133 @@
 "use client";
-
 import { useEffect, useState } from "react";
-
 import type { CustomerWorkspace } from "@/customer/contracts";
-
 import type { ExpansionState } from "@/customer/expansion";
-
 import {
   categoryLabels,
   fixtureScenarios,
   type ExpansionCommand,
   type ExpansionConfiguration,
 } from "@/customer/expansion-contracts";
-
 import {
   marketCategories,
   type MarketCategory,
 } from "@/customer/market-contracts";
-
 import { briefingText } from "@/customer/brief-export";
-
 import { CustomerMarket } from "./customer-market";
-
 type LivePilotView = {
   ready: boolean;
-
   blockers: string[];
-
   approvedCapUsd: number;
-
   retryAvailable: boolean;
-
   qualityReview: null | {
     reviewedAt: string;
-
     summary: string;
-
     priorities: Array<{
       title: string;
-
       fact: string;
-
       inference: string;
-
       nextStep: string;
-
       sourceUrl: string;
-
       unknowns: string;
     }>;
-
     corrections: string[];
-
     gaps: string[];
   };
-
   job: null | {
     id: string;
-
     state: string;
-
     step: number;
-
     document: {
       outcomes?: Array<{ category: string; status: string; code: string }>;
     };
-
     drafts: Array<{
       category: MarketCategory;
-
       outcome: string;
-
       summary: string;
-
       sources_json: string;
-
       citations_json: string;
-
       observed_at: string;
-
       identity_note: string;
     }>;
-
     briefing: null | {
       version: number;
-
       document: {
         status: string;
-
         sections: Array<{
           heading: string;
-
           outcome: string;
-
           summary: string;
-
           citations: Array<{ url: string; title: string; citedText: string }>;
-
           sources: Array<{ url: string; title: string }>;
-
           unknowns: string[];
-
           identityNote: string;
         }>;
       };
     };
-
     spentUsd: number;
-
     reconciledUsd: number;
-
     resumable: boolean;
-
     reservedUsd: number;
   };
 };
-
 const purposes = {
   corporate:
     "Companies and business activity that may bring visitors to your market.",
-
   project: "Construction and temporary projects that may bring visiting crews.",
-
   event: "Events and gatherings with possible overnight visitors.",
-
   competitor:
     "Noteworthy public changes at hotels you have explicitly selected.",
-
   property:
     "Public mentions of your hotel, with identity checks and sentiment in context.",
 };
-
 function pilotBlockerLabel(code: string) {
   const labels: Record<string, string> = {
     PILOT_ACTIVATION_DISABLED:
       "Live research and paid provider calls are disabled for this release.",
-
     OPENAI_SECRET_MISSING:
       "OpenAI secret is not configured on the research Worker.",
-
     SOURCE_POLICY_NOT_INSTALLED:
       "An administrator must approve a short-lived source and data-retention policy.",
-
     PILOT_POLICY_EXPIRED: "The source approval has expired.",
-
     PILOT_CAP_MISMATCH:
       "The approved research limit does not match the $1.25 pilot cap.",
-
     SOURCE_GRANTS_INCOMPLETE:
       "An administrator must approve allowed public-source domains for all five categories.",
-
     SOURCE_GRANTS_INVALID: "The approved source list needs correction.",
-
     RATE_REVIEW_REQUIRED:
       "Research pricing needs a current review before spending.",
-
     CUSTOMER_BUDGET_NOT_CONFIGURED:
       "The property's spending limit is not configured.",
-
     PROPERTY_RESEARCH_PAUSED: "Research is paused for this hotel.",
-
     PILOT_SCOPE_NOT_APPROVED:
       "This one-time pilot is limited to the approved ABC Hotel account.",
-
     SCOUT_RESEARCH_PERMISSION_REQUIRED:
       "A SIL administrator must grant SCOUT manual research for your hotel user in customer setup. Your hotel role does not need to change.",
-
     HOTEL_PROFILE_REQUIRED:
       "Complete the hotel name and address before starting research.",
-
     HOTEL_IDENTITY_OR_ADDRESS_REQUIRED:
       "The hotel's name or market address is missing.",
-
     HOTEL_PROFILE_INVALID:
       "The hotel profile needs correction before starting research.",
-
     HOTEL_RESEARCH_AREA_REQUIRED:
       "Set the hotel research area and selected competitor hotels first.",
-
     HOTEL_RESEARCH_AREA_INVALID:
       "The saved research area or competitor details need correction.",
-
     THREE_SELECTED_COMPETITORS_REQUIRED:
       "Confirm the three selected comp-set properties in the hotel research settings.",
   };
-
   return (
     labels[code] ??
     "An administrator must resolve a research approval before the pilot can run."
   );
 }
-
 export function CustomerExpansion({
   destination,
-
   workspace,
-
   onWorkspace,
 }: {
   destination: string;
-
   workspace: CustomerWorkspace;
-
   onWorkspace: (w: CustomerWorkspace) => void;
 }) {
   const [state, setState] = useState<ExpansionState | null>(null),
@@ -214,86 +140,59 @@ export function CustomerExpansion({
     [category, setCategory] = useState<MarketCategory>("competitor"),
     [scenario, setScenario] =
       useState<(typeof fixtureScenarios)[number]>("baseline");
-
   const name = workspace.profile?.name || workspace.propertyName;
-
   async function request(input?: ExpansionCommand, briefId?: string) {
     const r = await fetch(
       `/api/customer/expansion${briefId ? `?briefId=${briefId}` : ""}`,
-
       input
         ? {
             method: "POST",
-
             headers: { "Content-Type": "application/json" },
-
             body: JSON.stringify(input),
           }
         : { cache: "no-store" },
     );
-
     const data = await r.json();
-
     if (!r.ok) throw Error(data.error);
-
     setState(data);
-
     return data as ExpansionState;
   }
-
   useEffect(() => {
     void request().catch((e) => setMessage(e.message));
   }, []);
-
   async function refreshLivePilot() {
     const response = await fetch("/api/customer/openai-pilot", {
       cache: "no-store",
     });
-
     const data = await response.json();
-
     if (!response.ok)
       throw Error(data.error || "Live pilot status is unavailable.");
-
     setLivePilot(data);
-
     return data as LivePilotView;
   }
-
   useEffect(() => {
     void refreshLivePilot().catch(() => setLivePilot(null));
   }, []);
-
   async function run(id?: string) {
     setBusy(true);
-
     setMessage("");
-
     try {
       let next = id
         ? state!
         : await request({
             action: "start",
-
             requestKey: crypto.randomUUID(),
-
             scenario,
           });
-
       for (let i = 0; i < 7; i++) {
         const job = next.jobs.find(
           (j) => j.state === "queued" || j.state === "running",
         );
-
         if (!job) break;
-
         next = await request({ action: "advance", jobId: job.id });
       }
-
       const r = await fetch("/api/workspace", { cache: "no-store" });
-
       if (r.ok) onWorkspace(await r.json());
-
       setMessage(
         next.jobs[0]?.document.reason ??
           `Refresh ${next.jobs[0]?.state ?? "finished"}.`,
@@ -307,28 +206,21 @@ export function CustomerExpansion({
       setBusy(false);
     }
   }
-
   async function checkProvider() {
     setBusy(true);
-
     setMessage("");
-
     try {
       const response = await fetch("/api/customer/openai-connection", {
         cache: "no-store",
       });
-
       const data = await response.json();
-
       if (!response.ok) throw Error(data.error || "Connection check failed.");
-
       if (
         !["not_configured", "valid", "denied", "unavailable"].includes(
           data.status,
         )
       )
         throw Error("Connection check returned an unknown status.");
-
       setProviderStatus(data.status);
     } catch (error) {
       setMessage(
@@ -338,36 +230,25 @@ export function CustomerExpansion({
       setBusy(false);
     }
   }
-
   async function runLivePilot(retry = false) {
     setBusy(true);
-
     setMessage("");
-
     try {
       let next = livePilot;
-
       if (!next?.job || retry) {
         const response = await fetch("/api/customer/openai-pilot", {
           method: "POST",
-
           headers: { "Content-Type": "application/json" },
-
           body: JSON.stringify({
             action: retry ? "retry" : "start",
-
             requestKey: crypto.randomUUID(),
           }),
         });
-
         const data = await response.json();
-
         if (!response.ok)
           throw Error(data.error || "Manual research could not start.");
-
         next = data as LivePilotView;
       }
-
       for (
         let i = 0;
         i < 5 &&
@@ -377,22 +258,15 @@ export function CustomerExpansion({
       ) {
         const response = await fetch("/api/customer/openai-pilot", {
           method: "POST",
-
           headers: { "Content-Type": "application/json" },
-
           body: JSON.stringify({ action: "advance", jobId: next.job.id }),
         });
-
         const data = await response.json();
-
         if (!response.ok)
           throw Error(data.error || "Research step did not complete.");
-
         next = data as LivePilotView;
-
         setLivePilot(next);
       }
-
       setMessage(
         next.job?.state === "complete"
           ? "All five categories have review drafts and a source-linked briefing."
@@ -404,45 +278,31 @@ export function CustomerExpansion({
           ? error.message
           : "Manual research did not complete.",
       );
-
       await refreshLivePilot().catch(() => undefined);
     } finally {
       setBusy(false);
     }
   }
-
   const job = state?.jobs[0],
     active = state?.jobs.find(
       (j) => j.state === "queued" || j.state === "running",
     );
-
   const brief = state?.brief;
-
   async function downloadBrief(format: "csv" | "text" | "html") {
     if (!brief) return;
-
     try {
       const response = await fetch(
         `/api/customer/expansion?briefId=${brief.id}&format=${format}`,
-
         { cache: "no-store" },
       );
-
       if (!response.ok)
         throw Error((await response.json()).error || "Export unavailable.");
-
       const blob = URL.createObjectURL(await response.blob());
-
       const link = document.createElement("a");
-
       link.href = blob;
-
       link.download = `scout-briefing-${brief.version}.${format === "csv" ? "csv" : format === "html" ? "html" : "txt"}`;
-
       link.click();
-
       setTimeout(() => URL.revokeObjectURL(blob), 1000);
-
       setMessage(
         format === "html"
           ? "Formatted briefing downloaded. Open it in a browser to print or save as PDF."
@@ -452,7 +312,6 @@ export function CustomerExpansion({
       setMessage(error instanceof Error ? error.message : "Export failed.");
     }
   }
-
   return (
     <section className="expansion-workspace">
       <p className="eyebrow">
@@ -460,21 +319,17 @@ export function CustomerExpansion({
           ? "SCOUT Briefing"
           : "Your research coverage"}
       </p>
-
       <h1>
         {destination === "briefing"
           ? `A clearer picture for ${name}`
           : `Around ${name}`}
       </h1>
-
       <p>
         {destination === "briefing"
           ? "One source-linked brief across your market, selected competitors and your hotel's public mentions."
           : "Explore useful findings by research category. You choose the competitor hotels; SCOUT keeps the evidence together."}
       </p>
-
       <p role="status">{message}</p>
-
       {!state ? (
         <p>Loading hotel research information...</p>
       ) : (
@@ -482,37 +337,28 @@ export function CustomerExpansion({
           {workspace.manualResearchAllowed === true && (
             <aside
               className="expansion-panel"
-
               aria-label="Research provider status"
             >
               <p className="eyebrow">ADMINISTRATOR · CONNECTION CHECK</p>
-
               <h2>OpenAI provider</h2>
-
               <p>
                 Check whether the existing Worker secret can access the selected
                 model. This makes one free model-access check only; it does not
                 search the web, create findings, or change research settings.
               </p>
-
               <button
                 className="button secondary"
-
                 type="button"
-
                 onClick={() => void checkProvider()}
-
                 disabled={busy}
               >
                 {busy ? "Checking…" : "Check OpenAI connection"}
               </button>
-
               {providerStatus && (
                 <p role="status">
                   Connection status: {providerStatus.replaceAll("_", " ")}.
                 </p>
               )}
-
               <p className="fine-print">
                 Only the explicitly approved manual pilot can make paid research
                 calls, within the original $1.25 total cap. Routine research,
@@ -520,17 +366,13 @@ export function CustomerExpansion({
               </p>
             </aside>
           )}
-
           {livePilot && (
             <section
               className="expansion-panel"
-
               aria-label="One-time live research pilot"
             >
               <p className="eyebrow">LIVE RESEARCH · REVIEW ONLY</p>
-
               <h2>One manual five-category cycle</h2>
-
               <p>
                 OpenAI web search checks Corporate, Project, Event, your
                 selected competitors and public mentions of your hotel. Results
@@ -538,11 +380,9 @@ export function CustomerExpansion({
                 match is checked. The approved one-time ceiling is $1.25;
                 schedules and notifications stay off.
               </p>
-
               {!livePilot.ready && (
                 <div role="status">
                   <strong>Not ready to run</strong>
-
                   <ul>
                     {livePilot.blockers.map((code) => (
                       <li key={code}>{pilotBlockerLabel(code)}</li>
@@ -550,7 +390,6 @@ export function CustomerExpansion({
                   </ul>
                 </div>
               )}
-
               {workspace.manualResearchAllowed === true &&
                 livePilot.ready &&
                 (!livePilot.job ||
@@ -558,11 +397,8 @@ export function CustomerExpansion({
                   livePilot.job.resumable) && (
                   <button
                     className="button primary"
-
                     type="button"
-
                     onClick={() => void runLivePilot()}
-
                     disabled={busy}
                   >
                     {busy
@@ -572,28 +408,23 @@ export function CustomerExpansion({
                         : "Run the one manual cycle"}
                   </button>
                 )}
-
               {workspace.manualResearchAllowed === true &&
                 livePilot.ready &&
                 livePilot.retryAvailable && (
                   <button
                     className="button primary"
-
                     disabled={busy}
-
                     onClick={() => void runLivePilot(true)}
                   >
                     Retry the failed categories within the original $1.25 cap
                   </button>
                 )}
-
               {workspace.manualResearchAllowed !== true && (
                 <p className="fine-print">
                   A hotel user with SCOUT research permission must start or
                   continue this run. You can review results here after it runs.
                 </p>
               )}
-
               {livePilot.job && (
                 <div className="live-pilot-results">
                   <p>
@@ -605,7 +436,6 @@ export function CustomerExpansion({
                       ? ` · reserved $${livePilot.job.reservedUsd.toFixed(4)}`
                       : ""}
                   </p>
-
                   {livePilot.job.reconciledUsd > 0 && (
                     <p>
                       OpenAI billing export reconciled $
@@ -615,7 +445,6 @@ export function CustomerExpansion({
                       Per-call billed costs were not inferred.
                     </p>
                   )}
-
                   {livePilot.job.reservedUsd > 0 && (
                     <p role="status">
                       Some provider usage is not reconciled. The calculated
@@ -623,17 +452,13 @@ export function CustomerExpansion({
                       usage is checked; held reservations are not released.
                     </p>
                   )}
-
                   {livePilot.qualityReview && (
                     <section
                       className="expansion-panel"
-
                       aria-label="Private pilot quality review"
                     >
                       <h3>SCOUT Briefing - priorities for review</h3>
-
                       <p>{livePilot.qualityReview.summary}</p>
-
                       <p className="fine-print">
                         Technical source review -{" "}
                         {new Date(
@@ -642,50 +467,38 @@ export function CustomerExpansion({
                         - Not customer publication approval. The original AI
                         drafts remain below for audit.
                       </p>
-
                       {livePilot.qualityReview.priorities.map((item) => (
                         <article className="finding-card" key={item.title}>
                           <h4>{item.title}</h4>
-
                           <p>
                             <strong>Sourced fact:</strong> {item.fact}
                           </p>
-
                           <p>
                             <strong>Possible hotel relevance:</strong>{" "}
                             {item.inference}
                           </p>
-
                           <p>
                             <strong>Next step:</strong> {item.nextStep}
                           </p>
-
                           <p>
                             <strong>Unknowns:</strong> {item.unknowns}
                           </p>
-
                           <a
                             href={item.sourceUrl}
-
                             target="_blank"
-
                             rel="noreferrer"
                           >
                             Review the official source
                           </a>
                         </article>
                       ))}
-
                       <h4>Corrections to the AI draft</h4>
-
                       <ul>
                         {livePilot.qualityReview.corrections.map((x) => (
                           <li key={x}>{x}</li>
                         ))}
                       </ul>
-
                       <h4>Coverage gaps</h4>
-
                       <ul>
                         {livePilot.qualityReview.gaps.map((x) => (
                           <li key={x}>{x}</li>
@@ -693,57 +506,45 @@ export function CustomerExpansion({
                       </ul>
                     </section>
                   )}
-
                   {livePilot.job.drafts.map((draft) => {
                     const sources = JSON.parse(draft.sources_json) as Array<{
                       url: string;
-
                       title: string;
                     }>;
-
                     const citations = JSON.parse(
                       draft.citations_json,
                     ) as Array<{
                       url: string;
-
                       title: string;
-
                       citedText: string;
                     }>;
-
                     return (
                       <article className="finding-card" key={draft.category}>
                         <h3>
                           {categoryLabels[draft.category]} ·{" "}
                           {draft.outcome.replaceAll("_", " ")}
                         </h3>
-
                         <p>
                           {draft.summary ||
                             "No cited summary returned for this category."}
                         </p>
-
                         <p className="fine-print">
                           Observed{" "}
                           {new Date(draft.observed_at).toLocaleString()}.
                           Provider summaries are paraphrases; review the source
                           before using them. {draft.identity_note}
                         </p>
-
                         <ul>
                           {(citations.length ? citations : sources).map(
                             (source) => (
                               <li key={source.url}>
                                 <a
                                   href={source.url}
-
                                   target="_blank"
-
                                   rel="noreferrer"
                                 >
                                   {source.title || source.url}
                                 </a>
-
                                 {"citedText" in source && source.citedText
                                   ? ` — Summary citation: ${source.citedText}`
                                   : ""}
@@ -754,47 +555,38 @@ export function CustomerExpansion({
                       </article>
                     );
                   })}
-
                   {livePilot.job.briefing && (
                     <div className="briefing-action">
                       <h3>
                         SCOUT Briefing ·{" "}
                         {livePilot.job.briefing.document.status}
                       </h3>
-
                       <p>
                         Version {livePilot.job.briefing.version} · Review draft
                         only. Findings are not in the Market Blueprint.
                       </p>
-
                       {livePilot.job.briefing.document.sections.map(
                         (section) => (
                           <article key={section.heading}>
                             <h4>{section.heading}</h4>
-
                             <p>
                               {section.summary ||
                                 "No cited summary was available."}
                             </p>
-
                             <p>
                               <strong>Unknowns:</strong>{" "}
                               {section.unknowns.join(" ")}
                             </p>
-
                             <ul>
                               {section.citations.map((citation) => (
                                 <li key={citation.url}>
                                   <a
                                     href={citation.url}
-
                                     target="_blank"
-
                                     rel="noreferrer"
                                   >
                                     {citation.title}
                                   </a>
-
                                   {citation.citedText
                                     ? ` — Summary citation: ${citation.citedText}`
                                     : ""}
@@ -810,11 +602,9 @@ export function CustomerExpansion({
               )}
             </section>
           )}
-
           {state.fixturesEnabled && (
             <aside className="expansion-notice">
               <strong>Isolated synthetic workspace</strong>
-
               <p>
                 All refreshes below use fictional fixtures. No public sources
                 are fetched and no research charges or notifications are
@@ -822,28 +612,22 @@ export function CustomerExpansion({
               </p>
             </aside>
           )}
-
           {destination === "research" ? (
             <>
               <div className="expansion-tabs" aria-label="Research categories">
                 {marketCategories.map((c) => (
                   <button
                     key={c}
-
                     className={`button ${category === c ? "primary" : "secondary"}`}
-
                     aria-pressed={category === c}
-
                     onClick={() => setCategory(c)}
                   >
                     {categoryLabels[c]}
                   </button>
                 ))}
               </div>
-
               <div className={`expansion-panel finding-accent-${category}`}>
                 <p className="eyebrow">{categoryLabels[category]}</p>
-
                 <h2>
                   {category === "property"
                     ? `What is being said about ${name}?`
@@ -851,23 +635,17 @@ export function CustomerExpansion({
                       ? "Your selected hotels, in focus"
                       : categoryLabels[category]}
                 </h2>
-
                 <p>{purposes[category]}</p>
-
                 {category === "competitor" && (
                   <p>
                     <strong>Selected competitors:</strong>{" "}
                     {state.config.competitors
-
                       .filter((c) => c.active)
-
                       .map((c) => c.name)
-
                       .join(", ") ||
                       "None selected yet. Add the hotels you want to follow below."}
                   </p>
                 )}
-
                 {category === "property" && (
                   <p>
                     <strong>Matching identity:</strong>{" "}
@@ -879,53 +657,37 @@ export function CustomerExpansion({
                     to confirm a match.
                   </p>
                 )}
-
                 <p>
                   {state.fixturesEnabled
                     ? "Fixture coverage only. Sources and dates are shown with each finding."
                     : "Live research is disabled. Existing reviewed findings remain available."}
                 </p>
               </div>
-
               <CustomerMarket
                 key={category}
-
                 initialCategory={category}
-
                 workspace={workspace}
-
                 onChange={onWorkspace}
               />
-
               <details className="expansion-panel">
                 <summary>Hotel identity and selected competitors</summary>
-
                 <p>
                   Help distinguish your hotel from similarly named properties.
                   This does not start research.
                 </p>
-
                 <Configuration
                   key={state.revision}
-
                   state={state}
-
                   name={name}
-
                   readOnly={workspace.role === "viewer"}
-
                   save={async (config) => {
                     setBusy(true);
-
                     try {
                       await request({
                         action: "configure",
-
                         revision: state.revision,
-
                         config,
                       });
-
                       setMessage("Hotel identities and competitors saved.");
                     } catch (e) {
                       setMessage((e as Error).message);
@@ -933,21 +695,16 @@ export function CustomerExpansion({
                       setBusy(false);
                     }
                   }}
-
                   busy={busy}
                 />
               </details>
-
               <details className="expansion-panel">
                 <summary>
                   Recent coverage for {categoryLabels[category]}
                 </summary>
-
                 {state.jobs.flatMap((j) =>
                   j.document.outcomes
-
                     .filter((o) => o.category === category)
-
                     .map((o) => (
                       <div key={j.id}>
                         <strong>{o.status}</strong> -{" "}
@@ -962,7 +719,6 @@ export function CustomerExpansion({
                       </div>
                     )),
                 )}
-
                 {!state.jobs.some((j) =>
                   j.document.outcomes.some((o) => o.category === category),
                 ) && <p>No refresh has been completed for this category.</p>}
@@ -972,23 +728,19 @@ export function CustomerExpansion({
             <>
               <div className="expansion-panel briefing-action">
                 <h2>Refresh research, then create a brief</h2>
-
                 <p>
                   {state.fixturesEnabled
                     ? "Checks all five categories against isolated fixtures before preparing an evidence snapshot. An incomplete check is shown clearly."
                     : "Live refresh is not enabled. Your existing findings and stored briefs remain available. No paid source access or research budget has been activated."}
                 </p>
-
                 {state.fixturesEnabled && (
                   <label>
                     Fixture scenario
                     <select
                       value={scenario}
-
                       onChange={(e) =>
                         setScenario(e.target.value as typeof scenario)
                       }
-
                       disabled={busy || !!active}
                     >
                       {fixtureScenarios.map((s) => (
@@ -999,12 +751,9 @@ export function CustomerExpansion({
                     </select>
                   </label>
                 )}
-
                 <button
                   className="button primary"
-
                   disabled={busy || workspace.role === "viewer"}
-
                   onClick={() => void run(active?.id)}
                 >
                   {busy
@@ -1015,7 +764,6 @@ export function CustomerExpansion({
                         ? "Refresh fixtures and create briefing"
                         : "Check briefing availability"}
                 </button>
-
                 {state.fixturesEnabled && (
                   <p className="muted">
                     Fixture allowance: {state.budget.used ?? 0} used,{" "}
@@ -1025,43 +773,34 @@ export function CustomerExpansion({
                   </p>
                 )}
               </div>
-
               {job && (
                 <section
                   className="expansion-panel"
-
                   aria-label="Latest refresh"
                 >
                   <h2>Latest refresh: {job.state}</h2>
-
                   <p>
                     Requested {new Date(job.createdAt).toLocaleString()}.{" "}
                     {job.step} of 5 categories checked.
                   </p>
-
                   {job.document.reason && <p>{job.document.reason}</p>}
-
                   <div className="coverage-grid">
                     {marketCategories.map((c) => {
                       const o = job.document.outcomes.find(
                         (o) => o.category === c,
                       );
-
                       return (
                         <article key={c}>
                           <h3>{categoryLabels[c]}</h3>
-
                           <strong>
                             {o?.status ??
                               (job.state === "blocked"
                                 ? "blocked"
                                 : "not checked")}
                           </strong>
-
                           <p>
                             {o?.message ?? "No new source check completed."}
                           </p>
-
                           {o && (
                             <small>
                               Last success:{" "}
@@ -1076,21 +815,17 @@ export function CustomerExpansion({
                   </div>
                 </section>
               )}
-
               <div className="brief-history">
                 <h2>Stored briefings</h2>
-
                 <p>
                   Viewing a stored brief does not refresh research. Each version
                   preserves its original evidence and coverage.
                 </p>
-
                 {state.history.length > 0 ? (
                   <label>
                     View a stored briefing
                     <select
                       value={brief?.id ?? ""}
-
                       onChange={(e) =>
                         void request(undefined, e.target.value).catch((e) =>
                           setMessage(e.message),
@@ -1109,7 +844,6 @@ export function CustomerExpansion({
                   <p>No briefing has been created yet.</p>
                 )}
               </div>
-
               {brief && (
                 <article className="brief-snapshot">
                   <p className="eyebrow">
@@ -1117,25 +851,20 @@ export function CustomerExpansion({
                       ? "Evidence snapshot"
                       : "Previously stored brief - not a new refresh"}
                   </p>
-
                   <h2>SCOUT Briefing {brief.version}</h2>
-
                   <p>
                     <strong>{brief.status}</strong> - as of{" "}
                     {new Date(brief.generatedAt).toLocaleString()} - fictional
                     evidence
                   </p>
-
                   <div className="expansion-tabs">
                     <button
                       className="button secondary"
-
                       onClick={async () => {
                         try {
                           await navigator.clipboard.writeText(
                             briefingText(brief),
                           );
-
                           setMessage(
                             "Briefing copied with sources and coverage.",
                           );
@@ -1146,75 +875,57 @@ export function CustomerExpansion({
                     >
                       Copy briefing
                     </button>
-
                     <a
                       className="button secondary"
-
                       href={`/api/customer/expansion?briefId=${brief.id}&format=html`}
-
                       onClick={(e) => {
                         e.preventDefault();
-
                         void downloadBrief("html");
                       }}
                     >
                       Download formatted report
                     </a>
-
                     <a
                       className="button secondary"
-
                       href={`/api/customer/expansion?briefId=${brief.id}&format=csv`}
-
                       onClick={(e) => {
                         e.preventDefault();
-
                         void downloadBrief("csv");
                       }}
                     >
                       Export briefing CSV
                     </a>
-
                     <a
                       className="button secondary"
-
                       href={`/api/customer/expansion?briefId=${brief.id}&format=text`}
-
                       onClick={(e) => {
                         e.preventDefault();
-
                         void downloadBrief("text");
                       }}
                     >
                       Export text
                     </a>
                   </div>
-
                   {brief.status === "no-change" && (
                     <div className="expansion-notice">
                       <strong>No material changes in this refresh.</strong>
-
                       <p>
                         The findings below are ongoing context, not newly
                         discovered opportunities.
                       </p>
                     </div>
                   )}
-
                   {brief.status === "partial" && (
                     <div className="expansion-notice">
                       <strong>Coverage is incomplete.</strong>
-
                       <p>
                         Missing checks do not mean there were no changes.
                         Previous findings remain labeled as ongoing context.
                       </p>
                     </div>
                   )}
-
                   <details>
                     <summary>Coverage at the time of this brief</summary>
-
                     {brief.coverage.map((o) => (
                       <p key={o.category}>
                         <strong>
@@ -1224,11 +935,9 @@ export function CustomerExpansion({
                       </p>
                     ))}
                   </details>
-
                   {brief.sections.map((section) => (
                     <section key={section.heading}>
                       <h3>{section.heading}</h3>
-
                       {section.items.length === 0 ? (
                         <p>
                           No confidently matched findings available for this
@@ -1239,11 +948,9 @@ export function CustomerExpansion({
                           const f = brief.records.find(
                             (r) => r.id === item.findingId,
                           )!;
-
                           return (
                             <article
                               className={`brief-finding finding-accent-${f.categories[0]}`}
-
                               key={item.findingId}
                             >
                               <p className="eyebrow">
@@ -1252,15 +959,11 @@ export function CustomerExpansion({
                                   : "New or changed"}{" "}
                                 - finding version {item.version}
                               </p>
-
                               <h4>{f.title}</h4>
-
                               <p>{item.statement}</p>
-
                               <p>
                                 <strong>Status:</strong> {f.facts.status}
                               </p>
-
                               {f.context && (
                                 <p>
                                   <strong>
@@ -1269,39 +972,30 @@ export function CustomerExpansion({
                                   {f.context.sentimentReason}
                                 </p>
                               )}
-
                               <div className="customer-finding-relevance">
                                 <strong>
                                   What this may mean for your hotel
                                 </strong>
-
                                 <p>{item.implication}</p>
-
                                 <small>
                                   Interpretation, not an established commercial
                                   result.
                                 </small>
                               </div>
-
                               <p>
                                 <strong>Unknowns:</strong>{" "}
                                 {item.unknowns.join(" ")}
                               </p>
-
                               <ul>
                                 {f.evidence
-
                                   .filter((e) =>
                                     item.evidenceIds.includes(e.id),
                                   )
-
                                   .map((e) => (
                                     <li key={e.id}>
                                       <a
                                         href={e.url}
-
                                         target="_blank"
-
                                         rel="noreferrer"
                                       >
                                         {e.publisher}
@@ -1318,30 +1012,24 @@ export function CustomerExpansion({
                       )}
                     </section>
                   ))}
-
                   {brief.connections.length > 0 && (
                     <section>
                       <h3>Connected activity</h3>
-
                       {brief.connections.map((c, i) => (
                         <p key={i}>
                           {c.explanation} Related findings:{" "}
                           {c.findingIds
-
                             .map(
                               (id) =>
                                 brief.records.find((f) => f.id === id)?.title,
                             )
-
                             .join("; ")}
                         </p>
                       ))}
                     </section>
                   )}
-
                   <section>
                     <h3>What remains unknown</h3>
-
                     {brief.unknowns.map((u) => (
                       <p key={u}>{u}</p>
                     ))}
@@ -1355,94 +1043,65 @@ export function CustomerExpansion({
     </section>
   );
 }
-
 function Configuration({
   state,
-
   name,
-
   readOnly,
-
   busy,
-
   save,
 }: {
   state: ExpansionState;
-
   name: string;
-
   readOnly: boolean;
-
   busy: boolean;
-
   save: (c: ExpansionConfiguration) => Promise<void>;
 }) {
   const [config, setConfig] = useState<ExpansionConfiguration>({
     own: { ...state.config.own, name: state.config.own.name || name },
-
     competitors: state.config.competitors,
-
     paused: state.config.paused,
   });
-
   const fields = (
     item: ExpansionConfiguration["own"],
-
     change: (v: ExpansionConfiguration["own"]) => void,
-
     prefix: string,
   ) => (
     <div className="identity-grid">
       {(
         [
           ["name", "Hotel name"],
-
           ["address", "Street address"],
-
           ["locality", "City / region"],
-
           ["domain", "Official domain"],
-
           ["brand", "Brand (optional)"],
         ] as const
       ).map(([key, label]) => (
         <label key={key}>
           {label}
-
           <input
             aria-label={`${prefix} ${label}`}
-
             value={item[key]}
-
             maxLength={300}
-
             placeholder={key === "domain" ? "hotel.example" : undefined}
-
             onChange={(e) => change({ ...item, [key]: e.target.value })}
           />
         </label>
       ))}
-
       <label>
         Other names / aliases
         <textarea
           aria-label={`${prefix} aliases`}
-
           value={item.aliases.join("\n")}
-
           onChange={(e) =>
             change({ ...item, aliases: e.target.value.split("\n") })
           }
         />
       </label>
-
       <label>
         Former names
         <textarea
           aria-label={`${prefix} former names`}
-
           value={item.formerNames.join("\n")}
-
           onChange={(e) =>
             change({ ...item, formerNames: e.target.value.split("\n") })
           }
@@ -1450,34 +1109,24 @@ function Configuration({
       </label>
     </div>
   );
-
   function clean(i: ExpansionConfiguration["own"]) {
     return {
       ...i,
-
       aliases: i.aliases.map((s) => s.trim()).filter(Boolean),
-
       formerNames: i.formerNames.map((s) => s.trim()).filter(Boolean),
     };
   }
-
   return (
     <form
       className="expansion-config"
-
       onSubmit={(e) => {
         e.preventDefault();
-
         void save({
           paused: config.paused,
-
           own: clean(config.own),
-
           competitors: config.competitors.map((c) => ({
             ...clean(c),
-
             id: c.id,
-
             active: c.active,
           })),
         });
@@ -1485,53 +1134,39 @@ function Configuration({
     >
       <fieldset disabled={readOnly || busy}>
         <legend>Your hotel's public identity</legend>
-
         {fields(
           config.own,
-
           (own) => setConfig({ ...config, own }),
-
           "Own hotel",
         )}
       </fieldset>
-
       <fieldset disabled={readOnly || busy}>
         <legend>Selected competitor hotels</legend>
-
         <p>
           Only active hotels you add here are included. Deactivating a hotel
           preserves its earlier findings and membership history.
         </p>
-
         {config.competitors.map((c, index) => (
           <div className="competitor-editor" key={c.id}>
             <h3>Competitor {index + 1}</h3>
-
             {fields(
               c,
-
               (value) =>
                 setConfig({
                   ...config,
-
                   competitors: config.competitors.map((x) =>
                     x.id === c.id ? { ...x, ...value } : x,
                   ),
                 }),
-
               `Competitor ${index + 1}`,
             )}
-
             <label className="checkbox">
               <input
                 type="checkbox"
-
                 checked={c.active}
-
                 onChange={(e) =>
                   setConfig({
                     ...config,
-
                     competitors: config.competitors.map((x) =>
                       x.id === c.id ? { ...x, active: e.target.checked } : x,
                     ),
@@ -1542,38 +1177,24 @@ function Configuration({
             </label>
           </div>
         ))}
-
         <button
           type="button"
-
           className="button secondary"
-
           disabled={config.competitors.length >= 25}
-
           onClick={() =>
             setConfig({
               ...config,
-
               competitors: [
                 ...config.competitors,
-
                 {
                   name: "",
-
                   address: "",
-
                   locality: "",
-
                   domain: "",
-
                   aliases: [],
-
                   formerNames: [],
-
                   brand: "",
-
                   id: crypto.randomUUID(),
-
                   active: true,
                 },
               ],
@@ -1582,28 +1203,22 @@ function Configuration({
         >
           Add competitor hotel
         </button>
-
         <p className="muted">
           Up to 25 entries per configuration for this implementation's storage
           safety limit; this is not a subscription allowance.
         </p>
       </fieldset>
-
       {state.fixturesEnabled && (
         <label className="checkbox">
           <input
             type="checkbox"
-
             checked={config.paused ?? false}
-
             disabled={busy || readOnly}
-
             onChange={(e) => setConfig({ ...config, paused: e.target.checked })}
           />
           Pause fixture refreshes for this hotel
         </label>
       )}
-
       <button className="button primary" disabled={busy || readOnly}>
         Save hotel identities
       </button>
