@@ -32,12 +32,12 @@ export async function publishReviewedBrief(
   const market = storedMarket.parse(JSON.parse(review.document_json));
   const run = market.runs.find((r) => r.batchKey === reviewId);
   if (!run) throw new CustomerError("Review run missing.", 409);
-  const selected = new Set([...run.newIds, ...run.changedIds]);
-  const records = market.records
-    .filter((r) => selected.has(r.id))
-    .map((r) => ({ ...r, assessment: market.assessments[r.id] }));
+  const records = market.records.map((r) => ({
+    ...r,
+    assessment: market.assessments[r.id],
+  }));
   if (!records.length)
-    throw new CustomerError("No reviewed changes to publish.", 409);
+    throw new CustomerError("No reviewed evidence to publish.", 409);
   const version = await db
     .prepare(
       "SELECT COALESCE(MAX(version),0)+1 AS version FROM customer_all_briefings WHERE tenant_id=? AND property_id=?",
@@ -63,38 +63,76 @@ export async function publishReviewedBrief(
     coverage: ["corporate", "project", "event", "competitor", "property"].map(
       (category) => ({
         category,
-        status: ["project", "event"].includes(category) ? "partial" : "blocked",
+        status: records.some((r) => r.categories.includes(category as any))
+          ? "partial"
+          : "blocked",
         code: "REVIEWED_PUBLICATION",
-        message: ["project", "event"].includes(category)
-          ? "Selected source-checked findings published; market distance and lodging demand still require qualification."
+        message: records.some((r) => r.categories.includes(category as any))
+          ? "Persisted reviewed context and findings included. Baseline coverage remains incomplete; distance and lodging demand require qualification."
           : "No verified findings published in this category. This does not establish that no activity exists.",
         checkedAt: run.at,
-        lastSuccessAt: ["project", "event"].includes(category) ? run.at : null,
+        lastSuccessAt: records.some((r) =>
+          r.categories.includes(category as any),
+        )
+          ? run.at
+          : null,
         newIds: records
-          .filter((r) => r.categories.includes(category as any))
+          .filter(
+            (r) =>
+              run.newIds.includes(r.id) &&
+              r.categories.includes(category as any),
+          )
           .map((r) => r.id),
-        changedIds: [],
+        changedIds: run.changedIds.filter((id) =>
+          records.some(
+            (r) => r.id === id && r.categories.includes(category as any),
+          ),
+        ),
       }),
     ),
     sections: [
-      {
-        heading: "Priorities for your hotel",
-        items: records.map((r) => ({
-          findingId: r.id,
-          version: r.versions.length,
-          evidenceIds: r.evidence.map((e) => e.id),
-          statement: r.summary,
-          implication:
-            r.assessment.inference +
-            " Suggested next step: " +
-            r.assessment.rationale,
-          unknowns: r.assessment.unknowns,
-          ongoing: false,
-        })),
-      },
-    ],
+      ["corporate", "Priority accounts and established demand generators"],
+      ["event", "Upcoming demand opportunities and timing"],
+      ["project", "Project-related opportunities"],
+      ["competitor", "Competitive implications"],
+      ["property", "Your hotel's public mentions"],
+    ]
+      .filter(([category]) =>
+        records.some((r) => r.categories.includes(category as any)),
+      )
+      .map(([category, heading]) => ({
+        heading,
+        items: records
+          .filter((r) => r.categories.includes(category as any))
+          .map((r) => ({
+            findingId: r.id,
+            version: r.versions.length,
+            evidenceIds: r.evidence.map((e) => e.id),
+            statement:
+              (r.facts.start
+                ? `Timing: ${r.facts.start}${r.facts.end ? " to " + r.facts.end : ""}. `
+                : "") +
+              (r.entity
+                ? "Established market context: "
+                : r.discovery === "material-change"
+                  ? "Material change: "
+                  : "Known opportunity: ") +
+              r.summary,
+            implication:
+              r.assessment.inference +
+              " Suggested next step: " +
+              r.assessment.rationale,
+            unknowns: r.assessment.unknowns,
+            ongoing: !run.newIds.includes(r.id),
+          })),
+      })),
     connections: [],
-    unknowns,
+    unknowns: [
+      ...new Set([
+        ...unknowns,
+        "This is a partial briefing from persisted reviewed evidence, not a complete market assessment.",
+      ]),
+    ],
     cost: { provider: "reviewed", actualUsd: null, publicationUsd: 0 },
   });
   await db

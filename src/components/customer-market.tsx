@@ -401,8 +401,42 @@ export function CustomerMarket({
               Export CSV
             </a>
           </div>
-          <h3>What happened</h3>
+          <h3>
+            {current.entity ? "Established local operation" : "What is known"}
+          </h3>
           <p>{current.summary}</p>
+          <p className="fine-print">
+            {current.discovery === "material-change"
+              ? "An evidenced material change"
+              : current.entity
+                ? "Established market context"
+                : "Discovered by SCOUT; not necessarily new activity"}
+            . Last checked <DateText value={current.lastCheckedAt} />.
+          </p>
+          {current.entity && (
+            <section>
+              <h3>Demand generator</h3>
+              <p>
+                {current.entity.type.replaceAll("-", " ")} �{" "}
+                {current.entity.localAddress}
+              </p>
+              <p>
+                <a
+                  href={current.entity.website}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Organization website
+                </a>
+              </p>
+              <p>{current.entity.localOperation}</p>
+              <p className="fine-print">
+                This is not a confirmed hotel customer or proven room-night
+                producer.
+              </p>
+            </section>
+          )}
+
           {current.context && (
             <section>
               <h3>Property match and context</h3>
@@ -451,6 +485,12 @@ export function CustomerMarket({
                 Published <DateText value={e.publishedAt} /> · Collected{" "}
                 <DateText value={e.retrievedAt} />
               </p>
+              {e.basis === "provider-citation" && (
+                <p className="fine-print">
+                  AI research summary linked to a provider citation; not a
+                  verbatim page extract.
+                </p>
+              )}
               {e.excerpt && <p>{e.excerpt}</p>}
               <ul>
                 {e.claims.map((c, i) => (

@@ -206,7 +206,11 @@ export function sourceUrl(value: string, allowedHosts: readonly string[]) {
     !/^[a-z][a-z0-9.-]*\.[a-z]{2,}$/i.test(u.hostname) ||
     /(?:^|\.)(localhost|local|internal|test)$/.test(u.hostname)
   )
-    throw new SourceError("SOURCE_NOT_APPROVED");
+    throw new SourceError("SOURCE_NOT_APPROVED", {
+      rejectedHost: /^[a-z][a-z0-9.-]*\.[a-z]{2,}$/i.test(u.hostname)
+        ? u.hostname
+        : "invalid-host",
+    });
   u.hash = "";
   for (const k of [...u.searchParams.keys()])
     if (k.startsWith("utm_") || ["fbclid", "gclid"].includes(k))

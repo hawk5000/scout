@@ -1,4 +1,5 @@
 "use client";
+import { CustomerBlueprint } from "./customer-blueprint";
 import { useEffect, useState } from "react";
 import type { CustomerWorkspace } from "@/customer/contracts";
 import { profileFromBasics } from "@/customer/profile-basics";
@@ -180,6 +181,7 @@ export function CustomerHotelProfile({
         details help SCOUT identify the right properties; saving them does not
         start research.
       </p>
+      <CustomerBlueprint identityOnly />
       <form
         className="customer-form"
         onSubmit={(event) => {

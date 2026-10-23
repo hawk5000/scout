@@ -36,7 +36,9 @@ export async function broker(command: unknown) {
           typeof command === "object" &&
             command !== null &&
             "operation" in command &&
-            command.operation === "openai-pilot"
+            ["openai-pilot", "blueprint-workflow"].includes(
+              String(command.operation),
+            )
             ? 90000
             : 25000,
         ),

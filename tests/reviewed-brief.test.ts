@@ -120,5 +120,50 @@ test("reviewed publication requires scoped approval, is immutable and idempotent
     db.prepare("SELECT COUNT(*) n FROM customer_reviewed_briefings").get()!.n,
     1,
   );
+  const secondBatch = {
+    ...b,
+    batchKey: "second-review-batch",
+    expectedRevision: 1,
+    items: b.items.slice(0, 1),
+  };
+  const second = await api.execute(s, {
+    operation: "stage",
+    batch: secondBatch,
+  });
+  await api.execute(s, {
+    operation: "decide",
+    reviewId: second.reviewId,
+    approvalHash: second.approvalHash,
+    decision: "approved",
+    note: "Second scoped review preserves prior baseline evidence.",
+    evidenceReviewed: true,
+    lodgingInferenceReviewed: true,
+  });
+  const compiled = await publishReviewedBrief(
+    adapter(db),
+    s,
+    secondBatch.batchKey,
+    [],
+  );
+  assert.equal(
+    compiled.records.length,
+    3,
+    "Briefing must retain earlier approved context outside this batch",
+  );
+  assert.equal(compiled.status, "partial");
+  assert.equal(compiled.version, 2);
+  assert.ok(
+    compiled.sections
+      .flatMap((section) => section.items)
+      .every((item) =>
+        compiled.records.some(
+          (record) =>
+            record.id === item.findingId &&
+            item.evidenceIds.every((id) =>
+              record.evidence.some((e) => e.id === id),
+            ),
+        ),
+      ),
+  );
   db.close();
 });

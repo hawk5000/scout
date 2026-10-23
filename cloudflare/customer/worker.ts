@@ -1,3 +1,7 @@
+import {
+  BlueprintWorkflow,
+  blueprintActions,
+} from "../../src/research/blueprint-workflow";
 import { z } from "zod";
 import {
   CustomerError,
@@ -81,6 +85,13 @@ const command = z.discriminatedUnion("operation", [
     .object({
       operation: z.literal("openai-connection"),
       token: z.string().max(128),
+    })
+    .strict(),
+  z
+    .object({
+      operation: z.literal("blueprint-workflow"),
+      token: z.string().max(128),
+      input: blueprintActions,
     })
     .strict(),
   z
@@ -224,7 +235,23 @@ export async function handleCustomer(
       );
       return Response.json({ status }, { headers: customerHeaders });
     }
+    if (input.operation === "blueprint-workflow") {
+      const scope = await store.expansionScope(input.token);
+      const result = await new BlueprintWorkflow(
+        env.DB,
+        scope,
+        env.OPENAI_API_KEY,
+        () => store.expansionScope(input.token),
+        openAiFetch,
+      ).execute(input.input);
+      return Response.json(result, { headers: customerHeaders });
+    }
     if (input.operation === "openai-pilot") {
+      if (input.input.action !== "status")
+        throw new CustomerError(
+          "Use the blueprint-first workflow with a new plan-specific approval. Legacy pilot dispatch is closed.",
+          409,
+        );
       const scope = await store.expansionScope(input.token);
       if (input.input.action !== "status" && !scope.manualResearchAllowed)
         throw new CustomerError(

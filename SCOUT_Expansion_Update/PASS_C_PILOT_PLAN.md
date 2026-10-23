@@ -1,3 +1,5 @@
+> October 23 correction: the original five-request pilot is historical. New research must follow the blueprint-first workflow and a new plan-specific approval in [NEXT_CONTROLLED_RUN.md](../docs/NEXT_CONTROLLED_RUN.md). No remaining dollars authorize a new run. Schedules and notifications remain off.
+
 # ABC Hotel — Pass C live pilot approval plan
 
 Prepared October 22, 2026. **Proposal only. Not approved or activated.**

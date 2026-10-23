@@ -42,7 +42,7 @@ export function customerCsv(findings: CustomerFinding[]) {
   return (
     "\ufeff" +
     [
-      "finding_id,name,categories,observed_facts,location,start,end,status,lodging_inference,unknowns,sources,last_checked,verification,data_mode,subject,identity_match,sentiment,sentiment_context,published,discovered",
+      "finding_id,name,categories,observed_facts,location,start,end,status,lodging_inference,unknowns,sources,last_checked,verification,data_mode,subject,identity_match,sentiment,sentiment_context,published,discovered,discovery_type,entity_type,entity_website,local_operation",
       ...findings.map((f) =>
         [
           f.id,
@@ -67,6 +67,10 @@ export function customerCsv(findings: CustomerFinding[]) {
           f.context?.sentimentReason,
           f.factPublishedAt,
           f.firstSeenAt,
+          f.discovery,
+          f.entity?.type,
+          f.entity?.website,
+          f.entity?.localOperation,
         ]
           .map(csvCell)
           .join(","),

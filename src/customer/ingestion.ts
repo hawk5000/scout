@@ -259,6 +259,7 @@ async function merge(
             publishedAt: source.publishedAt,
             retrievedAt: receipt.retrievedAt,
             contentHash: receipt.contentHash,
+            ...(receipt.basis ? { basis: receipt.basis } : {}),
             claims: source.claims,
             ...(item.context
               ? {
@@ -272,10 +273,12 @@ async function merge(
           });
       }
     const context = retain && prior ? prior.context : last.item.context;
+    const entity = retain && prior ? prior.entity : (c.entity ?? prior?.entity);
     const material =
       !prior ||
       canonicalFacts(facts) !== canonicalFacts(prior.facts) ||
-      JSON.stringify(context) !== JSON.stringify(prior.context);
+      JSON.stringify(context) !== JSON.stringify(prior.context) ||
+      (!!entity && JSON.stringify(entity) !== JSON.stringify(prior?.entity));
     const versions = [...(prior?.versions ?? [])];
     if (material)
       versions.push({
@@ -292,6 +295,7 @@ async function merge(
             }.`
           : "Initial imported finding.",
         context,
+        ...(entity ? { entity } : {}),
         before: prior?.facts ?? null,
         after: facts,
         evidenceIds: [...new Set(incomingIds)],
@@ -310,6 +314,16 @@ async function merge(
     const record = {
       id,
       key: k,
+      ...((retain ? prior?.entity : (c.entity ?? prior?.entity))
+        ? { entity: retain ? prior!.entity : (c.entity ?? prior?.entity) }
+        : {}),
+      discovery: prior
+        ? material
+          ? ("material-change" as const)
+          : (prior.discovery ?? ("market-context" as const))
+        : input.researchMode === "baseline"
+          ? ("market-context" as const)
+          : ("newly-discovered" as const),
       title: retain && prior ? prior.title : c.name,
       summary: retain && prior ? prior.summary : last.item.summary,
       location: c.location,
@@ -341,6 +355,7 @@ async function merge(
     else if (material) changedIds.push(id);
   }
   doc.runs.push({
+    ...(input.researchMode ? { researchMode: input.researchMode } : {}),
     batchKey: input.batchKey,
     at: input.observedAt,
     status:
