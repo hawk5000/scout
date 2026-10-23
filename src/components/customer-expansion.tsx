@@ -49,6 +49,8 @@ type LivePilotView = {
       };
     };
     spentUsd: number;
+    reconciledUsd: number;
+    resumable: boolean;
     reservedUsd: number;
   };
 };
@@ -233,7 +235,9 @@ export function CustomerExpansion({
       }
       for (
         let i = 0;
-        i < 5 && next.job && ["queued", "running"].includes(next.job.state);
+        i < 5 &&
+        next.job &&
+        (["queued", "running"].includes(next.job.state) || next.job.resumable);
         i++
       ) {
         const response = await fetch("/api/customer/openai-pilot", {
@@ -374,7 +378,8 @@ export function CustomerExpansion({
               {workspace.manualResearchAllowed === true &&
                 livePilot.ready &&
                 (!livePilot.job ||
-                  ["queued", "running"].includes(livePilot.job.state)) && (
+                  ["queued", "running"].includes(livePilot.job.state) ||
+                  livePilot.job.resumable) && (
                   <button
                     className="button primary"
                     type="button"
@@ -405,6 +410,14 @@ export function CustomerExpansion({
                       ? ` · reserved $${livePilot.job.reservedUsd.toFixed(4)}`
                       : ""}
                   </p>
+                  {livePilot.job.reconciledUsd > 0 && (
+                    <p>
+                      OpenAI billing export reconciled $
+                      {livePilot.job.reconciledUsd.toFixed(6)} for the earlier
+                      calls as a group. Original budget holds remain in place;
+                      per-call costs were not inferred.
+                    </p>
+                  )}
                   {livePilot.job.reservedUsd > 0 && (
                     <p role="status">
                       Some provider usage is not reconciled. The calculated

@@ -10,7 +10,10 @@ export const executionPolicy = Object.freeze({
   notifications: false,
 });
 export class SourceError extends Error {
-  constructor(readonly code: string) {
+  constructor(
+    readonly code: string,
+    readonly diagnostics?: Record<string, unknown>,
+  ) {
     super(code);
   }
 }
