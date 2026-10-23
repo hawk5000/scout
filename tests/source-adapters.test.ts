@@ -685,7 +685,7 @@ test("OpenAI: API key is sent only to the fixed API host and errors never expose
 });
 
 test("OpenAI: citations must match the API search receipt and source grants", async () => {
-  const { db, ledger } = setup("openai-fixture", 700_000, 700_000);
+  const { db, ledger } = setup("openai-fixture", 1_000_000, 1_000_000);
   const sourceUrl = "https://hotel.example/news/hiring";
   const payload = {
     status: "completed",
@@ -725,6 +725,10 @@ test("OpenAI: citations must match the API search receipt and source grants", as
   payload.output.push({
     type: "web_search_call",
     action: { type: "find_in_page", sources: [] },
+  });
+  payload.output.push({
+    type: "web_search_call",
+    action: { type: "search", sources: [] },
   });
   const fixture: SourceTransport = {
     mode: "live",
@@ -807,7 +811,7 @@ test("OpenAI: citations must match the API search receipt and source grants", as
       }),
     /SOURCE_NOT_APPROVED/,
   );
-  assert.equal(openAiSearchMaximumMicros, 274_000);
+  assert.equal(openAiSearchMaximumMicros, 464_000);
   db.close();
 });
 
@@ -858,11 +862,7 @@ test("OpenAI usage distinguishes billable searches from page actions, prices cac
     openAiActualCostMicros(raw(["search", "open_page", "find_in_page"])),
     10240,
   );
-  assert.throws(
-    () => openAiActualCostMicros(raw(["search", "search"])),
-    (e: unknown) =>
-      e instanceof SourceError && e.diagnostics?.searchActions === 2,
-  );
+  assert.equal(openAiActualCostMicros(raw(["search", "search"])), 20240);
   assert.throws(
     () => openAiActualCostMicros(raw(["unknown"])),
     /OPENAI_UNKNOWN_SEARCH_ACTION/,
@@ -872,7 +872,7 @@ test("OpenAI usage distinguishes billable searches from page actions, prices cac
     /USAGE_EXCEEDS_RESERVATION/,
   );
   assert.equal(
-    openAiActualCostMicros(raw(["search"], 1050000, 2000)),
+    openAiActualCostMicros(raw(Array(20).fill("search"), 1050000, 2000)),
     openAiSearchMaximumMicros,
   );
 });
