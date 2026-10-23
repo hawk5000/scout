@@ -19,6 +19,20 @@ type LivePilotView = {
   blockers: string[];
   approvedCapUsd: number;
   retryAvailable: boolean;
+  qualityReview: null | {
+    reviewedAt: string;
+    summary: string;
+    priorities: Array<{
+      title: string;
+      fact: string;
+      inference: string;
+      nextStep: string;
+      sourceUrl: string;
+      unknowns: string;
+    }>;
+    corrections: string[];
+    gaps: string[];
+  };
   job: null | {
     id: string;
     state: string;
@@ -437,6 +451,60 @@ export function CustomerExpansion({
                       amount is not the total bill. Further research stops until
                       usage is checked; held reservations are not released.
                     </p>
+                  )}
+                  {livePilot.qualityReview && (
+                    <section
+                      className="expansion-panel"
+                      aria-label="Private pilot quality review"
+                    >
+                      <h3>SCOUT Briefing � priorities for review</h3>
+                      <p>{livePilot.qualityReview.summary}</p>
+                      <p className="fine-print">
+                        Technical source review �{" "}
+                        {new Date(
+                          livePilot.qualityReview.reviewedAt,
+                        ).toLocaleString()}{" "}
+                        � Not customer publication approval. The original AI
+                        drafts remain below for audit.
+                      </p>
+                      {livePilot.qualityReview.priorities.map((item) => (
+                        <article className="finding-card" key={item.title}>
+                          <h4>{item.title}</h4>
+                          <p>
+                            <strong>Sourced fact:</strong> {item.fact}
+                          </p>
+                          <p>
+                            <strong>Possible hotel relevance:</strong>{" "}
+                            {item.inference}
+                          </p>
+                          <p>
+                            <strong>Next step:</strong> {item.nextStep}
+                          </p>
+                          <p>
+                            <strong>Unknowns:</strong> {item.unknowns}
+                          </p>
+                          <a
+                            href={item.sourceUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Review the official source
+                          </a>
+                        </article>
+                      ))}
+                      <h4>Corrections to the AI draft</h4>
+                      <ul>
+                        {livePilot.qualityReview.corrections.map((x) => (
+                          <li key={x}>{x}</li>
+                        ))}
+                      </ul>
+                      <h4>Coverage gaps</h4>
+                      <ul>
+                        {livePilot.qualityReview.gaps.map((x) => (
+                          <li key={x}>{x}</li>
+                        ))}
+                      </ul>
+                    </section>
                   )}
                   {livePilot.job.drafts.map((draft) => {
                     const sources = JSON.parse(draft.sources_json) as Array<{

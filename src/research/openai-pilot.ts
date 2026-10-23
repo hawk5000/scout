@@ -60,6 +60,27 @@ export const openAiPilotActions = z.discriminatedUnion("action", [
     .strict(),
   z.object({ action: z.literal("advance"), jobId: z.string().uuid() }).strict(),
 ]);
+export const pilotQualityReview = z
+  .object({
+    summary: z.string().max(2000),
+    priorities: z
+      .array(
+        z
+          .object({
+            title: z.string().max(200),
+            fact: z.string().max(2000),
+            inference: z.string().max(1000),
+            nextStep: z.string().max(1500),
+            sourceUrl: z.url().startsWith("https://"),
+            unknowns: z.string().max(1000),
+          })
+          .strict(),
+      )
+      .max(10),
+    corrections: z.array(z.string().max(1500)).max(20),
+    gaps: z.array(z.string().max(1500)).max(20),
+  })
+  .strict();
 export type OpenAiPilotAction = z.infer<typeof openAiPilotActions>;
 type Policy = {
   id: string;
@@ -364,7 +385,23 @@ export class OpenAiPilotDispatcher {
         /* Ledger unavailable. */
       }
     }
+    const reviewRow =
+      job && this.retryMode
+        ? await this.db
+            .prepare(
+              "SELECT reviewed_at,document_json FROM customer_openai_retry_reviews WHERE tenant_id=? AND property_id=? AND job_id=?",
+            )
+            .bind(...this.bind(), job.id)
+            .first<{ reviewed_at: string; document_json: string }>()
+        : null;
+    const qualityReview = reviewRow
+      ? {
+          reviewedAt: reviewRow.reviewed_at,
+          ...pilotQualityReview.parse(JSON.parse(reviewRow.document_json)),
+        }
+      : null;
     return {
+      qualityReview,
       ready: blockers.length === 0,
       blockers,
       retryAvailable: !!approval && !this.retryMode && job?.step === 5,
