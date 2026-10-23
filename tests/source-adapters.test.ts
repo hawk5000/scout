@@ -11,6 +11,7 @@ import { ProviderLedger } from "../src/research/provider-ledger";
 import { PreparedExpansionProvider } from "../src/research/prepared-provider";
 import {
   BoundedSources,
+  SourceError,
   disabledTransport,
   executionPolicy,
   discover,
@@ -684,7 +685,7 @@ test("OpenAI: API key is sent only to the fixed API host and errors never expose
 });
 
 test("OpenAI: citations must match the API search receipt and source grants", async () => {
-  const { db, ledger } = setup("openai-fixture", 500_000, 500_000);
+  const { db, ledger } = setup("openai-fixture", 700_000, 700_000);
   const sourceUrl = "https://hotel.example/news/hiring";
   const payload = {
     status: "completed",
@@ -717,6 +718,14 @@ test("OpenAI: citations must match the API search receipt and source grants", as
       },
     ],
   };
+  payload.output.push({
+    type: "web_search_call",
+    action: { type: "open_page", sources: [] },
+  });
+  payload.output.push({
+    type: "web_search_call",
+    action: { type: "find_in_page", sources: [] },
+  });
   const fixture: SourceTransport = {
     mode: "live",
     async exchange() {
@@ -798,7 +807,7 @@ test("OpenAI: citations must match the API search receipt and source grants", as
       }),
     /SOURCE_NOT_APPROVED/,
   );
-  assert.equal(openAiSearchMaximumMicros, 221_500);
+  assert.equal(openAiSearchMaximumMicros, 274_000);
   db.close();
 });
 
@@ -833,4 +842,37 @@ test("OpenAI: verifies configured, invalid and unavailable connections without r
   );
   const { request } = openAiConnectionRequest("fixture-key");
   assert.equal(new URL(request.url).origin, "https://api.openai.com");
+});
+
+test("OpenAI usage distinguishes billable searches from page actions, prices cache writes conservatively, and keeps violations diagnostic", () => {
+  const raw = (actions: string[], input = 1200, output = 180) =>
+    JSON.stringify({
+      status: "completed",
+      usage: { input_tokens: input, output_tokens: output },
+      output: actions.map((type) => ({
+        type: "web_search_call",
+        action: { type },
+      })),
+    });
+  assert.equal(
+    openAiActualCostMicros(raw(["search", "open_page", "find_in_page"])),
+    10240,
+  );
+  assert.throws(
+    () => openAiActualCostMicros(raw(["search", "search"])),
+    (e: unknown) =>
+      e instanceof SourceError && e.diagnostics?.searchActions === 2,
+  );
+  assert.throws(
+    () => openAiActualCostMicros(raw(["unknown"])),
+    /OPENAI_UNKNOWN_SEARCH_ACTION/,
+  );
+  assert.throws(
+    () => openAiActualCostMicros(raw(["search"], 1050001)),
+    /USAGE_EXCEEDS_RESERVATION/,
+  );
+  assert.equal(
+    openAiActualCostMicros(raw(["search"], 1050000, 2000)),
+    openAiSearchMaximumMicros,
+  );
 });

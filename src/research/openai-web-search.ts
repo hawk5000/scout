@@ -106,10 +106,11 @@ function BufferConcat(chunks: Uint8Array[], size: number) {
 
 /**
  * Hard reserve for one Responses web-search request at GPT-6 Luna Standard.
- * Includes the documented long-context uplift and one search call. The caller
+ * Includes the long-context uplift, worst-case 30m cache writes, and one search.
+ * A five-category cycle may stop at the unchanged $1.25 cumulative budget.
  * must reserve before dispatch and settle actual usage from the API response.
  */
-export const openAiSearchMaximumMicros = 221_500;
+export const openAiSearchMaximumMicros = 274_000;
 export const openAiCycleMaximumMicros = openAiSearchMaximumMicros * 5;
 
 /**
@@ -139,6 +140,7 @@ export function openAiWebSearchRequest(input: {
     model: input.model,
     store: false,
     service_tier: "default",
+    prompt_cache_options: { ttl: "30m" },
     reasoning: { effort: "none" },
     max_output_tokens: Math.min(
       2000,
@@ -200,12 +202,21 @@ export async function searchWithOpenAI(input: {
   if (parsed.status !== "completed") throw new SourceError("SOURCE_INCOMPLETE");
   const allowed = [...new Set(input.allowedDomains)];
   const calls = parsed.output.filter((item) => item.type === "web_search_call");
-  if (calls.length !== 1) throw new SourceError("SEARCH_NOT_PERFORMED");
-  const action = calls[0].action as Record<string, unknown> | undefined;
+  if (
+    !calls.some(
+      (call) => (call.action as Record<string, unknown>)?.type === "search",
+    )
+  )
+    throw new SourceError("SEARCH_NOT_PERFORMED");
   const actionSources = z
     .array(citationSource)
     .max(50)
-    .parse(action?.sources ?? []);
+    .parse(
+      calls.flatMap((call) => {
+        const action = call.action as Record<string, unknown> | undefined;
+        return Array.isArray(action?.sources) ? action.sources : [];
+      }),
+    );
   const sources = new Map<string, { url: string; title: string }>();
   for (const source of actionSources) {
     const url = sourceUrl(source.url, allowed);
@@ -257,7 +268,7 @@ export async function searchWithOpenAI(input: {
     text,
     sources: [...sources.values()],
     citations: [...new Map(citations.map((c) => [c.url, c])).values()],
-    usage: parsed.usage,
+    usage: { ...parsed.usage, ...openAiUsageDiagnostics(response.body) },
     status: citations.length
       ? ("review-required" as const)
       : sources.size
@@ -266,7 +277,23 @@ export async function searchWithOpenAI(input: {
   };
 }
 
-/** Exact usage reconciliation: a missing/unknown tool count is not guessed. */
+/** Retain numeric counters only, never provider text, secrets or request headers. */
+export function openAiUsageDiagnostics(raw: string) {
+  const response = JSON.parse(raw);
+  const actions = Array.isArray(response.output)
+    ? response.output
+        .filter((x: any) => x?.type === "web_search_call")
+        .map((x: any) => x.action?.type)
+    : [];
+  return {
+    inputTokens: response.usage?.input_tokens,
+    outputTokens: response.usage?.output_tokens,
+    searchActions: actions.filter((x: unknown) => x === "search").length,
+    openPageActions: actions.filter((x: unknown) => x === "open_page").length,
+    findActions: actions.filter((x: unknown) => x === "find_in_page").length,
+  };
+}
+
 export function openAiActualCostMicros(raw: string) {
   let data: unknown;
   try {
@@ -284,28 +311,46 @@ export function openAiActualCostMicros(raw: string) {
     !usage ||
     !Number.isSafeInteger(usage.input_tokens) ||
     !Number.isSafeInteger(usage.output_tokens) ||
+    (usage.input_tokens as number) < 0 ||
+    (usage.output_tokens as number) < 0 ||
     !Array.isArray(output)
   )
     return null;
-  const searches = output.filter(
+  const calls = output.filter(
     (item) =>
       !!item &&
       typeof item === "object" &&
       (item as Record<string, unknown>).type === "web_search_call",
+  ) as Array<{ action?: { type?: string } }>;
+  if (
+    calls.some(
+      (call) =>
+        !["search", "open_page", "find_in_page"].includes(
+          call.action?.type ?? "",
+        ),
+    )
+  )
+    throw new SourceError("OPENAI_UNKNOWN_SEARCH_ACTION");
+  const searches = calls.filter(
+    (call) => call.action?.type === "search",
   ).length;
   if (
     searches > 1 ||
     (usage.input_tokens as number) > 1_050_000 ||
     (usage.output_tokens as number) > 2_000
   )
-    throw new SourceError("USAGE_EXCEEDS_RESERVATION");
+    throw new SourceError(
+      "USAGE_EXCEEDS_RESERVATION",
+      openAiUsageDiagnostics(raw),
+    );
   const longContext = (usage.input_tokens as number) > 272_000;
   const inputRate = longContext ? 200_000 : 100_000;
   const outputRate = longContext ? 750_000 : 500_000;
   const tokens =
-    (usage.input_tokens as number) * inputRate +
+    (usage.input_tokens as number) * inputRate * 1.25 +
     (usage.output_tokens as number) * outputRate;
-  // The API usage is authoritative; search charges count actual web-search items.
+  // Conservative calculation: all input priced as 30m cache writes. Billing
+  // exports reconcile discounts; only search actions incur the tool charge.
   return Math.ceil(tokens / 1_000_000) + searches * 10_000;
 }
 

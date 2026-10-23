@@ -314,17 +314,18 @@ export class OpenAiPilotDispatcher {
           ),
         };
     }
-    let spentMicros = 0,
+    const receipt = job ? await this.reconciled(job.id) : null;
+    let spentMicros = receipt?.billed_micros ?? 0,
       reservedMicros = 0;
     if (job) {
       try {
         const usage = await this.db
           .prepare(
-            "SELECT COALESCE(SUM(CASE WHEN state='known' THEN accounted_micros ELSE 0 END),0) AS spent,COALESCE(SUM(CASE WHEN state IN('reserved','unknown') THEN accounted_micros ELSE 0 END),0) AS reserved FROM customer_provider_calls WHERE tenant_id=? AND property_id=? AND job_id=?",
+            "SELECT COALESCE(SUM(CASE WHEN state='known' THEN accounted_micros ELSE 0 END),0) AS spent,COALESCE(SUM(CASE WHEN state IN('reserved','unknown') THEN accounted_micros ELSE 0 END),0) AS reserved FROM customer_provider_calls c WHERE tenant_id=? AND property_id=? AND job_id=? AND NOT EXISTS(SELECT 1 FROM customer_openai_usage_reconciliations r JOIN json_each(r.covered_keys_json) k ON k.value=c.call_key WHERE r.tenant_id=c.tenant_id AND r.property_id=c.property_id AND r.job_id=c.job_id)",
           )
           .bind(...this.bind(), job.id)
           .first<{ spent: number; reserved: number }>();
-        spentMicros = usage?.spent ?? 0;
+        spentMicros += usage?.spent ?? 0;
         reservedMicros = usage?.reserved ?? 0;
       } catch {
         /* Ledger unavailable. */
@@ -346,6 +347,8 @@ export class OpenAiPilotDispatcher {
             document: JSON.parse(job.document_json),
             drafts: docs,
             briefing,
+            reconciledUsd: (receipt?.billed_micros ?? 0) / 1_000_000,
+            resumable: job.state === "blocked" && !!receipt,
             spentUsd: spentMicros / 1_000_000,
             reservedUsd: reservedMicros / 1_000_000,
           }
@@ -422,6 +425,14 @@ export class OpenAiPilotDispatcher {
     if (!row) throw new CustomerError("Pilot run was not found.", 404);
     return row;
   }
+  private async reconciled(id: string) {
+    return this.db
+      .prepare(
+        "SELECT billed_micros FROM customer_openai_usage_reconciliations WHERE tenant_id=? AND property_id=? AND job_id=?",
+      )
+      .bind(...this.bind(), id)
+      .first<{ billed_micros: number }>();
+  }
   private async configurationHash() {
     const profile = await this.db
       .prepare(
@@ -452,13 +463,17 @@ export class OpenAiPilotDispatcher {
   private async advance(id: string) {
     await this.access();
     const job = await this.job(id);
-    if (!["queued", "running"].includes(job.state)) return this.status();
+    if (
+      !["queued", "running"].includes(job.state) &&
+      !(job.state === "blocked" && (await this.reconciled(id)))
+    )
+      return this.status();
     if (job.step >= marketCategories.length) return this.status();
     const fence = crypto.randomUUID(),
       now = this.now();
     const claim = await this.db
       .prepare(
-        "UPDATE customer_openai_pilot_jobs SET state='running',lease=?,lease_until=?,updated_at=? WHERE tenant_id=? AND property_id=? AND id=? AND state IN('queued','running') AND (lease IS NULL OR lease_until<=?)",
+        "UPDATE customer_openai_pilot_jobs SET state='running',lease=?,lease_until=?,updated_at=? WHERE tenant_id=? AND property_id=? AND id=? AND state IN('queued','running','blocked') AND (lease IS NULL OR lease_until<=?)",
       )
       .bind(fence, now + 120000, now, ...this.bind(), id, now)
       .run();
@@ -468,7 +483,7 @@ export class OpenAiPilotDispatcher {
     // Never continue spending after a response could not be reconciled.
     const unresolved = await this.db
       .prepare(
-        "SELECT 1 AS found FROM customer_provider_calls WHERE tenant_id=? AND property_id=? AND job_id=? AND state IN('unknown','reserved') LIMIT 1",
+        "SELECT 1 AS found FROM customer_provider_calls c WHERE c.tenant_id=? AND c.property_id=? AND c.job_id=? AND c.state IN('unknown','reserved') AND NOT EXISTS(SELECT 1 FROM customer_openai_usage_reconciliations r JOIN json_each(r.covered_keys_json) k ON k.value=c.call_key WHERE r.tenant_id=c.tenant_id AND r.property_id=c.property_id AND r.job_id=c.job_id) LIMIT 1",
       )
       .bind(...this.bind(), id)
       .first();
@@ -525,6 +540,7 @@ export class OpenAiPilotDispatcher {
     await this.guard(activeJob, fence);
     let result: Awaited<ReturnType<typeof searchWithOpenAI>> | null = null,
       failure: string | null = null;
+    let usageDiagnostics: Record<string, unknown> | undefined;
     try {
       const transport =
         this.transportFactory?.() ??
@@ -560,6 +576,8 @@ export class OpenAiPilotDispatcher {
     } catch (error) {
       failure =
         error instanceof SourceError ? error.code : "PROVIDER_UNAVAILABLE";
+      usageDiagnostics =
+        error instanceof SourceError ? error.diagnostics : undefined;
     }
     await this.guard(activeJob, fence);
     const outcome = failure
@@ -606,13 +624,14 @@ export class OpenAiPilotDispatcher {
       category,
       status: outcome,
       code: failure ?? outcome.toUpperCase(),
+      ...(usageDiagnostics ? { usageDiagnostics } : {}),
     });
     const step = activeJob.step + 1;
     const final = step === marketCategories.length;
     const complete = final && doc.outcomes.every((x) => x.status === "cited");
     const unresolvedUsage = await this.db
       .prepare(
-        "SELECT 1 AS found FROM customer_provider_calls WHERE tenant_id=? AND property_id=? AND job_id=? AND state IN('unknown','reserved') LIMIT 1",
+        "SELECT 1 AS found FROM customer_provider_calls c WHERE c.tenant_id=? AND c.property_id=? AND c.job_id=? AND c.state IN('unknown','reserved') AND NOT EXISTS(SELECT 1 FROM customer_openai_usage_reconciliations r JOIN json_each(r.covered_keys_json) k ON k.value=c.call_key WHERE r.tenant_id=c.tenant_id AND r.property_id=c.property_id AND r.job_id=c.job_id) LIMIT 1",
       )
       .bind(...this.bind(), id)
       .first();
