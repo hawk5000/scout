@@ -24,6 +24,7 @@ test("OpenAI pilot migration is additive, empty, and refuses synthetic policy sc
     "0010_openai_usage_reconciliation.sql",
     "0011_openai_call_receipts.sql",
     "0012_openai_failed_retry.sql",
+    "0013_openai_private_quality_review.sql",
   ])
     db.exec(readFileSync(`cloudflare/migrations/${file}`, "utf8"));
 
@@ -77,6 +78,7 @@ test("real OpenAI pilot status refuses the isolated synthetic tenant before prov
     "0010_openai_usage_reconciliation.sql",
     "0011_openai_call_receipts.sql",
     "0012_openai_failed_retry.sql",
+    "0013_openai_private_quality_review.sql",
   ])
     db.exec(readFileSync(`cloudflare/migrations/${file}`, "utf8"));
   let networkCalls = 0;
@@ -122,6 +124,7 @@ test("ABC Hotel editor status exposes disabled gates without an OpenAI request",
     "0010_openai_usage_reconciliation.sql",
     "0011_openai_call_receipts.sql",
     "0012_openai_failed_retry.sql",
+    "0013_openai_private_quality_review.sql",
   ])
     db.exec(readFileSync(`cloudflare/migrations/${file}`, "utf8"));
   const tenantId = "tenant_abc";
@@ -202,6 +205,7 @@ async function pilotSetup(outputTokens = 180, failFirstRun = false) {
     "0010_openai_usage_reconciliation.sql",
     "0011_openai_call_receipts.sql",
     "0012_openai_failed_retry.sql",
+    "0013_openai_private_quality_review.sql",
   ])
     db.exec(readFileSync(`cloudflare/migrations/${file}`, "utf8"));
   const tenant = "tenant_abc",
@@ -694,6 +698,64 @@ test("bounded retry requires approval, preserves original evidence, carries succ
     dispatcher.execute({ action: "retry", requestKey: crypto.randomUUID() }),
   );
   assert.equal(calls(), 9);
+  const insertReview = db.prepare(
+    "INSERT INTO customer_openai_retry_reviews VALUES(?,?,?,?,?)",
+  );
+  const review = {
+    summary: "Private test review",
+    priorities: [
+      {
+        title: "Test",
+        fact: "Test evidence",
+        inference: "Unconfirmed travel",
+        nextStep: "Verify travel",
+        sourceUrl: "https://sources.example/activity",
+        unknowns: "Room demand",
+      },
+    ],
+    corrections: [],
+    gaps: [],
+  };
+  assert.throws(() =>
+    insertReview.run(
+      "wrong",
+      "wrong",
+      retryId,
+      new Date().toISOString(),
+      JSON.stringify(review),
+    ),
+  );
+  assert.throws(
+    () =>
+      insertReview.run(
+        "tenant_abc",
+        "property_abc_abc_hotel",
+        retryId,
+        new Date().toISOString(),
+        JSON.stringify({
+          ...review,
+          priorities: [
+            {
+              ...review.priorities[0],
+              sourceUrl: "https://not-in-run.example",
+            },
+          ],
+        }),
+      ),
+    /REVIEW_SOURCE_NOT_IN_RUN/,
+  );
+  insertReview.run(
+    "tenant_abc",
+    "property_abc_abc_hotel",
+    retryId,
+    new Date().toISOString(),
+    JSON.stringify(review),
+  );
+  assert.equal((await dispatcher.status()).qualityReview?.priorities.length, 1);
+  assert.throws(
+    () => db.exec("DELETE FROM customer_openai_retry_reviews"),
+    /IMMUTABLE/,
+  );
   db.close();
 });
 test("retry reservation includes previous spend and stops before exceeding the original shared cap", async () => {
