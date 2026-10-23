@@ -62,7 +62,11 @@ const config: ExpansionConfiguration = {
 async function setup(filename?: string) {
   const db = database(filename);
   db.exec(
-    readFileSync("cloudflare/migrations/0005_scout_expansion.sql", "utf8"),
+    readFileSync("cloudflare/migrations/0005_scout_expansion.sql", "utf8") +
+      readFileSync(
+        "cloudflare/migrations/0014_reviewed_brief_publication.sql",
+        "utf8",
+      ),
   );
   const store = new CustomerStore(adapter(db), auth());
   const login = await store.login(

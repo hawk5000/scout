@@ -107,7 +107,7 @@ export const briefSchema = z.object({
   version: z.number().int().positive(),
   generatedAt: z.iso.datetime(),
   status: z.enum(["complete", "partial", "no-change"]),
-  mode: z.literal("synthetic"),
+  mode: z.enum(["synthetic", "reviewed"]),
   fence: z.string(),
   configRevision: z.number(),
   coverage: z.array(outcomeSchema),
@@ -135,12 +135,19 @@ export const briefSchema = z.object({
     }),
   ),
   unknowns: z.array(z.string()),
-  cost: z.object({
-    provider: z.literal("fixture"),
-    actualUsd: z.literal(0),
-    usedFixtureUnits: z.number(),
-    reservedFixtureUnits: z.literal(0),
-  }),
+  cost: z.union([
+    z.object({
+      provider: z.literal("fixture"),
+      actualUsd: z.literal(0),
+      usedFixtureUnits: z.number(),
+      reservedFixtureUnits: z.literal(0),
+    }),
+    z.object({
+      provider: z.literal("reviewed"),
+      actualUsd: z.null(),
+      publicationUsd: z.literal(0),
+    }),
+  ]),
 });
 export type Brief = z.infer<typeof briefSchema>;
 export const emptyConfiguration: ExpansionConfiguration = {

@@ -60,7 +60,11 @@ const config: ExpansionConfiguration = {
 function setup(job = "adapter-job", jobLimit = 100_000, monthLimit = 200_000) {
   const db = database();
   db.exec(
-    readFileSync("cloudflare/migrations/0005_scout_expansion.sql", "utf8"),
+    readFileSync("cloudflare/migrations/0005_scout_expansion.sql", "utf8") +
+      readFileSync(
+        "cloudflare/migrations/0014_reviewed_brief_publication.sql",
+        "utf8",
+      ),
   );
   db.exec(
     readFileSync("cloudflare/migrations/0006_provider_preparation.sql", "utf8"),

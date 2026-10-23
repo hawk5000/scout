@@ -142,13 +142,13 @@ export class Expansion {
       .first<{ data: string }>();
     const history = await this.db
       .prepare(
-        "SELECT json_group_array(json_object('id',id,'version',version,'createdAt',created_at,'status',json_extract(document_json,'$.status'))) AS data FROM (SELECT * FROM customer_briefings WHERE tenant_id=? AND property_id=? ORDER BY version DESC LIMIT 50)",
+        "SELECT json_group_array(json_object('id',id,'version',version,'createdAt',created_at,'status',json_extract(document_json,'$.status'))) AS data FROM (SELECT * FROM customer_all_briefings WHERE tenant_id=? AND property_id=? ORDER BY version DESC LIMIT 50)",
       )
       .bind(...this.bind())
       .first<{ data: string }>();
     const brief = await this.db
       .prepare(
-        `SELECT document_json FROM customer_briefings WHERE tenant_id=? AND property_id=? ${briefId ? "AND id=?" : ""} ORDER BY version DESC LIMIT 1`,
+        `SELECT document_json FROM customer_all_briefings WHERE tenant_id=? AND property_id=? ${briefId ? "AND id=?" : ""} ORDER BY version DESC LIMIT 1`,
       )
       .bind(...this.bind(), ...(briefId ? [briefId] : []))
       .first<{ document_json: string }>();
@@ -614,7 +614,7 @@ export class Expansion {
     const market = await this.market();
     const latest = await this.db
       .prepare(
-        "SELECT COALESCE(MAX(version),0) AS version FROM customer_briefings WHERE tenant_id=? AND property_id=?",
+        "SELECT COALESCE(MAX(version),0) AS version FROM customer_all_briefings WHERE tenant_id=? AND property_id=?",
       )
       .bind(...this.bind())
       .first<{ version: number }>();

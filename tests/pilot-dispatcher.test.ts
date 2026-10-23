@@ -36,6 +36,7 @@ async function setup(totalMicros = 200000) {
   for (const f of [
     "0004_reviewed_imports.sql",
     "0005_scout_expansion.sql",
+    "0014_reviewed_brief_publication.sql",
     "0006_provider_preparation.sql",
     "0007_pilot_dispatch.sql",
   ])

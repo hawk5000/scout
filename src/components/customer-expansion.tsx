@@ -854,8 +854,10 @@ export function CustomerExpansion({
                   <h2>SCOUT Briefing {brief.version}</h2>
                   <p>
                     <strong>{brief.status}</strong> - as of{" "}
-                    {new Date(brief.generatedAt).toLocaleString()} - fictional
-                    evidence
+                    {new Date(brief.generatedAt).toLocaleString()} -{" "}
+                    {brief.mode === "synthetic"
+                      ? "fictional evidence"
+                      : "reviewed public sources"}
                   </p>
                   <div className="expansion-tabs">
                     <button
