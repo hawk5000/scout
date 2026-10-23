@@ -334,39 +334,41 @@ export function CustomerExpansion({
         <p>Loading hotel research information...</p>
       ) : (
         <>
-          {workspace.manualResearchAllowed === true && (
-            <aside
-              className="expansion-panel"
-              aria-label="Research provider status"
-            >
-              <p className="eyebrow">ADMINISTRATOR · CONNECTION CHECK</p>
-              <h2>OpenAI provider</h2>
-              <p>
-                Check whether the existing Worker secret can access the selected
-                model. This makes one free model-access check only; it does not
-                search the web, create findings, or change research settings.
-              </p>
-              <button
-                className="button secondary"
-                type="button"
-                onClick={() => void checkProvider()}
-                disabled={busy}
+          {destination === "research" &&
+            workspace.manualResearchAllowed === true && (
+              <aside
+                className="expansion-panel"
+                aria-label="Research provider status"
               >
-                {busy ? "Checking…" : "Check OpenAI connection"}
-              </button>
-              {providerStatus && (
-                <p role="status">
-                  Connection status: {providerStatus.replaceAll("_", " ")}.
+                <p className="eyebrow">ADMINISTRATOR · CONNECTION CHECK</p>
+                <h2>OpenAI provider</h2>
+                <p>
+                  Check whether the existing Worker secret can access the
+                  selected model. This makes one free model-access check only;
+                  it does not search the web, create findings, or change
+                  research settings.
                 </p>
-              )}
-              <p className="fine-print">
-                Only the explicitly approved manual pilot can make paid research
-                calls, within the original $1.25 total cap. Routine research,
-                schedules and notifications remain off.
-              </p>
-            </aside>
-          )}
-          {livePilot && (
+                <button
+                  className="button secondary"
+                  type="button"
+                  onClick={() => void checkProvider()}
+                  disabled={busy}
+                >
+                  {busy ? "Checking…" : "Check OpenAI connection"}
+                </button>
+                {providerStatus && (
+                  <p role="status">
+                    Connection status: {providerStatus.replaceAll("_", " ")}.
+                  </p>
+                )}
+                <p className="fine-print">
+                  Only the explicitly approved manual pilot can make paid
+                  research calls, within the original $1.25 total cap. Routine
+                  research, schedules and notifications remain off.
+                </p>
+              </aside>
+            )}
+          {destination === "research" && livePilot && (
             <section
               className="expansion-panel"
               aria-label="One-time live research pilot"
@@ -726,54 +728,56 @@ export function CustomerExpansion({
             </>
           ) : (
             <>
-              <div className="expansion-panel briefing-action">
-                <h2>Refresh research, then create a brief</h2>
-                <p>
-                  {state.fixturesEnabled
-                    ? "Checks all five categories against isolated fixtures before preparing an evidence snapshot. An incomplete check is shown clearly."
-                    : "Live refresh is not enabled. Your existing findings and stored briefs remain available. No paid source access or research budget has been activated."}
-                </p>
-                {state.fixturesEnabled && (
-                  <label>
-                    Fixture scenario
-                    <select
-                      value={scenario}
-                      onChange={(e) =>
-                        setScenario(e.target.value as typeof scenario)
-                      }
-                      disabled={busy || !!active}
-                    >
-                      {fixtureScenarios.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-                <button
-                  className="button primary"
-                  disabled={busy || workspace.role === "viewer"}
-                  onClick={() => void run(active?.id)}
-                >
-                  {busy
-                    ? "Refreshing fixture research..."
-                    : active
-                      ? "Resume refresh"
-                      : state.fixturesEnabled
-                        ? "Refresh fixtures and create briefing"
-                        : "Check briefing availability"}
-                </button>
-                {state.fixturesEnabled && (
-                  <p className="muted">
-                    Fixture allowance: {state.budget.used ?? 0} used,{" "}
-                    {state.budget.held ?? 0} reserved of {state.budget.limit}{" "}
-                    units this month. Maximum 6 units per job. Actual charges:
-                    $0.
+              {brief?.mode !== "reviewed" && (
+                <div className="expansion-panel briefing-action">
+                  <h2>Refresh research, then create a brief</h2>
+                  <p>
+                    {state.fixturesEnabled
+                      ? "Checks all five categories against isolated fixtures before preparing an evidence snapshot. An incomplete check is shown clearly."
+                      : "Live refresh is not enabled. Your existing findings and stored briefs remain available. No paid source access or research budget has been activated."}
                   </p>
-                )}
-              </div>
-              {job && (
+                  {state.fixturesEnabled && (
+                    <label>
+                      Fixture scenario
+                      <select
+                        value={scenario}
+                        onChange={(e) =>
+                          setScenario(e.target.value as typeof scenario)
+                        }
+                        disabled={busy || !!active}
+                      >
+                        {fixtureScenarios.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  <button
+                    className="button primary"
+                    disabled={busy || workspace.role === "viewer"}
+                    onClick={() => void run(active?.id)}
+                  >
+                    {busy
+                      ? "Refreshing fixture research..."
+                      : active
+                        ? "Resume refresh"
+                        : state.fixturesEnabled
+                          ? "Refresh fixtures and create briefing"
+                          : "Check briefing availability"}
+                  </button>
+                  {state.fixturesEnabled && (
+                    <p className="muted">
+                      Fixture allowance: {state.budget.used ?? 0} used,{" "}
+                      {state.budget.held ?? 0} reserved of {state.budget.limit}{" "}
+                      units this month. Maximum 6 units per job. Actual charges:
+                      $0.
+                    </p>
+                  )}
+                </div>
+              )}
+              {brief?.mode !== "reviewed" && job && (
                 <section
                   className="expansion-panel"
                   aria-label="Latest refresh"
