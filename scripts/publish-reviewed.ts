@@ -1,8 +1,7 @@
 // Explicit local operator command; Cloudflare CLI authentication stays outside source files.
 // Input is an ignored JSON document: {database, scope, batch, unknowns, approvalNote}.
-import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { resolve, join, sep } from "node:path";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { execFileSync } from "node:child_process";
 import { ReviewedImports } from "../src/customer/reviewed-imports";
 import { publishReviewedBrief } from "../src/customer/reviewed-brief";
@@ -23,7 +22,6 @@ async function main() {
     throw new Error(
       "Explicit reviewed scope, database and approval note required.",
     );
-  const directory = mkdtempSync(join(tmpdir(), "scout-publication-"));
   const query = (sql: string, values: unknown[]) => {
     let index = 0;
     const bound = sql.replace(/\?/g, () => {
@@ -35,25 +33,26 @@ async function main() {
           : "'" + String(v).replace(/'/g, "''") + "'";
     });
     if (index !== values.length) throw new Error("Binding mismatch");
-    const path = join(directory, "query.sql");
-    writeFileSync(path, bound);
     const result = execFileSync(
       process.execPath,
       [
-        resolve("node_modules/wrangler/bin/wrangler.js"),
+        resolve(
+          process.env.SCOUT_WRANGLER_CLI ??
+            "node_modules/wrangler/bin/wrangler.js",
+        ),
         "d1",
         "execute",
         input.database,
         "--remote",
         "--config",
         "cloudflare/wrangler.toml",
-        "--file",
-        path,
+        "--command",
+        bound,
         "--json",
       ],
       { encoding: "utf8", maxBuffer: 8e6 },
     );
-    const start = result.indexOf("[\n");
+    const start = result.search(/\[\s*\{/);
     const parsed = JSON.parse(start >= 0 ? result.slice(start) : result);
     if (!parsed[0]?.success) throw new Error("D1 publication query failed");
     return parsed[0];
@@ -76,44 +75,35 @@ async function main() {
       return s;
     },
   };
-  try {
-    const reviews = new ReviewedImports(db);
-    const staged = await reviews.execute(input.scope, {
-      operation: "stage",
-      batch: input.batch,
-    });
-    if (staged.stale) throw new Error("Review is stale; no approval made.");
-    await reviews.execute(input.scope, {
-      operation: "decide",
+  const reviews = new ReviewedImports(db);
+  const staged = await reviews.execute(input.scope, {
+    operation: "stage",
+    batch: input.batch,
+  });
+  if (staged.stale) throw new Error("Review is stale; no approval made.");
+  await reviews.execute(input.scope, {
+    operation: "decide",
+    reviewId: staged.reviewId,
+    approvalHash: staged.approvalHash,
+    decision: "approved",
+    note: input.approvalNote,
+    evidenceReviewed: true,
+    lodgingInferenceReviewed: true,
+  });
+  const brief = await publishReviewedBrief(
+    db,
+    input.scope,
+    String(staged.reviewId),
+    input.unknowns,
+  );
+  console.log(
+    JSON.stringify({
       reviewId: staged.reviewId,
-      approvalHash: staged.approvalHash,
-      decision: "approved",
-      note: input.approvalNote,
-      evidenceReviewed: true,
-      lodgingInferenceReviewed: true,
-    });
-    const brief = await publishReviewedBrief(
-      db,
-      input.scope,
-      String(staged.reviewId),
-      input.unknowns,
-    );
-    console.log(
-      JSON.stringify({
-        reviewId: staged.reviewId,
-        briefId: brief.id,
-        version: brief.version,
-        findings: brief.records.length,
-      }),
-    );
-  } finally {
-    if (
-      !resolve(directory).startsWith(resolve(tmpdir()) + sep) ||
-      !directory.includes("scout-publication-")
-    )
-      throw new Error("Unexpected cleanup target");
-    rmSync(directory, { recursive: true, force: true });
-  }
+      briefId: brief.id,
+      version: brief.version,
+      findings: brief.records.length,
+    }),
+  );
 }
 main().catch(() => {
   console.error(
