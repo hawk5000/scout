@@ -17,6 +17,7 @@ test("OpenAI pilot migration is additive, empty, and refuses synthetic policy sc
   for (const file of [
     "0004_reviewed_imports.sql",
     "0005_scout_expansion.sql",
+    "0014_reviewed_brief_publication.sql",
     "0006_provider_preparation.sql",
     "0007_pilot_dispatch.sql",
     "0008_openai_manual_pilot.sql",
@@ -71,6 +72,7 @@ test("real OpenAI pilot status refuses the isolated synthetic tenant before prov
   for (const file of [
     "0004_reviewed_imports.sql",
     "0005_scout_expansion.sql",
+    "0014_reviewed_brief_publication.sql",
     "0006_provider_preparation.sql",
     "0007_pilot_dispatch.sql",
     "0008_openai_manual_pilot.sql",
@@ -117,6 +119,7 @@ test("ABC Hotel editor status exposes disabled gates without an OpenAI request",
   for (const file of [
     "0004_reviewed_imports.sql",
     "0005_scout_expansion.sql",
+    "0014_reviewed_brief_publication.sql",
     "0006_provider_preparation.sql",
     "0007_pilot_dispatch.sql",
     "0008_openai_manual_pilot.sql",
@@ -198,6 +201,7 @@ async function pilotSetup(outputTokens = 180, failFirstRun = false) {
   for (const file of [
     "0004_reviewed_imports.sql",
     "0005_scout_expansion.sql",
+    "0014_reviewed_brief_publication.sql",
     "0006_provider_preparation.sql",
     "0007_pilot_dispatch.sql",
     "0008_openai_manual_pilot.sql",

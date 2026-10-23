@@ -5,7 +5,11 @@ import worker from "../cloudflare/acceptance-worker";
 import { database, adapter } from "./helpers/customer-market";
 test("Pass B acceptance entrypoint persists provider replay, no network, one ledger per durable job", async () => {
   const db = database();
-  for (const f of ["0005_scout_expansion.sql", "0006_provider_preparation.sql"])
+  for (const f of [
+    "0005_scout_expansion.sql",
+    "0014_reviewed_brief_publication.sql",
+    "0006_provider_preparation.sql",
+  ])
     db.exec(readFileSync(`cloudflare/migrations/${f}`, "utf8"));
   db.exec(
     "CREATE TABLE acceptance_marker(name TEXT PRIMARY KEY);INSERT INTO acceptance_marker VALUES('synthetic-only')",

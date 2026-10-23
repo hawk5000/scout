@@ -28,7 +28,9 @@ function sourceLink(url: string, label: string) {
 export function briefingText(b: Brief) {
   return [
     `SCOUT Briefing ${b.version} - ${b.status.toUpperCase()}`,
-    "FICTIONAL SYNTHETIC FIXTURE - no live research",
+    b.mode === "synthetic"
+      ? "FICTIONAL SYNTHETIC FIXTURE - no live research"
+      : "Reviewed public-source research - approved for this hotel",
     `As of ${b.generatedAt}`,
     ...b.coverage.map(
       (o) =>
@@ -52,7 +54,9 @@ export function briefingText(b: Brief) {
     ...b.connections.map((c) => c.explanation),
     "",
     ...b.unknowns,
-    `Actual charge: $0. Fixture units used: ${b.cost.usedFixtureUnits}.`,
+    b.cost.provider === "fixture"
+      ? `Actual charge: $0. Fixture units used: ${b.cost.usedFixtureUnits}.`
+      : "Publication charge: $0. Research usage is recorded separately; no new provider call.",
   ].join("\n");
 }
 
@@ -115,10 +119,10 @@ export function briefingHtml(b: Brief) {
 <header><div class="brand">SCOUT<span>by SalesHospitality · Your hotel’s market research assistant</span></div>
 <h1>Market briefing</h1><p class="lede">An evidence-linked view of developments that may matter to your hotel’s sales work.</p>
 <div class="meta"><span class="pill">${escapeHtml(b.status)}</span><span>Briefing version ${b.version}</span><span>Prepared ${escapeHtml(new Date(b.generatedAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }))} UTC</span></div>
-<p class="notice"><strong>Fictional synthetic sample.</strong> This report uses isolated demo fixtures and is not the result of live research. Actual research charge: $0.</p></header>
+<p class="notice">${b.mode === "synthetic" ? "<strong>Fictional synthetic sample.</strong> This report uses isolated demo fixtures and is not the result of live research. Actual research charge: $0." : "<strong>Reviewed public-source research.</strong> Approved for this hotel. Publication made no provider call. Research usage is recorded separately."}</p></header>
 <section><h2>Research coverage</h2><table><thead><tr><th>Area</th><th>Outcome</th><th>Coverage note</th><th>Last successful check</th></tr></thead><tbody>${coverage}</tbody></table></section>
 ${sections}${connections}${unknowns}
-<footer class="footer">SCOUT Briefing ${b.version} · Fixture units used: ${b.cost.usedFixtureUnits} · Evidence links and dates are preserved from the stored snapshot.</footer>
+<footer class="footer">SCOUT Briefing ${b.version} · ${b.cost.provider === "fixture" ? `Fixture units used: ${b.cost.usedFixtureUnits}` : "Reviewed publication; no new provider call"} · Evidence links and dates are preserved from the stored snapshot.</footer>
 </main></body></html>`;
 }
 
@@ -157,7 +161,9 @@ export function briefingCsv(b: Brief) {
             .evidence.filter((e) => i.evidenceIds.includes(e.id))
             .map((e) => e.url)
             .join("; "),
-          "FICTIONAL SYNTHETIC FIXTURE",
+          b.mode === "synthetic"
+            ? "FICTIONAL SYNTHETIC FIXTURE"
+            : "REVIEWED PUBLIC SOURCES",
         ]),
       ),
     ]
