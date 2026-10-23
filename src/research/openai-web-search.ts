@@ -106,11 +106,11 @@ function BufferConcat(chunks: Uint8Array[], size: number) {
 
 /**
  * Hard reserve for one Responses web-search request at GPT-6 Luna Standard.
- * Includes the long-context uplift, worst-case 30m cache writes, and one search.
+ * Includes the long-context uplift, worst-case 30m cache writes, and up to 20 returned search actions.
  * A five-category cycle may stop at the unchanged $1.25 cumulative budget.
  * must reserve before dispatch and settle actual usage from the API response.
  */
-export const openAiSearchMaximumMicros = 274_000;
+export const openAiSearchMaximumMicros = 464_000;
 export const openAiCycleMaximumMicros = openAiSearchMaximumMicros * 5;
 
 /**
@@ -335,7 +335,7 @@ export function openAiActualCostMicros(raw: string) {
     (call) => call.action?.type === "search",
   ).length;
   if (
-    searches > 1 ||
+    calls.length > 20 ||
     (usage.input_tokens as number) > 1_050_000 ||
     (usage.output_tokens as number) > 2_000
   )

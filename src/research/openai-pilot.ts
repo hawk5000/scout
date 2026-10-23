@@ -315,13 +315,23 @@ export class OpenAiPilotDispatcher {
         };
     }
     const receipt = job ? await this.reconciled(job.id) : null;
-    let spentMicros = receipt?.billed_micros ?? 0,
+    const extraReceipt = job
+      ? await this.db
+          .prepare(
+            "SELECT COALESCE(SUM(accounted_micros),0) total,COALESCE(SUM(CASE WHEN basis='billing-export' THEN accounted_micros ELSE 0 END),0) billed FROM customer_openai_usage_call_receipts WHERE tenant_id=? AND property_id=? AND job_id=?",
+          )
+          .bind(...this.bind(), job.id)
+          .first<{ total: number; billed: number }>()
+      : null;
+    const billedTotal =
+      (receipt?.billed_micros ?? 0) + (extraReceipt?.total ?? 0);
+    let spentMicros = billedTotal,
       reservedMicros = 0;
     if (job) {
       try {
         const usage = await this.db
           .prepare(
-            "SELECT COALESCE(SUM(CASE WHEN state='known' THEN accounted_micros ELSE 0 END),0) AS spent,COALESCE(SUM(CASE WHEN state IN('reserved','unknown') THEN accounted_micros ELSE 0 END),0) AS reserved FROM customer_provider_calls c WHERE tenant_id=? AND property_id=? AND job_id=? AND NOT EXISTS(SELECT 1 FROM customer_openai_usage_reconciliations r JOIN json_each(r.covered_keys_json) k ON k.value=c.call_key WHERE r.tenant_id=c.tenant_id AND r.property_id=c.property_id AND r.job_id=c.job_id)",
+            "SELECT COALESCE(SUM(CASE WHEN state='known' THEN accounted_micros ELSE 0 END),0) AS spent,COALESCE(SUM(CASE WHEN state IN('reserved','unknown') THEN accounted_micros ELSE 0 END),0) AS reserved FROM customer_provider_calls c WHERE tenant_id=? AND property_id=? AND job_id=? AND NOT EXISTS(SELECT 1 FROM customer_openai_reconciled_call_keys r WHERE r.tenant_id=c.tenant_id AND r.property_id=c.property_id AND r.job_id=c.job_id AND r.call_key=c.call_key)",
           )
           .bind(...this.bind(), job.id)
           .first<{ spent: number; reserved: number }>();
@@ -347,8 +357,10 @@ export class OpenAiPilotDispatcher {
             document: JSON.parse(job.document_json),
             drafts: docs,
             briefing,
-            reconciledUsd: (receipt?.billed_micros ?? 0) / 1_000_000,
-            resumable: job.state === "blocked" && !!receipt,
+            reconciledUsd:
+              ((receipt?.billed_micros ?? 0) + (extraReceipt?.billed ?? 0)) /
+              1_000_000,
+            resumable: job.state === "blocked" && job.step < 5 && !!receipt,
             spentUsd: spentMicros / 1_000_000,
             reservedUsd: reservedMicros / 1_000_000,
           }
@@ -483,7 +495,7 @@ export class OpenAiPilotDispatcher {
     // Never continue spending after a response could not be reconciled.
     const unresolved = await this.db
       .prepare(
-        "SELECT 1 AS found FROM customer_provider_calls c WHERE c.tenant_id=? AND c.property_id=? AND c.job_id=? AND c.state IN('unknown','reserved') AND NOT EXISTS(SELECT 1 FROM customer_openai_usage_reconciliations r JOIN json_each(r.covered_keys_json) k ON k.value=c.call_key WHERE r.tenant_id=c.tenant_id AND r.property_id=c.property_id AND r.job_id=c.job_id) LIMIT 1",
+        "SELECT 1 AS found FROM customer_provider_calls c WHERE c.tenant_id=? AND c.property_id=? AND c.job_id=? AND c.state IN('unknown','reserved') AND NOT EXISTS(SELECT 1 FROM customer_openai_reconciled_call_keys r WHERE r.tenant_id=c.tenant_id AND r.property_id=c.property_id AND r.job_id=c.job_id AND r.call_key=c.call_key) LIMIT 1",
       )
       .bind(...this.bind(), id)
       .first();
@@ -631,7 +643,7 @@ export class OpenAiPilotDispatcher {
     const complete = final && doc.outcomes.every((x) => x.status === "cited");
     const unresolvedUsage = await this.db
       .prepare(
-        "SELECT 1 AS found FROM customer_provider_calls c WHERE c.tenant_id=? AND c.property_id=? AND c.job_id=? AND c.state IN('unknown','reserved') AND NOT EXISTS(SELECT 1 FROM customer_openai_usage_reconciliations r JOIN json_each(r.covered_keys_json) k ON k.value=c.call_key WHERE r.tenant_id=c.tenant_id AND r.property_id=c.property_id AND r.job_id=c.job_id) LIMIT 1",
+        "SELECT 1 AS found FROM customer_provider_calls c WHERE c.tenant_id=? AND c.property_id=? AND c.job_id=? AND c.state IN('unknown','reserved') AND NOT EXISTS(SELECT 1 FROM customer_openai_reconciled_call_keys r WHERE r.tenant_id=c.tenant_id AND r.property_id=c.property_id AND r.job_id=c.job_id AND r.call_key=c.call_key) LIMIT 1",
       )
       .bind(...this.bind(), id)
       .first();

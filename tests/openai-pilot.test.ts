@@ -22,6 +22,7 @@ test("OpenAI pilot migration is additive, empty, and refuses synthetic policy sc
     "0008_openai_manual_pilot.sql",
     "0009_sil_research_permission.sql",
     "0010_openai_usage_reconciliation.sql",
+    "0011_openai_call_receipts.sql",
   ])
     db.exec(readFileSync(`cloudflare/migrations/${file}`, "utf8"));
 
@@ -73,6 +74,7 @@ test("real OpenAI pilot status refuses the isolated synthetic tenant before prov
     "0008_openai_manual_pilot.sql",
     "0009_sil_research_permission.sql",
     "0010_openai_usage_reconciliation.sql",
+    "0011_openai_call_receipts.sql",
   ])
     db.exec(readFileSync(`cloudflare/migrations/${file}`, "utf8"));
   let networkCalls = 0;
@@ -116,6 +118,7 @@ test("ABC Hotel editor status exposes disabled gates without an OpenAI request",
     "0008_openai_manual_pilot.sql",
     "0009_sil_research_permission.sql",
     "0010_openai_usage_reconciliation.sql",
+    "0011_openai_call_receipts.sql",
   ])
     db.exec(readFileSync(`cloudflare/migrations/${file}`, "utf8"));
   const tenantId = "tenant_abc";
@@ -194,6 +197,7 @@ async function pilotSetup(outputTokens = 180) {
     "0008_openai_manual_pilot.sql",
     "0009_sil_research_permission.sql",
     "0010_openai_usage_reconciliation.sql",
+    "0011_openai_call_receipts.sql",
   ])
     db.exec(readFileSync(`cloudflare/migrations/${file}`, "utf8"));
   const tenant = "tenant_abc",
@@ -358,7 +362,7 @@ test("unreconciled provider usage blocks the cycle and repeat advances without r
     jobId: initial.job!.id,
   });
   assert.equal(state.job!.state, "blocked");
-  assert.equal(state.job!.reservedUsd, 0.274);
+  assert.equal(state.job!.reservedUsd, 0.464);
   assert.equal((state.job!.drafts[0] as { outcome: string }).outcome, "failed");
   await dispatcher.execute({ action: "advance", jobId: initial.job!.id });
   assert.equal(calls(), 1);
@@ -434,6 +438,46 @@ test("legacy queued job with unknown usage is blocked before another provider re
   });
   assert.equal(resumed.job!.step, 2);
   assert.equal(resumed.job!.reconciledUsd, 0.01);
+  const receipt = db.prepare(
+    "INSERT INTO customer_openai_usage_call_receipts VALUES(?,?,?,?,?,?,?,?,?)",
+  );
+  assert.throws(
+    () =>
+      receipt.run(
+        "tenant_abc",
+        "property_abc_abc_hotel",
+        initial.job!.id,
+        "corporate:search",
+        1,
+        "billing-export",
+        "a".repeat(64),
+        "overlap",
+        new Date().toISOString(),
+      ),
+    /CALL_RECEIPT_INVALID/,
+  );
+  receipt.run(
+    "tenant_abc",
+    "property_abc_abc_hotel",
+    initial.job!.id,
+    "project:search",
+    10000,
+    "provider-usage-upper-bound",
+    "b".repeat(64),
+    "numeric fixture evidence",
+    new Date().toISOString(),
+  );
+  assert.throws(
+    () =>
+      db.exec(
+        "UPDATE customer_openai_usage_call_receipts SET accounted_micros=0",
+      ),
+    /IMMUTABLE/,
+  );
+  const reconciled = await dispatcher.status();
+  assert.equal(reconciled.job!.spentUsd, 0.02);
+  assert.equal(reconciled.job!.reconciledUsd, 0.01);
+
   assert.equal(calls(), 2);
   assert.equal(
     (
@@ -443,7 +487,7 @@ test("legacy queued job with unknown usage is blocked before another provider re
         )
         .get() as { accounted_micros: number }
     ).accounted_micros,
-    274000,
+    464000,
   );
   db.close();
 });
