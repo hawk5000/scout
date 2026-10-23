@@ -933,7 +933,11 @@ export function CustomerExpansion({
                               <p className="eyebrow">
                                 {item.ongoing
                                   ? "Ongoing context"
-                                  : "New or changed"}{" "}
+                                  : f.discovery === "material-change"
+                                    ? "Material change"
+                                    : f.entity
+                                      ? "Established market context"
+                                      : "First recorded by SCOUT; activity may be older"}{" "}
                                 - finding version {item.version}
                               </p>
                               <h4>{f.title}</h4>

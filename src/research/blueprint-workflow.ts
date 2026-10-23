@@ -273,21 +273,56 @@ export class BlueprintWorkflow {
             r.area === s.area,
         );
         const latest = history[0];
+        const prior = c.market.records.filter(
+          (r) =>
+            r.categories.includes(s.category) &&
+            (!["competitor", "property"].includes(s.category) ||
+              r.context?.subjectId === s.subjectId),
+        );
+        const priorAt =
+          prior
+            .map((r) => r.lastCheckedAt)
+            .sort()
+            .at(-1) ?? null;
         return {
           ...s,
-          outcome: latest?.outcome ?? "blocked",
-          lastCheckedAt: latest?.checked_at ?? null,
+          label:
+            s.category === "competitor"
+              ? (c.config.competitors.find((h) => h.id === s.subjectId)?.name ??
+                "Selected competitor")
+              : s.category === "property"
+                ? "Your hotel's public mentions"
+                : s.category === "event"
+                  ? "Upcoming and recurring events"
+                  : s.category === "project"
+                    ? "Active and announced projects"
+                    : s.focus,
+          outcome: latest?.outcome ?? (prior.length ? "partial" : "blocked"),
+          lastCheckedAt: latest?.checked_at ?? priorAt,
           lastSuccessAt:
             history.find(
               (r) =>
                 r.outcome === "complete" ||
                 (r.outcome === "partial" &&
                   JSON.parse(r.document_json).items?.length),
-            )?.checked_at ?? null,
+            )?.checked_at ?? priorAt,
           gaps: latest
             ? JSON.parse(latest.document_json).gaps
-            : [s.blocked ?? "Baseline research has not covered this area."],
-          sources: latest ? JSON.parse(latest.document_json).sources : [],
+            : [
+                s.blocked ??
+                  (prior.length
+                    ? "Previously reviewed findings are available. This broader baseline task has not run; market coverage remains incomplete."
+                    : "Baseline research has not covered this area."),
+              ],
+          sources: latest
+            ? JSON.parse(latest.document_json).sources
+            : prior
+                .flatMap((r) =>
+                  r.evidence.map((e) => ({ url: e.url, title: e.publisher })),
+                )
+                .filter(
+                  (e, i, all) => all.findIndex((x) => x.url === e.url) === i,
+                ),
         };
       }),
       jobs: jobs.map((j) => ({
