@@ -48,7 +48,7 @@ const policyDocument = z
     approvalVersion: z.string().min(1).max(100),
   })
   .strict();
-const actions = z.discriminatedUnion("action", [
+export const openAiPilotActions = z.discriminatedUnion("action", [
   z
     .object({ action: z.literal("retry"), requestKey: z.string().uuid() })
     .strict(),
@@ -60,7 +60,7 @@ const actions = z.discriminatedUnion("action", [
     .strict(),
   z.object({ action: z.literal("advance"), jobId: z.string().uuid() }).strict(),
 ]);
-export type OpenAiPilotAction = z.infer<typeof actions>;
+export type OpenAiPilotAction = z.infer<typeof openAiPilotActions>;
 type Policy = {
   id: string;
   expires_at: number;

@@ -17,6 +17,7 @@ import { expansionCommand } from "../../src/customer/expansion-contracts";
 import { verifyOpenAiConnection } from "../../src/research/openai-web-search";
 import {
   OpenAiPilotDispatcher,
+  openAiPilotActions,
   type OpenAiPilotAction,
 } from "../../src/research/openai-pilot";
 export interface Env {
@@ -86,17 +87,9 @@ const command = z.discriminatedUnion("operation", [
     .object({
       operation: z.literal("openai-pilot"),
       token: z.string().max(128),
-      input: z.discriminatedUnion("action", [
+      input: z.union([
         z.object({ action: z.literal("status") }).strict(),
-        z
-          .object({
-            action: z.literal("start"),
-            requestKey: z.string().regex(/^[a-zA-Z0-9_-]{8,100}$/),
-          })
-          .strict(),
-        z
-          .object({ action: z.literal("advance"), jobId: z.string().uuid() })
-          .strict(),
+        openAiPilotActions,
       ]),
     })
     .strict(),
