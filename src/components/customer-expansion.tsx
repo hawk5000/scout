@@ -457,14 +457,14 @@ export function CustomerExpansion({
                       className="expansion-panel"
                       aria-label="Private pilot quality review"
                     >
-                      <h3>SCOUT Briefing � priorities for review</h3>
+                      <h3>SCOUT Briefing - priorities for review</h3>
                       <p>{livePilot.qualityReview.summary}</p>
                       <p className="fine-print">
-                        Technical source review �{" "}
+                        Technical source review -{" "}
                         {new Date(
                           livePilot.qualityReview.reviewedAt,
                         ).toLocaleString()}{" "}
-                        � Not customer publication approval. The original AI
+                        - Not customer publication approval. The original AI
                         drafts remain below for audit.
                       </p>
                       {livePilot.qualityReview.priorities.map((item) => (
@@ -562,8 +562,8 @@ export function CustomerExpansion({
                         {livePilot.job.briefing.document.status}
                       </h3>
                       <p>
-                        Version 1 · Review draft only. Findings are not in the
-                        Market Blueprint.
+                        Version {livePilot.job.briefing.version} · Review draft
+                        only. Findings are not in the Market Blueprint.
                       </p>
                       {livePilot.job.briefing.document.sections.map(
                         (section) => (
