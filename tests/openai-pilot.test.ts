@@ -181,7 +181,7 @@ test("ABC Hotel editor status exposes disabled gates without an OpenAI request",
   db.close();
 });
 
-async function pilotSetup() {
+async function pilotSetup(outputTokens = 180) {
   const db = database();
   for (const file of [
     "0004_reviewed_imports.sql",
@@ -286,7 +286,7 @@ async function pilotSetup() {
         contentType: "application/json",
         body: JSON.stringify({
           status: "completed",
-          usage: { input_tokens: 1200, output_tokens: 180 },
+          usage: { input_tokens: 1200, output_tokens: outputTokens },
           output: [
             {
               type: "web_search_call",
@@ -342,6 +342,45 @@ async function pilotSetup() {
     },
   };
 }
+
+test("unreconciled provider usage blocks the cycle and repeat advances without releasing its reservation", async () => {
+  const { db, dispatcher, calls } = await pilotSetup(2001);
+  const initial = await dispatcher.execute({
+    action: "start",
+    requestKey: "usage-failure",
+  });
+  const state = await dispatcher.execute({
+    action: "advance",
+    jobId: initial.job!.id,
+  });
+  assert.equal(state.job!.state, "blocked");
+  assert.equal(state.job!.reservedUsd, 0.2215);
+  assert.equal((state.job!.drafts[0] as { outcome: string }).outcome, "failed");
+  await dispatcher.execute({ action: "advance", jobId: initial.job!.id });
+  assert.equal(calls(), 1);
+  db.close();
+});
+
+test("legacy queued job with unknown usage is blocked before another provider request", async () => {
+  const { db, dispatcher, calls } = await pilotSetup();
+  const initial = await dispatcher.execute({
+    action: "start",
+    requestKey: "legacy-usage",
+  });
+  await dispatcher.execute({ action: "advance", jobId: initial.job!.id });
+  // Reconstruct a pre-fix snapshot in this disposable in-memory database.
+  db.exec("DROP TRIGGER customer_provider_settle");
+  db.exec(
+    "UPDATE customer_provider_calls SET state='unknown',accounted_micros=maximum_micros",
+  );
+  const state = await dispatcher.execute({
+    action: "advance",
+    jobId: initial.job!.id,
+  });
+  assert.equal(state.job!.state, "blocked");
+  assert.equal(calls(), 1);
+  db.close();
+});
 
 test("manual pilot atomically persists five cited categories and briefing; duplicate and concurrent requests do not repeat spend", async () => {
   const { db, dispatcher, calls } = await pilotSetup();

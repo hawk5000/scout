@@ -805,3 +805,15 @@ Verified 137 SCOUT tests, typecheck and production build; includes editor with e
 SCOUT main `7db4c1f` deployed to Vercel Production/Ready and Worker `f5ec432e-9a49-4180-af61-9bd7ebe2d61f`; SIL main `43d1db8` deployed Production/Ready. ABC Hotel signed in with existing credentials, retaining editor membership. Owner SIL administrator session needs sign-in before using the new explicit grant control. No grants, provider calls or jobs exist yet.
 
 Hosted readiness found stored expansion documents include internal `memberships` history. The pilot now validates only their public own/competitors/paused settings while keeping the entire stored configuration digest for drift detection. No customer record is rewritten. Six focused pilot tests pass using the actual stored shape; typecheck and build pass.
+
+## First authorized live attempt — 2026-10-22
+
+SIL's explicit manual-research grant is recognized in the hosted ABC Hotel session. The free OpenAI model-access check returned valid. ABC Hotel remains an active editor; no role or other-app change was made.
+
+One job (`b9c023dd-70cf-4763-907c-6071344950b1`) made four real research requests. Corporate, Project and Event returned `USAGE_EXCEEDS_RESERVATION`; their responses were rejected before evidence/usage persistence. The current error does not distinguish excessive search-item count, input/output token bounds, or calculated charge. Raw responses were not retained (`store:false`), so the exact offending counter and actual charges cannot be reconstructed from SCOUT. Competitor returned no sources: 4,946 input / 254 output tokens, calculated $0.010622 including one search. This is not proof of no competitor activity. Property/Hotel Mentions has not run. No useful sourced findings or briefing were produced or published.
+
+Three unknown-usage holds remain $0.664500, plus $0.010622 calculated known usage: $0.675122 accounted, NOT verified billing or a proven upper bound after the usage guard failed. No retries or reservation release. The $1.25 approval has not been increased. Schedules/notifications remain off.
+
+Confirmed defect: dispatcher continued categories after an unreconciled response. Fixed it to block immediately after unknown usage and to block legacy queued jobs before further dispatch. Existing held reservations and failed drafts are preserved. UI now states that calculated spend excludes unreconciled charges. Eight focused pilot tests, typecheck and production build passed; tests made no provider calls.
+
+Required next evidence: OpenAI project Usage/Costs for the four Responses requests around 2026-10-22 20:55–20:58 UTC (13:55–13:58 Pacific), including billed total and per-request token/search counts if available. Do not provide API keys, request bodies or credentials. Reconcile those calls and identify the exceeded bound before any further paid request; do not replace the one-job policy or claim successful live research. Hosted blocked-state verification follows the release.
