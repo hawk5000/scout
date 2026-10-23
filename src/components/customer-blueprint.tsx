@@ -30,6 +30,7 @@ type View = {
     category: string;
     subjectId: string;
     focus: string;
+    label: string;
     outcome: string;
     lastCheckedAt: string | null;
     lastSuccessAt: string | null;
@@ -70,7 +71,9 @@ export function CustomerBlueprint({
   const [view, setView] = useState<View | null>(null),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
+  const [reload, setReload] = useState(0);
   useEffect(() => {
+    setMessage("");
     let active = true;
     fetch("/api/customer/blueprint", { cache: "no-store" })
       .then(async (r) => {
@@ -84,7 +87,7 @@ export function CustomerBlueprint({
     return () => {
       active = false;
     };
-  }, []);
+  }, [reload]);
   async function confirm(subjectId: string, form: HTMLFormElement) {
     if (!view) return;
     setBusy(true);
@@ -152,7 +155,19 @@ export function CustomerBlueprint({
     }
   }
   if (!view)
-    return <p role="status">{message || "Loading market coverage…"}</p>;
+    return (
+      <div>
+        <p role="status">{message || "Loading market coverage…"}</p>
+        {message && (
+          <button
+            className="button secondary"
+            onClick={() => setReload((value) => value + 1)}
+          >
+            Reload coverage
+          </button>
+        )}
+      </div>
+    );
   if (identityOnly)
     return (
       <section
@@ -278,7 +293,7 @@ export function CustomerBlueprint({
         <summary>Research coverage and remaining gaps</summary>
         {view.coverage.map((c) => (
           <article key={c.subjectId}>
-            <h3>{c.focus}</h3>
+            <h3>{c.label}</h3>
             <p>
               {c.outcome} · Last checked: {c.lastCheckedAt ?? "Not checked"} ·
               Last useful result: {c.lastSuccessAt ?? "None yet"}

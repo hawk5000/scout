@@ -237,13 +237,17 @@ export async function handleCustomer(
     }
     if (input.operation === "blueprint-workflow") {
       const scope = await store.expansionScope(input.token);
-      const result = await new BlueprintWorkflow(
+      const workflow = new BlueprintWorkflow(
         env.DB,
         scope,
         env.OPENAI_API_KEY,
         () => store.expansionScope(input.token),
         openAiFetch,
-      ).execute(input.input);
+      );
+      const result =
+        input.input.action === "status"
+          ? await workflow.status()
+          : await workflow.execute(input.input);
       return Response.json(result, { headers: customerHeaders });
     }
     if (input.operation === "openai-pilot") {
