@@ -865,3 +865,11 @@ Owner approved publication of four source-checked pilot priorities into ABC Hote
 The explicit local operator command scripts/publish-reviewed.ts uses existing Cloudflare CLI authentication, a private input file and --publish-owner-approved. It does not read or create API keys, start research, or enable schedules/notifications. Repeat requests reuse the same import and briefing. The four-item input and public source receipts remain ignored local data. Month/season project dates stay in narrative rather than invented exact dates. Venue pages were re-opened without paid API calls; the Holiday Food & Gift detail URL is used as the strongest date evidence.
 
 Validation: 143 tests passed, including scoped approval, immutable/repeat-safe publication, stale review conflicts, invalid evidence references and preserved customer state. TypeScript and production build passed. Production publication and hosted acceptance will be recorded after deployment; no claim of publication yet.
+
+### Publication persisted
+
+Production main 58e2b3abb34f6b56b4df45925330335cc8d894af is Vercel Production/Ready on scout-olive-ten.vercel.app; Worker aa7e1af5-2539-4b85-8918-70e1713cdc14. Migration 0014 applied without rewriting customer records. Operator tooling was corrected for the globally installed Wrangler CLI (SCOUT_WRANGLER_CLI) and result-bearing --command queries; preliminary failures occurred before staging or publication.
+
+Approved import abc-verified-pilot-20261023-v1 published exactly four findings, advancing ABC Hotel's market from revision 0 to 1. Reviewed Briefing 58533063-48ed-47a2-b2fb-b8dadbf8bc17 version 1 contains those four records, source links, next steps and coverage gaps. Current property/profile, expansion configuration, memberships and original private quality review compare unchanged with the pre-publication snapshot. Provider call count is unchanged at nine; publication made zero paid calls. Saved/dismissed state has zero rows and was not modified. Schedules and notifications remain off.
+
+Authenticated hosted visual acceptance is awaiting owner sign-in because the ABC Hotel browser session expired. The browser is prepared with the email; no password was requested or copied. Persisted publication and exact production deployment are verified, but on-screen Findings/Briefing and authenticated export checks are not yet claimed.
