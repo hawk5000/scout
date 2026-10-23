@@ -465,6 +465,20 @@ export class OpenAiPilotDispatcher {
     if (!claim.meta.changes) return this.status();
     const activeJob = await this.job(id);
     const category = marketCategories[activeJob.step];
+    // Never continue spending after a response could not be reconciled.
+    const unresolved = await this.db
+      .prepare(
+        "SELECT 1 AS found FROM customer_provider_calls WHERE tenant_id=? AND property_id=? AND job_id=? AND state IN('unknown','reserved') LIMIT 1",
+      )
+      .bind(...this.bind(), id)
+      .first();
+    if (unresolved)
+      return this.failStep(
+        activeJob,
+        fence,
+        category,
+        "PROVIDER_USAGE_RECONCILIATION_REQUIRED",
+      );
     const policy = await this.policy();
     const profileRow = await this.db
       .prepare(
@@ -596,15 +610,26 @@ export class OpenAiPilotDispatcher {
     const step = activeJob.step + 1;
     const final = step === marketCategories.length;
     const complete = final && doc.outcomes.every((x) => x.status === "cited");
-    const state = final
-      ? complete
-        ? "complete"
-        : doc.outcomes.every((x) => x.status === "failed")
-          ? "failed"
-          : "partial"
-      : "queued";
+    const unresolvedUsage = await this.db
+      .prepare(
+        "SELECT 1 AS found FROM customer_provider_calls WHERE tenant_id=? AND property_id=? AND job_id=? AND state IN('unknown','reserved') LIMIT 1",
+      )
+      .bind(...this.bind(), id)
+      .first();
+    const state = unresolvedUsage
+      ? "blocked"
+      : final
+        ? complete
+          ? "complete"
+          : doc.outcomes.every((x) => x.status === "failed")
+            ? "failed"
+            : "partial"
+        : "queued";
     const nextDoc = {
       ...doc,
+      ...(unresolvedUsage
+        ? { blockedCode: "PROVIDER_USAGE_RECONCILIATION_REQUIRED" }
+        : {}),
       briefingStatus: final ? (complete ? "complete" : "partial") : "pending",
     };
     if (final) {

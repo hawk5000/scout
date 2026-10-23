@@ -405,6 +405,13 @@ export function CustomerExpansion({
                       ? ` · reserved $${livePilot.job.reservedUsd.toFixed(4)}`
                       : ""}
                   </p>
+                  {livePilot.job.reservedUsd > 0 && (
+                    <p role="status">
+                      Some provider usage is not reconciled. The calculated
+                      amount is not the total bill. Further research stops until
+                      usage is checked; held reservations are not released.
+                    </p>
+                  )}
                   {livePilot.job.drafts.map((draft) => {
                     const sources = JSON.parse(draft.sources_json) as Array<{
                       url: string;
