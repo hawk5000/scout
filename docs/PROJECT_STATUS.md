@@ -839,3 +839,11 @@ The fifth response had already been rejected before source persistence. Its safe
 Migration 0011 adds immutable non-overlapping per-call receipts with explicit billing-export versus provider-usage-upper-bound basis; it cannot rewrite old holds or cover an already reconciled call. The customer UI hides continuation once all five categories have been attempted. Tests verify separate billed/calculated display and overlap/mutation rejection. 25 focused tests, typecheck and production build pass.
 
 Live outcome: all five categories attempted; Corporate/Project/Event/Property failed validation, Competitor supplied no sources. A version-1 partial briefing with explicit gaps persisted privately, with zero source-backed findings and nothing published to the Market Blueprint. This is NOT a successful research-quality pilot. No failed category was retried, and no sixth paid request was made. The final validation correction is fixture-verified, not proven by another live response. Schedules and notifications remain off. Source quality, identity, freshness and sales usefulness cannot be validated without retained cited results.
+
+## Authorized failed-category retry — October 23, 2026
+
+Owner authorized four failed-category retries under the original $1.25 cumulative cap. Added a separate one-time retry job, immutable drafts and v2 private briefing. Competitor results carry forward without another paid request. Original attempts, reservations, receipts and customer records remain intact. Fresh SIL permission, configuration hash, lease, source-policy and expiry checks remain mandatory. No HTTP endpoint creates retry approval.
+
+Migration 0012 adds receipt-aware budget accounting: aggregate and supplemental receipts count once; uncovered calls retain full holds. The original and retry jobs share the original policy cap and monthly budget. At most four failed-category requests, with idempotent keys and unknown-usage blocking. No cap increase or source expansion.
+
+Verification: 27 focused pilot/provider tests passed, including approval, concurrency, original evidence preservation, private-only persistence and prior-spend budget rejection. TypeScript and production build passed. Live retry and hosted results remain pending deployment. No paid calls during implementation; schedules and notifications remain off.

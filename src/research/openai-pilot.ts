@@ -50,6 +50,9 @@ const policyDocument = z
   .strict();
 const actions = z.discriminatedUnion("action", [
   z
+    .object({ action: z.literal("retry"), requestKey: z.string().uuid() })
+    .strict(),
+  z
     .object({
       action: z.literal("start"),
       requestKey: z.string().regex(/^[a-zA-Z0-9_-]{8,100}$/),
@@ -97,6 +100,29 @@ export class OpenAiPilotDispatcher {
     private readonly now: () => number = Date.now,
     private readonly transportFactory?: () => SourceTransport,
   ) {}
+  private retryMode = false;
+  // Fixed server-selected table names; no caller-controlled SQL identifiers.
+  private prepare(sql: string) {
+    return this.db.prepare(
+      this.retryMode
+        ? sql.replace(
+            /customer_openai_pilot_(jobs|drafts|briefings)\b/g,
+            "customer_openai_retry_$1",
+          )
+        : sql,
+    );
+  }
+  private async selectRetry(id?: string) {
+    const row = await this.db
+      .prepare(
+        "SELECT id FROM customer_openai_retry_jobs WHERE tenant_id=? AND property_id=?" +
+          (id ? " AND id=?" : "") +
+          " LIMIT 1",
+      )
+      .bind(...this.bind(), ...(id ? [id] : []))
+      .first();
+    this.retryMode = !!row;
+  }
   private bind() {
     return [this.scope.tenantId, this.scope.propertyId] as const;
   }
@@ -125,10 +151,9 @@ export class OpenAiPilotDispatcher {
       (adminOnly && !fresh.manualResearchAllowed)
     )
       throw new CustomerError("Hotel access must be reverified.", 403);
-    const session = await this.db
-      .prepare(
-        `SELECT 1 AS ok FROM customer_sessions s JOIN customer_memberships m USING(tenant_id,property_id,user_id) JOIN customer_properties p USING(tenant_id,property_id) WHERE s.token_hash=? AND s.tenant_id=? AND s.property_id=? AND s.user_id=? AND s.expires_at>? AND m.active=1 AND ${adminOnly ? "EXISTS(SELECT 1 FROM customer_research_authorizations ra WHERE ra.session_hash=s.token_hash AND ra.tenant_id=s.tenant_id AND ra.property_id=s.property_id AND ra.user_id=s.user_id AND ra.valid_until>CAST(strftime('%s','now') AS INTEGER)*1000)" : "m.role IN('viewer','editor','admin')"} AND p.active=1`,
-      )
+    const session = await this.prepare(
+      `SELECT 1 AS ok FROM customer_sessions s JOIN customer_memberships m USING(tenant_id,property_id,user_id) JOIN customer_properties p USING(tenant_id,property_id) WHERE s.token_hash=? AND s.tenant_id=? AND s.property_id=? AND s.user_id=? AND s.expires_at>? AND m.active=1 AND ${adminOnly ? "EXISTS(SELECT 1 FROM customer_research_authorizations ra WHERE ra.session_hash=s.token_hash AND ra.tenant_id=s.tenant_id AND ra.property_id=s.property_id AND ra.user_id=s.user_id AND ra.valid_until>CAST(strftime('%s','now') AS INTEGER)*1000)" : "m.role IN('viewer','editor','admin')"} AND p.active=1`,
+    )
       .bind(
         this.scope.sessionHash,
         ...this.bind(),
@@ -142,10 +167,9 @@ export class OpenAiPilotDispatcher {
   }
   private async policy(): Promise<Policy | null> {
     try {
-      return await this.db
-        .prepare(
-          "SELECT id,expires_at,total_micros,allowed_domains_json,retention_policy,approved_by FROM customer_openai_pilot_policies WHERE tenant_id=? AND property_id=?",
-        )
+      return await this.prepare(
+        "SELECT id,expires_at,total_micros,allowed_domains_json,retention_policy,approved_by FROM customer_openai_pilot_policies WHERE tenant_id=? AND property_id=?",
+      )
         .bind(...this.bind())
         .first<Policy>();
     } catch {
@@ -182,10 +206,9 @@ export class OpenAiPilotDispatcher {
       rate_version: string;
     } | null = null;
     try {
-      limit = await this.db
-        .prepare(
-          "SELECT job_limit_micros,monthly_limit_micros,rate_version FROM customer_provider_limits WHERE tenant_id=? AND property_id=? AND month=?",
-        )
+      limit = await this.prepare(
+        "SELECT job_limit_micros,monthly_limit_micros,rate_version FROM customer_provider_limits WHERE tenant_id=? AND property_id=? AND month=?",
+      )
         .bind(...this.bind(), month)
         .first<{
           job_limit_micros: number;
@@ -202,25 +225,22 @@ export class OpenAiPilotDispatcher {
       limit.rate_version !== rateCard.version
     )
       blockers.push("CUSTOMER_BUDGET_NOT_CONFIGURED");
-    const paused = await this.db
-      .prepare(
-        "SELECT COALESCE(json_extract(document_json,'$.paused'),0) AS paused FROM customer_expansion_config WHERE tenant_id=? AND property_id=?",
-      )
+    const paused = await this.prepare(
+      "SELECT COALESCE(json_extract(document_json,'$.paused'),0) AS paused FROM customer_expansion_config WHERE tenant_id=? AND property_id=?",
+    )
       .bind(...this.bind())
       .first<{ paused: number }>()
       .catch(() => null);
     if (paused?.paused === 1) blockers.push("PROPERTY_RESEARCH_PAUSED");
-    const property = await this.db
-      .prepare(
-        "SELECT property_name,profile_json FROM customer_properties WHERE tenant_id=? AND property_id=? AND active=1",
-      )
+    const property = await this.prepare(
+      "SELECT property_name,profile_json FROM customer_properties WHERE tenant_id=? AND property_id=? AND active=1",
+    )
       .bind(...this.bind())
       .first<{ property_name: string; profile_json: string | null }>()
       .catch(() => null);
-    const configuration = await this.db
-      .prepare(
-        "SELECT document_json FROM customer_expansion_config WHERE tenant_id=? AND property_id=?",
-      )
+    const configuration = await this.prepare(
+      "SELECT document_json FROM customer_expansion_config WHERE tenant_id=? AND property_id=?",
+    )
       .bind(...this.bind())
       .first<{ document_json: string }>()
       .catch(() => null);
@@ -258,26 +278,25 @@ export class OpenAiPilotDispatcher {
   }
   async status() {
     await this.access(false);
+    await this.selectRetry();
     const policy = await this.policy();
     const blockers = await this.blockers(policy);
     if (!this.scope.manualResearchAllowed)
       blockers.push("SCOUT_RESEARCH_PERMISSION_REQUIRED");
     let job: Job | null = null;
     try {
-      job = await this.db
-        .prepare(
-          "SELECT * FROM customer_openai_pilot_jobs WHERE tenant_id=? AND property_id=? ORDER BY created_at DESC LIMIT 1",
-        )
+      job = await this.prepare(
+        "SELECT * FROM customer_openai_pilot_jobs WHERE tenant_id=? AND property_id=? ORDER BY created_at DESC LIMIT 1",
+      )
         .bind(...this.bind())
         .first<Job>();
     } catch {
       /* Migration not installed. */
     }
     const drafts = job
-      ? await this.db
-          .prepare(
-            "SELECT category,outcome,summary,sources_json,citations_json,usage_json,observed_at,identity_note FROM customer_openai_pilot_drafts WHERE tenant_id=? AND property_id=? AND job_id=? ORDER BY rowid",
-          )
+      ? await this.prepare(
+          "SELECT category,outcome,summary,sources_json,citations_json,usage_json,observed_at,identity_note FROM customer_openai_pilot_drafts WHERE tenant_id=? AND property_id=? AND job_id=? ORDER BY rowid",
+        )
           .bind(...this.bind(), job.id)
           .all?.()
       : undefined;
@@ -289,10 +308,9 @@ export class OpenAiPilotDispatcher {
     if (job) {
       try {
         briefing =
-          (await this.db
-            .prepare(
-              "SELECT version,created_at,document_json FROM customer_openai_pilot_briefings WHERE tenant_id=? AND property_id=? AND job_id=?",
-            )
+          (await this.prepare(
+            "SELECT version,created_at,document_json FROM customer_openai_pilot_briefings WHERE tenant_id=? AND property_id=? AND job_id=?",
+          )
             .bind(...this.bind(), job.id)
             .first<{
               version: number;
@@ -314,13 +332,19 @@ export class OpenAiPilotDispatcher {
           ),
         };
     }
-    const receipt = job ? await this.reconciled(job.id) : null;
+    const approval = await this.db
+      .prepare(
+        "SELECT original_job_id FROM customer_openai_retry_approvals WHERE tenant_id=? AND property_id=?",
+      )
+      .bind(...this.bind())
+      .first<{ original_job_id: string }>();
+    const accountingId = this.retryMode ? approval?.original_job_id : job?.id;
+    const receipt = accountingId ? await this.reconciled(accountingId) : null;
     const extraReceipt = job
-      ? await this.db
-          .prepare(
-            "SELECT COALESCE(SUM(accounted_micros),0) total,COALESCE(SUM(CASE WHEN basis='billing-export' THEN accounted_micros ELSE 0 END),0) billed FROM customer_openai_usage_call_receipts WHERE tenant_id=? AND property_id=? AND job_id=?",
-          )
-          .bind(...this.bind(), job.id)
+      ? await this.prepare(
+          "SELECT COALESCE(SUM(accounted_micros),0) total,COALESCE(SUM(CASE WHEN basis='billing-export' THEN accounted_micros ELSE 0 END),0) billed FROM customer_openai_usage_call_receipts WHERE tenant_id=? AND property_id=? AND job_id=?",
+        )
+          .bind(...this.bind(), accountingId)
           .first<{ total: number; billed: number }>()
       : null;
     const billedTotal =
@@ -329,11 +353,10 @@ export class OpenAiPilotDispatcher {
       reservedMicros = 0;
     if (job) {
       try {
-        const usage = await this.db
-          .prepare(
-            "SELECT COALESCE(SUM(CASE WHEN state='known' THEN accounted_micros ELSE 0 END),0) AS spent,COALESCE(SUM(CASE WHEN state IN('reserved','unknown') THEN accounted_micros ELSE 0 END),0) AS reserved FROM customer_provider_calls c WHERE tenant_id=? AND property_id=? AND job_id=? AND NOT EXISTS(SELECT 1 FROM customer_openai_reconciled_call_keys r WHERE r.tenant_id=c.tenant_id AND r.property_id=c.property_id AND r.job_id=c.job_id AND r.call_key=c.call_key)",
-          )
-          .bind(...this.bind(), job.id)
+        const usage = await this.prepare(
+          "SELECT COALESCE(SUM(CASE WHEN state='known' THEN accounted_micros ELSE 0 END),0) AS spent,COALESCE(SUM(CASE WHEN state IN('reserved','unknown') THEN accounted_micros ELSE 0 END),0) AS reserved FROM customer_provider_calls c WHERE tenant_id=? AND property_id=? AND NOT EXISTS(SELECT 1 FROM customer_openai_reconciled_call_keys r WHERE r.tenant_id=c.tenant_id AND r.property_id=c.property_id AND r.job_id=c.job_id AND r.call_key=c.call_key)",
+        )
+          .bind(...this.bind())
           .first<{ spent: number; reserved: number }>();
         spentMicros += usage?.spent ?? 0;
         reservedMicros = usage?.reserved ?? 0;
@@ -344,6 +367,7 @@ export class OpenAiPilotDispatcher {
     return {
       ready: blockers.length === 0,
       blockers,
+      retryAvailable: !!approval && !this.retryMode && job?.step === 5,
       approvedCapUsd: 1.25,
       manualRunEnabled: blockers.length === 0,
       schedulesEnabled: false,
@@ -360,7 +384,11 @@ export class OpenAiPilotDispatcher {
             reconciledUsd:
               ((receipt?.billed_micros ?? 0) + (extraReceipt?.billed ?? 0)) /
               1_000_000,
-            resumable: job.state === "blocked" && job.step < 5 && !!receipt,
+            resumable:
+              !this.retryMode &&
+              job.state === "blocked" &&
+              job.step < 5 &&
+              !!receipt,
             spentUsd: spentMicros / 1_000_000,
             reservedUsd: reservedMicros / 1_000_000,
           }
@@ -369,14 +397,21 @@ export class OpenAiPilotDispatcher {
   }
   async execute(input: OpenAiPilotAction) {
     await this.access();
-    if (input.action === "start") return this.start(input.requestKey);
+    if (input.action === "retry") {
+      this.retryMode = true;
+      return this.start(input.requestKey);
+    }
+    if (input.action === "start") {
+      this.retryMode = false;
+      return this.start(input.requestKey);
+    }
+    await this.selectRetry(input.jobId);
     return this.advance(input.jobId);
   }
   private async start(requestKey: string) {
-    const old = await this.db
-      .prepare(
-        "SELECT * FROM customer_openai_pilot_jobs WHERE tenant_id=? AND property_id=? AND request_key=?",
-      )
+    const old = await this.prepare(
+      "SELECT * FROM customer_openai_pilot_jobs WHERE tenant_id=? AND property_id=? AND request_key=?",
+    )
       .bind(...this.bind(), requestKey)
       .first<Job>()
       .catch(() => null);
@@ -391,10 +426,9 @@ export class OpenAiPilotDispatcher {
     const id = crypto.randomUUID(),
       at = this.now();
     try {
-      await this.db
-        .prepare(
-          "INSERT INTO customer_openai_pilot_jobs(tenant_id,property_id,id,policy_id,request_key,actor,session_hash,state,created_at,updated_at,document_json) VALUES(?,?,?,?,?,?,?,'queued',?,?,?)",
-        )
+      await this.prepare(
+        "INSERT INTO customer_openai_pilot_jobs(tenant_id,property_id,id,policy_id,request_key,actor,session_hash,state,created_at,updated_at,document_json) VALUES(?,?,?,?,?,?,?,'queued',?,?,?)",
+      )
         .bind(
           ...this.bind(),
           id,
@@ -413,10 +447,9 @@ export class OpenAiPilotDispatcher {
         )
         .run();
     } catch {
-      const same = await this.db
-        .prepare(
-          "SELECT id FROM customer_openai_pilot_jobs WHERE tenant_id=? AND property_id=? AND request_key=?",
-        )
+      const same = await this.prepare(
+        "SELECT id FROM customer_openai_pilot_jobs WHERE tenant_id=? AND property_id=? AND request_key=?",
+      )
         .bind(...this.bind(), requestKey)
         .first<{ id: string }>();
       if (!same)
@@ -428,34 +461,30 @@ export class OpenAiPilotDispatcher {
     return this.status();
   }
   private async job(id: string) {
-    const row = await this.db
-      .prepare(
-        "SELECT * FROM customer_openai_pilot_jobs WHERE tenant_id=? AND property_id=? AND id=?",
-      )
+    const row = await this.prepare(
+      "SELECT * FROM customer_openai_pilot_jobs WHERE tenant_id=? AND property_id=? AND id=?",
+    )
       .bind(...this.bind(), id)
       .first<Job>();
     if (!row) throw new CustomerError("Pilot run was not found.", 404);
     return row;
   }
   private async reconciled(id: string) {
-    return this.db
-      .prepare(
-        "SELECT billed_micros FROM customer_openai_usage_reconciliations WHERE tenant_id=? AND property_id=? AND job_id=?",
-      )
+    return this.prepare(
+      "SELECT billed_micros FROM customer_openai_usage_reconciliations WHERE tenant_id=? AND property_id=? AND job_id=?",
+    )
       .bind(...this.bind(), id)
       .first<{ billed_micros: number }>();
   }
   private async configurationHash() {
-    const profile = await this.db
-      .prepare(
-        "SELECT profile_json FROM customer_properties WHERE tenant_id=? AND property_id=?",
-      )
+    const profile = await this.prepare(
+      "SELECT profile_json FROM customer_properties WHERE tenant_id=? AND property_id=?",
+    )
       .bind(...this.bind())
       .first<{ profile_json: string }>();
-    const config = await this.db
-      .prepare(
-        "SELECT document_json FROM customer_expansion_config WHERE tenant_id=? AND property_id=?",
-      )
+    const config = await this.prepare(
+      "SELECT document_json FROM customer_expansion_config WHERE tenant_id=? AND property_id=?",
+    )
       .bind(...this.bind())
       .first<{ document_json: string }>();
     return digest(
@@ -464,10 +493,9 @@ export class OpenAiPilotDispatcher {
   }
   private async guard(job: Job, fence: string) {
     await this.access();
-    const ok = await this.db
-      .prepare(
-        "SELECT 1 AS ok FROM customer_openai_pilot_jobs j JOIN customer_openai_pilot_policies p ON p.tenant_id=j.tenant_id AND p.property_id=j.property_id AND p.id=j.policy_id JOIN customer_sessions s ON s.token_hash=j.session_hash JOIN customer_memberships m USING(tenant_id,property_id,user_id) JOIN customer_properties h USING(tenant_id,property_id) LEFT JOIN customer_expansion_config e USING(tenant_id,property_id) WHERE j.tenant_id=? AND j.property_id=? AND j.id=? AND j.state='running' AND j.lease=? AND j.lease_until>? AND p.expires_at>? AND s.expires_at>? AND m.active=1 AND EXISTS(SELECT 1 FROM customer_research_authorizations ra WHERE ra.session_hash=s.token_hash AND ra.tenant_id=s.tenant_id AND ra.property_id=s.property_id AND ra.user_id=s.user_id AND ra.valid_until>CAST(strftime('%s','now') AS INTEGER)*1000) AND h.active=1 AND COALESCE(json_extract(e.document_json,'$.paused'),0)!=1",
-      )
+    const ok = await this.prepare(
+      "SELECT 1 AS ok FROM customer_openai_pilot_jobs j JOIN customer_openai_pilot_policies p ON p.tenant_id=j.tenant_id AND p.property_id=j.property_id AND p.id=j.policy_id JOIN customer_sessions s ON s.token_hash=j.session_hash JOIN customer_memberships m USING(tenant_id,property_id,user_id) JOIN customer_properties h USING(tenant_id,property_id) LEFT JOIN customer_expansion_config e USING(tenant_id,property_id) WHERE j.tenant_id=? AND j.property_id=? AND j.id=? AND j.state='running' AND j.lease=? AND j.lease_until>? AND p.expires_at>? AND s.expires_at>? AND m.active=1 AND EXISTS(SELECT 1 FROM customer_research_authorizations ra WHERE ra.session_hash=s.token_hash AND ra.tenant_id=s.tenant_id AND ra.property_id=s.property_id AND ra.user_id=s.user_id AND ra.valid_until>CAST(strftime('%s','now') AS INTEGER)*1000) AND h.active=1 AND COALESCE(json_extract(e.document_json,'$.paused'),0)!=1",
+    )
       .bind(...this.bind(), job.id, fence, this.now(), this.now(), this.now())
       .first<{ ok: number }>();
     if (!ok) throw new SourceError("PILOT_LEASE_OR_ACCESS_LOST");
@@ -483,20 +511,18 @@ export class OpenAiPilotDispatcher {
     if (job.step >= marketCategories.length) return this.status();
     const fence = crypto.randomUUID(),
       now = this.now();
-    const claim = await this.db
-      .prepare(
-        "UPDATE customer_openai_pilot_jobs SET state='running',lease=?,lease_until=?,updated_at=? WHERE tenant_id=? AND property_id=? AND id=? AND state IN('queued','running','blocked') AND (lease IS NULL OR lease_until<=?)",
-      )
+    const claim = await this.prepare(
+      "UPDATE customer_openai_pilot_jobs SET state='running',lease=?,lease_until=?,updated_at=? WHERE tenant_id=? AND property_id=? AND id=? AND state IN('queued','running','blocked') AND (lease IS NULL OR lease_until<=?)",
+    )
       .bind(fence, now + 120000, now, ...this.bind(), id, now)
       .run();
     if (!claim.meta.changes) return this.status();
     const activeJob = await this.job(id);
     const category = marketCategories[activeJob.step];
     // Never continue spending after a response could not be reconciled.
-    const unresolved = await this.db
-      .prepare(
-        "SELECT 1 AS found FROM customer_provider_calls c WHERE c.tenant_id=? AND c.property_id=? AND c.job_id=? AND c.state IN('unknown','reserved') AND NOT EXISTS(SELECT 1 FROM customer_openai_reconciled_call_keys r WHERE r.tenant_id=c.tenant_id AND r.property_id=c.property_id AND r.job_id=c.job_id AND r.call_key=c.call_key) LIMIT 1",
-      )
+    const unresolved = await this.prepare(
+      "SELECT 1 AS found FROM customer_provider_calls c WHERE c.tenant_id=? AND c.property_id=? AND c.job_id=? AND c.state IN('unknown','reserved') AND NOT EXISTS(SELECT 1 FROM customer_openai_reconciled_call_keys r WHERE r.tenant_id=c.tenant_id AND r.property_id=c.property_id AND r.job_id=c.job_id AND r.call_key=c.call_key) LIMIT 1",
+    )
       .bind(...this.bind(), id)
       .first();
     if (unresolved)
@@ -507,16 +533,14 @@ export class OpenAiPilotDispatcher {
         "PROVIDER_USAGE_RECONCILIATION_REQUIRED",
       );
     const policy = await this.policy();
-    const profileRow = await this.db
-      .prepare(
-        "SELECT property_name,profile_json FROM customer_properties WHERE tenant_id=? AND property_id=? AND active=1",
-      )
+    const profileRow = await this.prepare(
+      "SELECT property_name,profile_json FROM customer_properties WHERE tenant_id=? AND property_id=? AND active=1",
+    )
       .bind(...this.bind())
       .first<{ property_name: string; profile_json: string | null }>();
-    const configRow = await this.db
-      .prepare(
-        "SELECT document_json FROM customer_expansion_config WHERE tenant_id=? AND property_id=?",
-      )
+    const configRow = await this.prepare(
+      "SELECT document_json FROM customer_expansion_config WHERE tenant_id=? AND property_id=?",
+    )
       .bind(...this.bind())
       .first<{ document_json: string }>();
     if (!profileRow?.profile_json || !configRow || !policy)
@@ -553,38 +577,64 @@ export class OpenAiPilotDispatcher {
     let result: Awaited<ReturnType<typeof searchWithOpenAI>> | null = null,
       failure: string | null = null;
     let usageDiagnostics: Record<string, unknown> | undefined;
-    try {
-      const transport =
-        this.transportFactory?.() ??
-        new OpenAIWebSearchTransport(this.apiKey ?? "", this.fetcher);
-      const sources = new BoundedSources(
-        transport,
-        new ProviderLedger(
-          this.db,
-          {
-            ...this.scope,
-            jobId: id,
-            month: new Date(now).toISOString().slice(0, 7),
-          },
-          true,
-          { lease: fence, step: activeJob.step },
-        ),
-        this.now,
-        true,
-        60_000,
+    const prior = this.retryMode
+      ? await this.db
+          .prepare(
+            "SELECT d.* FROM customer_openai_pilot_drafts d JOIN customer_openai_retry_approvals a ON a.tenant_id=d.tenant_id AND a.property_id=d.property_id AND a.original_job_id=d.job_id WHERE a.tenant_id=? AND a.property_id=? AND d.category=?",
+          )
+          .bind(...this.bind(), category)
+          .first<{
+            outcome: string;
+            summary: string;
+            sources_json: string;
+            citations_json: string;
+            usage_json: string | null;
+            observed_at: string;
+            identity_note: string;
+          }>()
+      : null;
+    if (this.retryMode && !prior)
+      return this.failStep(
+        activeJob,
+        fence,
+        category,
+        "ORIGINAL_CATEGORY_MISSING",
       );
-      result = await searchWithOpenAI({
-        sources,
-        callKey: `${category}:search`,
-        prompt: makePrompt(
-          category,
-          profileRow.property_name,
-          profile,
-          config,
-          new Date(this.now()).toISOString().slice(0, 10),
-        ),
-        allowedDomains: grants.domains[category],
-      });
+    const carried = prior && prior.outcome !== "failed" ? prior : null;
+    try {
+      if (!carried) {
+        const transport =
+          this.transportFactory?.() ??
+          new OpenAIWebSearchTransport(this.apiKey ?? "", this.fetcher);
+        const sources = new BoundedSources(
+          transport,
+          new ProviderLedger(
+            this.db,
+            {
+              ...this.scope,
+              jobId: id,
+              month: new Date(now).toISOString().slice(0, 7),
+            },
+            true,
+            { lease: fence, step: activeJob.step, retry: this.retryMode },
+          ),
+          this.now,
+          true,
+          60_000,
+        );
+        result = await searchWithOpenAI({
+          sources,
+          callKey: `${category}:search`,
+          prompt: makePrompt(
+            category,
+            profileRow.property_name,
+            profile,
+            config,
+            new Date(this.now()).toISOString().slice(0, 10),
+          ),
+          allowedDomains: grants.domains[category],
+        });
+      }
     } catch (error) {
       failure =
         error instanceof SourceError ? error.code : "PROVIDER_UNAVAILABLE";
@@ -592,16 +642,20 @@ export class OpenAiPilotDispatcher {
         error instanceof SourceError ? error.diagnostics : undefined;
     }
     await this.guard(activeJob, fence);
-    const outcome = failure
-      ? "failed"
-      : result!.status === "review-required"
-        ? "cited"
-        : result!.status === "uncited-summary"
-          ? "uncited"
-          : "no_sources";
-    const summary = result?.text ?? "";
-    const sourcesJson = JSON.stringify(result?.sources ?? []),
-      citationsJson = JSON.stringify(result?.citations ?? []),
+    const outcome = carried
+      ? carried.outcome
+      : failure
+        ? "failed"
+        : result!.status === "review-required"
+          ? "cited"
+          : result!.status === "uncited-summary"
+            ? "uncited"
+            : "no_sources";
+    const summary = carried?.summary ?? result?.text ?? "";
+    const sourcesJson =
+        carried?.sources_json ?? JSON.stringify(result?.sources ?? []),
+      citationsJson =
+        carried?.citations_json ?? JSON.stringify(result?.citations ?? []),
       usageJson = result ? JSON.stringify(result.usage) : null;
     const identityNote =
       category === "property" && !profile.website
@@ -611,23 +665,21 @@ export class OpenAiPilotDispatcher {
           : "Summaries are provider-generated paraphrases. Verify the cited source and publication date before using any statement.";
     const statements: Statement[] = [];
     statements.push(
-      this.db
-        .prepare(
-          "INSERT INTO customer_openai_pilot_drafts(tenant_id,property_id,job_id,category,outcome,summary,sources_json,citations_json,usage_json,observed_at,identity_note,lease) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
-        )
-        .bind(
-          ...this.bind(),
-          id,
-          category,
-          outcome,
-          summary,
-          sourcesJson,
-          citationsJson,
-          usageJson,
-          new Date(this.now()).toISOString(),
-          identityNote,
-          fence,
-        ),
+      this.prepare(
+        "INSERT INTO customer_openai_pilot_drafts(tenant_id,property_id,job_id,category,outcome,summary,sources_json,citations_json,usage_json,observed_at,identity_note,lease) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+      ).bind(
+        ...this.bind(),
+        id,
+        category,
+        outcome,
+        summary,
+        sourcesJson,
+        citationsJson,
+        usageJson,
+        carried?.observed_at ?? new Date(this.now()).toISOString(),
+        carried?.identity_note ?? identityNote,
+        fence,
+      ),
     );
     const doc = JSON.parse(activeJob.document_json) as {
       outcomes: Array<{ category: string; status: string; code: string }>;
@@ -636,15 +688,15 @@ export class OpenAiPilotDispatcher {
       category,
       status: outcome,
       code: failure ?? outcome.toUpperCase(),
+      ...(carried ? { carriedForward: true } : {}),
       ...(usageDiagnostics ? { usageDiagnostics } : {}),
     });
     const step = activeJob.step + 1;
     const final = step === marketCategories.length;
     const complete = final && doc.outcomes.every((x) => x.status === "cited");
-    const unresolvedUsage = await this.db
-      .prepare(
-        "SELECT 1 AS found FROM customer_provider_calls c WHERE c.tenant_id=? AND c.property_id=? AND c.job_id=? AND c.state IN('unknown','reserved') AND NOT EXISTS(SELECT 1 FROM customer_openai_reconciled_call_keys r WHERE r.tenant_id=c.tenant_id AND r.property_id=c.property_id AND r.job_id=c.job_id AND r.call_key=c.call_key) LIMIT 1",
-      )
+    const unresolvedUsage = await this.prepare(
+      "SELECT 1 AS found FROM customer_provider_calls c WHERE c.tenant_id=? AND c.property_id=? AND c.job_id=? AND c.state IN('unknown','reserved') AND NOT EXISTS(SELECT 1 FROM customer_openai_reconciled_call_keys r WHERE r.tenant_id=c.tenant_id AND r.property_id=c.property_id AND r.job_id=c.job_id AND r.call_key=c.call_key) LIMIT 1",
+    )
       .bind(...this.bind(), id)
       .first();
     const state = unresolvedUsage
@@ -674,33 +726,29 @@ export class OpenAiPilotDispatcher {
         identity_note: identityNote,
       });
       statements.push(
-        this.db
-          .prepare(
-            "INSERT INTO customer_openai_pilot_briefings(tenant_id,property_id,job_id,version,created_at,document_json) VALUES(?,?,?,1,?,?)",
-          )
-          .bind(
-            ...this.bind(),
-            id,
-            new Date(this.now()).toISOString(),
-            JSON.stringify(briefing),
-          ),
+        this.prepare(
+          `INSERT INTO customer_openai_pilot_briefings(tenant_id,property_id,job_id,version,created_at,document_json) VALUES(?,?,?,${this.retryMode ? 2 : 1},?,?)`,
+        ).bind(
+          ...this.bind(),
+          id,
+          new Date(this.now()).toISOString(),
+          JSON.stringify(briefing),
+        ),
       );
     }
     await this.guard(activeJob, fence);
     statements.push(
-      this.db
-        .prepare(
-          "UPDATE customer_openai_pilot_jobs SET state=?,step=?,lease=NULL,lease_until=0,updated_at=?,document_json=? WHERE tenant_id=? AND property_id=? AND id=? AND lease=? AND state='running'",
-        )
-        .bind(
-          state,
-          step,
-          this.now(),
-          JSON.stringify(nextDoc),
-          ...this.bind(),
-          id,
-          fence,
-        ),
+      this.prepare(
+        "UPDATE customer_openai_pilot_jobs SET state=?,step=?,lease=NULL,lease_until=0,updated_at=?,document_json=? WHERE tenant_id=? AND property_id=? AND id=? AND lease=? AND state='running'",
+      ).bind(
+        state,
+        step,
+        this.now(),
+        JSON.stringify(nextDoc),
+        ...this.bind(),
+        id,
+        fence,
+      ),
     );
     await this.db.batch!(statements);
     return this.status();
@@ -712,10 +760,9 @@ export class OpenAiPilotDispatcher {
     code: string,
   ) {
     await this.guard(job, fence);
-    await this.db
-      .prepare(
-        "UPDATE customer_openai_pilot_jobs SET state='blocked',lease=NULL,lease_until=0,updated_at=?,document_json=json_set(document_json,'$.blockedCode',?) WHERE tenant_id=? AND property_id=? AND id=? AND lease=?",
-      )
+    await this.prepare(
+      "UPDATE customer_openai_pilot_jobs SET state='blocked',lease=NULL,lease_until=0,updated_at=?,document_json=json_set(document_json,'$.blockedCode',?) WHERE tenant_id=? AND property_id=? AND id=? AND lease=?",
+    )
       .bind(this.now(), code, ...this.bind(), job.id, fence)
       .run();
     return this.status();
@@ -725,10 +772,9 @@ export class OpenAiPilotDispatcher {
     outcomes: Array<{ category: string; status: string; code: string }>,
     pending?: Record<string, unknown>,
   ) {
-    const drafts = await this.db
-      .prepare(
-        "SELECT category,outcome,summary,sources_json,citations_json,observed_at,identity_note FROM customer_openai_pilot_drafts WHERE tenant_id=? AND property_id=? AND job_id=? ORDER BY rowid",
-      )
+    const drafts = await this.prepare(
+      "SELECT category,outcome,summary,sources_json,citations_json,observed_at,identity_note FROM customer_openai_pilot_drafts WHERE tenant_id=? AND property_id=? AND job_id=? ORDER BY rowid",
+    )
       .bind(...this.bind(), jobId)
       .all?.();
     const rows =
@@ -737,7 +783,7 @@ export class OpenAiPilotDispatcher {
         : [];
     if (pending) rows.push(pending);
     return {
-      version: 1,
+      version: this.retryMode ? 2 : 1,
       title: "SCOUT Briefing — ABC Hotel",
       generatedAt: new Date(this.now()).toISOString(),
       status: outcomes.every((o) => o.status === "cited")

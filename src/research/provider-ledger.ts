@@ -14,7 +14,7 @@ export class ProviderLedger implements CallLedger {
       month: string;
     },
     allowLive = false,
-    private pilotFence?: { lease: string; step: number },
+    private pilotFence?: { lease: string; step: number; retry?: boolean },
   ) {
     if (
       ((!scope.tenantId.startsWith("fixture_") ||
@@ -40,7 +40,7 @@ export class ProviderLedger implements CallLedger {
         .prepare(
           "INSERT INTO customer_provider_calls(tenant_id,property_id,month,job_id,call_key,maximum_micros,accounted_micros,state) SELECT ?,?,?,?,?,?,?,'reserved' WHERE EXISTS(SELECT 1 FROM customer_provider_limits WHERE tenant_id=? AND property_id=? AND month=? AND rate_version=?)" +
             (this.pilotFence
-              ? " AND EXISTS(SELECT 1 FROM customer_openai_pilot_jobs WHERE tenant_id=? AND property_id=? AND id=? AND lease=? AND step=? AND state='running' AND lease_until>CAST(strftime('%s','now') AS INTEGER)*1000)"
+              ? ` AND EXISTS(SELECT 1 FROM ${this.pilotFence.retry ? "customer_openai_retry_jobs" : "customer_openai_pilot_jobs"} WHERE tenant_id=? AND property_id=? AND id=? AND lease=? AND step=? AND state='running' AND lease_until>CAST(strftime('%s','now') AS INTEGER)*1000)`
               : "") +
             " RETURNING call_key",
         )

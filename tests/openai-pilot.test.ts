@@ -23,6 +23,7 @@ test("OpenAI pilot migration is additive, empty, and refuses synthetic policy sc
     "0009_sil_research_permission.sql",
     "0010_openai_usage_reconciliation.sql",
     "0011_openai_call_receipts.sql",
+    "0012_openai_failed_retry.sql",
   ])
     db.exec(readFileSync(`cloudflare/migrations/${file}`, "utf8"));
 
@@ -75,6 +76,7 @@ test("real OpenAI pilot status refuses the isolated synthetic tenant before prov
     "0009_sil_research_permission.sql",
     "0010_openai_usage_reconciliation.sql",
     "0011_openai_call_receipts.sql",
+    "0012_openai_failed_retry.sql",
   ])
     db.exec(readFileSync(`cloudflare/migrations/${file}`, "utf8"));
   let networkCalls = 0;
@@ -119,6 +121,7 @@ test("ABC Hotel editor status exposes disabled gates without an OpenAI request",
     "0009_sil_research_permission.sql",
     "0010_openai_usage_reconciliation.sql",
     "0011_openai_call_receipts.sql",
+    "0012_openai_failed_retry.sql",
   ])
     db.exec(readFileSync(`cloudflare/migrations/${file}`, "utf8"));
   const tenantId = "tenant_abc";
@@ -187,7 +190,7 @@ test("ABC Hotel editor status exposes disabled gates without an OpenAI request",
   db.close();
 });
 
-async function pilotSetup(outputTokens = 180) {
+async function pilotSetup(outputTokens = 180, failFirstRun = false) {
   const db = database();
   for (const file of [
     "0004_reviewed_imports.sql",
@@ -198,6 +201,7 @@ async function pilotSetup(outputTokens = 180) {
     "0009_sil_research_permission.sql",
     "0010_openai_usage_reconciliation.sql",
     "0011_openai_call_receipts.sql",
+    "0012_openai_failed_retry.sql",
   ])
     db.exec(readFileSync(`cloudflare/migrations/${file}`, "utf8"));
   const tenant = "tenant_abc",
@@ -314,7 +318,10 @@ async function pilotSetup(outputTokens = 180) {
                   annotations: [
                     {
                       type: "url_citation",
-                      url,
+                      url:
+                        failFirstRun && calls <= 5 && calls !== 4
+                          ? "https://unapproved.example/not-evidence"
+                          : url,
                       title: "Unit test evidence",
                       start_index: 0,
                       end_index: 26,
@@ -583,6 +590,132 @@ test("SIL revocation stops an existing editor pilot before spend; local role is 
         .get() as { n: number }
     ).n,
     0,
+  );
+  db.close();
+});
+
+async function retrySetup() {
+  const setup = await pilotSetup(180, true);
+  let state = await setup.dispatcher.execute({
+    action: "start",
+    requestKey: "retry-original",
+  });
+  for (let i = 0; i < 5; i++)
+    state = await setup.dispatcher.execute({
+      action: "advance",
+      jobId: state.job!.id,
+    });
+  assert.equal(state.job!.state, "partial");
+  assert.equal(
+    state.job!.document.outcomes.filter(
+      (o: { status: string }) => o.status === "failed",
+    ).length,
+    4,
+  );
+  const originalId = state.job!.id;
+  return {
+    ...setup,
+    originalId,
+    approve: () =>
+      setup.db
+        .prepare(
+          "INSERT INTO customer_openai_retry_approvals VALUES(?,?,?,?,?,?)",
+        )
+        .run(
+          setup.tenant,
+          setup.property,
+          "unit-policy",
+          originalId,
+          "Owner approved four failed category retries under original cap",
+          new Date().toISOString(),
+        ),
+  };
+}
+test("bounded retry requires approval, preserves original evidence, carries successful category without spend and is idempotent", async () => {
+  const { db, dispatcher, calls, approve, originalId } = await retrySetup();
+  const original = JSON.stringify(
+    db.prepare("SELECT * FROM customer_openai_pilot_drafts").all(),
+  );
+  await assert.rejects(
+    dispatcher.execute({ action: "retry", requestKey: crypto.randomUUID() }),
+  );
+  assert.equal(calls(), 5);
+  approve();
+  const requestKey = crypto.randomUUID();
+  let state = await dispatcher.execute({ action: "retry", requestKey });
+  const retryId = state.job!.id;
+  assert.notEqual(retryId, originalId);
+  await dispatcher.execute({ action: "retry", requestKey });
+  await Promise.all([
+    dispatcher.execute({ action: "advance", jobId: retryId }),
+    dispatcher.execute({ action: "advance", jobId: retryId }),
+  ]);
+  assert.equal(calls(), 6);
+  for (let i = 0; i < 5; i++)
+    state = await dispatcher.execute({ action: "advance", jobId: retryId });
+  assert.equal(state.job!.state, "complete");
+  assert.equal(calls(), 9);
+  assert.equal(state.job!.spentUsd, 0.09216);
+  assert.equal(
+    JSON.stringify(
+      db.prepare("SELECT * FROM customer_openai_pilot_drafts").all(),
+    ),
+    original,
+  );
+  assert.equal(
+    (
+      db
+        .prepare("SELECT count(*) n FROM customer_openai_pilot_briefings")
+        .get() as { n: number }
+    ).n,
+    1,
+  );
+  assert.equal(
+    (
+      db
+        .prepare("SELECT version FROM customer_openai_retry_briefings")
+        .get() as { version: number }
+    ).version,
+    2,
+  );
+  assert.equal(
+    (
+      db
+        .prepare(
+          "SELECT count(*) n FROM customer_markets WHERE tenant_id='tenant_abc'",
+        )
+        .get() as {
+        n: number;
+      }
+    ).n,
+    0,
+  );
+  await assert.rejects(
+    dispatcher.execute({ action: "retry", requestKey: crypto.randomUUID() }),
+  );
+  assert.equal(calls(), 9);
+  db.close();
+});
+test("retry reservation includes previous spend and stops before exceeding the original shared cap", async () => {
+  const { db, dispatcher, calls, approve } = await retrySetup();
+  approve();
+  db.exec(
+    "UPDATE customer_provider_limits SET monthly_limit_micros=470000,job_limit_micros=470000",
+  );
+  let state = await dispatcher.execute({
+    action: "retry",
+    requestKey: crypto.randomUUID(),
+  });
+  state = await dispatcher.execute({ action: "advance", jobId: state.job!.id });
+  assert.equal(calls(), 5);
+  assert.equal((state.job!.drafts[0] as { outcome: string }).outcome, "failed");
+  assert.equal(
+    (
+      db.prepare("SELECT count(*) n FROM customer_provider_calls").get() as {
+        n: number;
+      }
+    ).n,
+    5,
   );
   db.close();
 });

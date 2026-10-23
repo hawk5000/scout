@@ -18,6 +18,7 @@ type LivePilotView = {
   ready: boolean;
   blockers: string[];
   approvedCapUsd: number;
+  retryAvailable: boolean;
   job: null | {
     id: string;
     state: string;
@@ -35,6 +36,7 @@ type LivePilotView = {
       identity_note: string;
     }>;
     briefing: null | {
+      version: number;
       document: {
         status: string;
         sections: Array<{
@@ -214,17 +216,17 @@ export function CustomerExpansion({
       setBusy(false);
     }
   }
-  async function runLivePilot() {
+  async function runLivePilot(retry = false) {
     setBusy(true);
     setMessage("");
     try {
       let next = livePilot;
-      if (!next?.job) {
+      if (!next?.job || retry) {
         const response = await fetch("/api/customer/openai-pilot", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            action: "start",
+            action: retry ? "retry" : "start",
             requestKey: crypto.randomUUID(),
           }),
         });
@@ -344,10 +346,9 @@ export function CustomerExpansion({
                 </p>
               )}
               <p className="fine-print">
-                Live research and paid calls remain disabled. The approved
-                ceiling is $1.25 for one manual five-category cycle; source
-                permissions and review staging are still required before it can
-                run.
+                Only the explicitly approved manual pilot can make paid research
+                calls, within the original $1.25 total cap. Routine research,
+                schedules and notifications remain off.
               </p>
             </aside>
           )}
@@ -393,6 +394,17 @@ export function CustomerExpansion({
                         : "Run the one manual cycle"}
                   </button>
                 )}
+              {workspace.manualResearchAllowed === true &&
+                livePilot.ready &&
+                livePilot.retryAvailable && (
+                  <button
+                    className="button primary"
+                    disabled={busy}
+                    onClick={() => void runLivePilot(true)}
+                  >
+                    Retry the failed categories within the original $1.25 cap
+                  </button>
+                )}
               {workspace.manualResearchAllowed !== true && (
                 <p className="fine-print">
                   A hotel user with SCOUT research permission must start or
@@ -414,8 +426,9 @@ export function CustomerExpansion({
                     <p>
                       OpenAI billing export reconciled $
                       {livePilot.job.reconciledUsd.toFixed(6)} for the earlier
-                      calls as a group. Original budget holds remain in place;
-                      per-call costs were not inferred.
+                      calls as a group. Original records are preserved; verified
+                      receipts replace their holds for budget accounting.
+                      Per-call billed costs were not inferred.
                     </p>
                   )}
                   {livePilot.job.reservedUsd > 0 && (
